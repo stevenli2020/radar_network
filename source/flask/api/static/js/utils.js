@@ -554,6 +554,7 @@ const upload_image = (file, Elname, fileError, imgLink) => {
 function secondsToHours(seconds){
   var seconds = Number(seconds);
   var h = Math.round(seconds / (3600)) 
+  var hDisplay = h > 0 ? h + (h == 1 ? " hr" : " hrs") : "0 hr";
   return h
 }
 

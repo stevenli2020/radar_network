@@ -135,19 +135,23 @@ async function onMessageArrived(message) {
     // timer = parseInt(1000 / data.length);
     // console.log(data, data.length, timer);
     // timeOutMultiLoop(data)
-    if("heartRate" in data[index]){      
-      // console.log(data)
-      data.forEach(d => {
-        // console.log(d)
-        if("heartRate" in d)
-          if(d.heartRate != "-" && d.heartRate != null){
-            addLineChart(d.heartRate, d.breathRate)
-            checkVitalDataEmpty = new Date()   
-            checkRoomEmpty = new Date()         
-          }
-            
-      })
+    if(realtimeHistVital.classLits.contains("active")){
+      if("heartRate" in data[index]){      
+        // console.log(data)
+        data.forEach(d => {
+          // console.log(d)
+          if("heartRate" in d)
+            if(d.heartRate != "-" && d.heartRate != null){
+              addLineChart(d.heartRate, d.breathRate)
+              checkVitalDataEmpty = new Date()   
+              checkRoomEmpty = new Date() 
+              document.querySelector('#empty-lable').style.display = 'none'        
+            }
+              
+        })
+      }
     }
+    
         
     var interval = setInterval(function () {
       if ("DATA" in JSON.parse(message.payloadString)) {

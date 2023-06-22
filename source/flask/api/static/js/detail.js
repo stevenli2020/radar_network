@@ -57,7 +57,7 @@ var sampleLocData = []
 var realTimeLocationRadarInRoom = 1
 var realTimeLocationPerson = 1
 setInterval(function(){
-  console.log(Math.round((new Date() - checkRoomEmpty)/1000))
+  // console.log(Math.round((new Date() - checkRoomEmpty)/1000))
   if(Math.round((new Date() - checkRoomEmpty)/1000)>180){
     document.querySelector('#empty-lable').style.display = ''
     scatterWeight.setOption({

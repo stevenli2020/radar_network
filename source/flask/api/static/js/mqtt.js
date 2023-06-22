@@ -135,7 +135,7 @@ async function onMessageArrived(message) {
     // timer = parseInt(1000 / data.length);
     // console.log(data, data.length, timer);
     // timeOutMultiLoop(data)
-    if(realtimeHistVital.classLits.contains("active")){
+    if(realtimeHistVital.classList.contains("active")){
       if("heartRate" in data[index]){      
         // console.log(data)
         data.forEach(d => {

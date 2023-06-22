@@ -851,10 +851,12 @@ input[type=submit] {
 /* history posture data on chart */
 #in-bed-hour, #in-room-hour, #in-bed-day, #in-room-day, #in-bed-week, #in-room-week, #in-bed-month, #in-room-month{
     color: rgb(238, 230, 7);
+    /* color: white; */
     position: absolute;
     /* top: 15%; */
     right: 3%;
     /* line-height: 110%; */
+    font-weight: bold;
 }
 #in-bed-hour{
     top: 17%;

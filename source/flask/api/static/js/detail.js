@@ -315,11 +315,11 @@ function getHistorOfPos(t, XD, YD) {
       minX = 0;
       maxX = 2;
       if (t == "HOUR") {
-        maxX = 1;
+        maxX = 2;
       } else if (t == "DAY") {
-        maxX = 5;
+        maxX = 10;
       } else if (t == "WEEK") {
-        maxX = 7;
+        maxX = 20;
       } else if (t == "MONTH") {
         maxX = 30;
       }

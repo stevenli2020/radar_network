@@ -1,0 +1,239 @@
+<div class="tab-pane fade show active" id="admin-user-data" role="tabpanel" aria-labelledby="admin-user-tab"
+    tabindex="0">
+
+    <div class="mt-5">
+        <div class="card users-card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5 class="card-title text-uppercase mb-0">List of Admin Users</h5>
+                    </div>
+                    <div class="col-lg-5"></div>
+                    <div class="col-lg-1">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#user-data-update-modal" attr="add"><i class="bi bi-person-plus-fill"></i> Add</button>
+                    </div>
+                </div>
+            </div>
+            <table id="admin-user-table" class="table table-striped" width="100%">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Login Name</th>
+                        <th>Fullname</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Code</th>
+                        <th>Created</th>
+                        <th>Last Modified</th>
+                        <th>Manage</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="tab-pane fade show" id="user-data" role="tabpanel" aria-labelledby="user-data-tab"
+    tabindex="0">
+
+    <div class="mt-5">
+        <div class="card users-card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5 class="card-title text-uppercase mb-0">List of Users</h5>
+                    </div>
+                    <div class="col-lg-5"></div>
+                    <div class="col-lg-1">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#user-data-update-modal" attr="add"><i class="bi bi-person-plus-fill"></i> Add</button>
+                    </div>
+                </div>
+            </div>
+            <table id="user-data-table" class="table table-striped" width="100%">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Login Name</th>
+                        <th>Fullname</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Code</th>
+                        <th>Created</th>
+                        <th>Assign Room</th>
+                        <th>Manage</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- <div class="modal fade" id="user-data-add-modal" tabindex="-1" aria-labelledby="user-data-add-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="user-data-add-modalLabel">Add New User</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="user-data-add-username" class="col-form-label">Username:</label>
+                            <input type="text" class="form-control" id="user-data-add-username" required>
+                            <p id="add-username-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="user-data-add-fullname" class="col-form-label">Full Name:</label>
+                            <input type="text" class="form-control" id="user-data-add-fullname" required>
+                            <p id="add-fullname-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="user-data-add-email" class="col-form-label">Email:</label>
+                            <input type="text" class="form-control" id="user-data-add-email" required>
+                            <p id="add-email-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="user-data-add-phone" class="col-form-label">Phone:</label>
+                            <input type="text" class="form-control" id="user-data-add-phone" required>
+                            <p id="add-phone-error"></p>
+                        </div>                        
+                    </div>
+                    
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="user-data-add-type" class="col-form-label">User Type:</label>
+                            <select id="user-data-add-type" class="form-select">
+                                <option value="-1">Please Select</option>
+                                <option value="1">Admin</option>
+                                <option value="0">User</option>
+                            </select>
+                            <p id="add-user-type-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <div>
+                                <label for="mul-sel" class="col-form-label">Assign Device:</label>
+                                <select id="mul-sel" multiple data-multi-select-plugin>
+                                    <option value="Volvo" selected>Volvo</option>
+                                    <option value="Mercedes" selected>Mercedes</option>
+                                    <option value="Hilux">Hilux</option>
+                                    <option value="Corsa">Corsa</option>
+                                    <option value="BMW">BMW</option>
+                                    <option value="Ferrari">Ferrari</option>
+                                   <option value="Gol">Gol</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addNewUser()"
+                    id="user-data-submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+<div class="modal fade" id="user-data-update-modal" tabindex="-1" aria-labelledby="user-data-update-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="user-data-update-modalLabel">Update User Detail</h1>
+                <button type="button" id="update-user-close-btn" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="update-user-data-id">Id:</p>
+                <!-- <p id="update-user-data-code">Code:</p> -->
+                <p id="update-user-data-created">Created:</p>
+                <p id="update-user-data-last-modified-time">Last Modified Time:</p>
+                <p id="delete-user-data-username">Username:</p>
+                <p id="delete-user-data-fullname">Full Name:</p>
+                <p id="delete-user-data-email">Email:</p>
+                <p id="delete-user-data-phone">Phone:</p>
+                <!-- <p id="delete-user-data-type">Type:</p> -->
+                <form id="update-user-data-form">
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="user-data-update-username" class="col-form-label">Username:</label>
+                            <input type="text" class="form-control" id="user-data-update-username" required>
+                            <p id="update-user-data-username-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="user-data-update-fullname" class="col-form-label">Full Name:</label>
+                            <input type="text" class="form-control" id="user-data-update-fullname" required>
+                            <p id="update-user-data-fullname-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="user-data-update-email" class="col-form-label">Email:</label>
+                            <input type="text" class="form-control" id="user-data-update-email" required>
+                            <p id="update-user-data-email-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="user-data-update-phone" class="col-form-label">Phone:</label>
+                            <input type="text" class="form-control" id="user-data-update-phone" required>
+                            <!-- <p id="update-user-data-phone-error"></p> -->
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="user-data-update-type" class="col-form-label">User Type:</label>
+                            <select id="user-data-update-type" class="form-select">
+                                <option value="-1">Please Select</option>
+                                <option value="1">Admin</option>
+                                <option value="0">User</option>
+                            </select>
+                            <p id="update-user-data-type-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <div id="parent-mul">
+                                <label for="mul-sel" class="col-form-label">Assign Room:</label>
+                                <select id="mul-sel" multiple data-multi-select-plugin>
+                                    <!-- <option value="Volvo" selected>Volvo</option>
+                                    <option value="Mercedes" selected>Mercedes</option>
+                                    <option value="Hilux">Hilux</option>
+                                    <option value="Corsa">Corsa</option>
+                                    <option value="BMW">BMW</option>
+                                    <option value="Ferrari">Ferrari</option>
+                                   <option value="Gol">Gol</option> -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updateUserDetail()"
+                    id="update-device-register-submit-btn">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+

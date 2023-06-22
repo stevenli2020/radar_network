@@ -1,0 +1,2 @@
+docker run -dit --name debug_server_status --network net01 -v $(pwd)/app:/app --workdir="/app" debug_container bash
+

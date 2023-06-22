@@ -1,0 +1,25 @@
+version: "3"
+services:
+  evt:
+    image: stevenli2019/usvc-python:220407
+    container_name: server_status
+    restart: unless-stopped
+    networks:
+      - net01
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 10m      
+    environment:
+      DATABASE: 'db'
+      MQTT_HOST: 'vernemq'    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net01" 
+    volumes:
+      - ./app:/app      
+
+networks:
+  net01:
+    external: true
+    name: net01

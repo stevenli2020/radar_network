@@ -1,0 +1,41 @@
+version: "3"
+services:
+  vernemq:
+    image: erlio/docker-vernemq
+    container_name: vernemq
+    restart: always
+    networks:
+      - net01
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 10m      
+    environment:
+      DOCKER_VERNEMQ_ACCEPT_EULA: 'yes'
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: 'off'
+      DOCKER_VERNEMQ_PLUGINS.vmq_diversity: 'on'
+      DOCKER_VERNEMQ_PLUGINS.vmq_passwd: 'off'
+      DOCKER_VERNEMQ_PLUGINS.vmq_acl: 'off'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.auth_mysql.enabled: 'on'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.host: 'database'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.port: '3306'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.user: 'vernemq'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.password: 'vernemq'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.database: 'vernemq_db'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.password_hash_method: 'md5'   
+    ports:
+      - 1883:1883
+      - 8888:8080
+    expose:
+      - 1883
+      - 8080
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net01" 
+    volumes:
+      - /var/lib/    
+
+networks:
+  net01:
+    external: true
+    name: net01

@@ -1,0 +1,8 @@
+line_op="##while 1: #time.sleep(10)"
+line_dbg="while 1: time.sleep(10)"
+
+if [ "$1" == "exit" ]; then
+    sed -i "s%$line_dbg%$line_op%g" ./run.py
+else
+    sed -i "s%$line_op%$line_dbg%g" ./run.py
+fi

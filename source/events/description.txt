@@ -1,0 +1,4 @@
+This service is to 
+ - receive processed json data reports from [decode_publish] and update to database
+ - monitor device status and update to database
+

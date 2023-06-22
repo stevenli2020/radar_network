@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  db:
+    image: mariadb:10.3
+    container_name: database
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - net01
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 10m
+    environment:
+      MYSQL_ROOT_PASSWORD: 14102022  
+      TZ: Asia/Singapore
+    ports:
+      - 2203:3306      
+    labels:
+      - "traefik.enable=false"
+      - "traefik.docker.network=net01"
+ 
+  phpmyadmin:
+    depends_on:
+      - db  
+    container_name: dbadmin
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: db 
+      TZ: Asia/Singapore
+    networks:
+      - net01     
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net01"
+      
+networks:
+  net01:
+    external: true

@@ -1,0 +1,271 @@
+<div class="tab-pane fade show active" id="status-device-data" role="tabpanel" aria-labelledby="status-device-tab"
+    tabindex="0">
+
+    <div class="mt-5 full-width">
+        <div class="card users-card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <h5 class="card-title text-uppercase mb-0">List of Devices Status</h5>
+                    </div>
+                    <div class="col-6"></div>
+                </div>
+            </div>
+            <table id="status-device-table" class="table table-striped" width="100%">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Mac</th>
+                        <th>Status</th>
+                        <th>Datetime</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="tab-pane fade" id="save-device-data" role="tabpanel" aria-labelledby="save-device-tab"
+    tabindex="0">
+
+    <div class="mt-5 full-width">
+        <div class="card users-card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <h5 class="card-title text-uppercase mb-0">List of Save Devices</h5>
+                    </div>
+                    <div class="col-5"></div>
+                    <div class="col-1">
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                            data-bs-target="#save-device-add-modal">Add</button>
+                    </div>
+                </div>
+            </div>
+            <table id="save-device-table" class="table table-striped" width="100%">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Mac</th>
+                        <th>Start</th>
+                        <th>Expired</th>
+                        <th>Option</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="tab-pane fade" id="register-device" role="tabpanel" aria-labelledby="register-device-tab"
+    tabindex="0">
+
+    <div class="mt-5 full-width">
+        <div class="card users-card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <h5 class="card-title text-uppercase mb-0">List of Devices</h5>
+                    </div>
+                    <div class="col-5"></div>
+                    <div class="col-1">
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                            data-bs-target="#register-device-add-modal">Add</button>
+                    </div>
+                </div>
+            </div>
+            <table id="register-device-table" class="table table-striped" width="100%">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Mac</th>
+                        <th>Name</th>
+                        <th>Last Modified Time</th>
+                        <th>Description</th>
+                        <th>Option</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="register-device-add-modal" tabindex="-1" aria-labelledby="register-device-add-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="register-device-add-modalLabel">Add New Device List</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="register-device-add-mac" class="col-form-label">MAC Address:</label>
+                            <input type="text" class="form-control" id="register-device-add-mac" required>
+                            <p id="register-mac-address-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="register-device-add-name" class="col-form-label">Device Name:</label>
+                            <input type="text" class="form-control" id="register-device-add-name" required>
+                            <p id="register-device-add-name-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="register-device-description" class="col-form-label">Device Description:</label>
+                            <textarea class="form-control" id="register-device-description" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addNewDevice()"
+                    id="register-device-submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="register-device-update-modal" tabindex="-1" aria-labelledby="register-device-update-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="register-device-update-modalLabel">Update Device Detail</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="update-register-device-id">Id:</p>
+                <p id="update-register-mac"></p>
+                <p id="update-register-name"></p>
+                <p id="update-register-device-last-modified-time">Last Modified Time:</p>
+                <form id="update-register-device-form">
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="register-device-update-mac" class="col-form-label">MAC Address:</label>
+                            <input type="text" class="form-control" id="register-device-update-mac" required>
+                            <p id="register-mac-address-update-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="register-device-update-name" class="col-form-label">Device Name:</label>
+                            <input type="text" class="form-control" id="register-device-update-name" required>
+                            <p id="register-device-update-name-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="register-device-update-description" class="col-form-label">Device Description:</label>
+                            <textarea class="form-control" id="register-device-update-description" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updateDeviceDetail()"
+                    id="update-device-register-submit-btn">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="save-device-add-modal" tabindex="-1" aria-labelledby="save-device-add-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="save-device-add-modalLabel">Add Device Date and Time Save Data List</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="device-add-mac" class="col-form-label">MAC Address:</label>
+                            <input type="text" class="form-control" id="device-add-mac" required>
+                            <p id="mac-address-error"></p>
+                        </div>
+                        <!-- <div class="mb-1 col">
+                        <label for="device-add-name" class="col-form-label">Name:</label>
+                        <input type="text" class="form-control" id="device-add-name">
+                        <p id="time-select-error"></p>
+                    </div> -->
+                        <div class="mb-1 col">
+                            <label for="time-select" class="col-form-label">TIME:</label>
+                            <select class="form-select" id="time-select" aria-label="Default select example">
+                            </select>
+                            <p id="time-select-error"></p>
+                        </div>
+                    </div>
+                    <div class="row" id="date-time-row" style="display: none;">
+                        <div class="mb-1 col">
+                            <label for="datetimes" class="col-form-label">Date & Time:</label>
+                            <input type="text" class="form-control" name="datetimes" id="date-range-picker" />
+                        </div>
+                    </div>
+                    <!-- <div class="row">
+                    <div class="col-8"></div>
+                    <div class="col-1"><button type="button" class="btn btn-primary" onclick="getSelectedData()" id="user-register-submit-btn">Submit</button></div>
+                    <div class="col-3"></div>
+                </div>                 -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="getSelectedData()"
+                    id="add-device-save-data-submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="save-device-update-modal" tabindex="-1" aria-labelledby="save-device-update-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="save-device-update-modalLabel">Update Save Device Data List Time</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="update-save-device-id">Id:</p>
+                <p id="update-save-device-start">Start DateTime:</p>
+                <p id="update-save-device-end">End DateTime:</p>
+                <form id="update-save-device-form">
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="update-save-device-mac" class="col-form-label">MAC Address:</label>
+                            <input type="text" class="form-control" id="update-save-device-mac" required>
+                            <p id="mac-address-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="upateDevicedatetimes" class="col-form-label">Update Date & Time:</label>
+                            <input type="text" class="form-control" name="upateDevicedatetimes"
+                                id="update-device-save-date-time" />
+                        </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updateDeviceSaveData()"
+                    id="update-device-save-data-submit-btn">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+

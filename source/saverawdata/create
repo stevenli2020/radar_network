@@ -1,0 +1,2 @@
+docker run -dit --name events --network net01 python-mqtt bash
+

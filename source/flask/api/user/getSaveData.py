@@ -362,7 +362,7 @@ def getSummaryDataofPosition(data):
         X,Y = row[0].split(",")   
         CNT = int(row[1])
         # print(int(X), int(Y), X_SHIFT+int(X), Y_SHIFT+int(Y), CNT)
-        sample.append([math.abs(int(X)), int(Y), int(row[1])])
+        sample.append([int(X), int(Y), int(row[1])])
         try:
             HMAP[X_SHIFT+int(X)][Y_SHIFT+int(Y)] += CNT
         except:

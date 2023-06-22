@@ -44,5 +44,5 @@ def getHistOfVitalData(data):
     connection.close()
     return result
     
-DATA = {'ROOM_UUID':'d32231684bd3470b9b0a86dc0b9df524','TIME':'7 DAY'}
+DATA = {'ROOM_UUID':'d32231684bd3470b9b0a86dc0b9df524','TIME':'1 DAY'}
 print(getHistOfVitalData(DATA))  

@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 import time
 from datetime import datetime, timedelta, timezone
 import atexit
-import messageCallBack
+from messageCallBack import *
 
 brokerAddress="vernemq" 
 clientID="0005"
@@ -35,7 +35,7 @@ atexit.register(cleanup)
 mqttc = mqtt.Client(clientID)
 mqttc.username_pw_set(userName, password=userPassword)
 mqttc.will_set("/GMT/USVC/EVENTS/STATUS","DISCONNECTED",1,True)
-mqttc.on_message = messageCallBack.on_message
+mqttc.on_message = on_message
 mqttc.on_connect = on_connect
 mqttc.on_disconnect = on_disconnect
 mqttc.connect(brokerAddress)

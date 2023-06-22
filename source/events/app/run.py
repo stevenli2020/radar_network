@@ -39,12 +39,14 @@ mqttc.on_message = messageCallBack.on_message
 mqttc.on_connect = on_connect
 mqttc.on_disconnect = on_disconnect
 mqttc.connect(brokerAddress)
-print("Subscribe to topic: "+ "/GMT/DEV/+/DATA/+/JSON")
+# print("Subscribe to topic: "+ "/GMT/DEV/+/DATA/+/JSON")
 mqttc.subscribe("/GMT/DEV/+/DATA/+/JSON")
 print("Subscribe to topic: "+ "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
 mqttc.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
 print("Subscribe to topic: "+ "/GMT/DEV/+/REQ/#")
 mqttc.subscribe("/GMT/DEV/+/REQ/#")
+print("Subscribe to topic: "+ "/GMT/DEV/+/STATUS/#")
+mqttc.subscribe("/GMT/DEV/+/STATUS/#")
 time.sleep(1)
 print("Start mqtt receiving loop")
 mqttc.loop_forever()

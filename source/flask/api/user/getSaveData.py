@@ -349,7 +349,9 @@ def getSummaryDataofPosition(data):
     cursor.close()
     connection.close() 
     # print("second sql time: %s s"%(time.time()-start_time))
-    # print(dbresult)
+    print(dbresult)
+    
+    sample = []
     if not dbresult:
         # print("No data")
         result["ERROR"].append({'DATA': 'No Data!'})
@@ -359,11 +361,12 @@ def getSummaryDataofPosition(data):
         X,Y = row[0].split(",")   
         CNT = int(row[1])
         # print(int(X), int(Y), X_SHIFT+int(X), Y_SHIFT+int(Y), CNT)
+        sample.append([X, Y, int(row[1])])
         try:
             HMAP[X_SHIFT+int(X)][Y_SHIFT+int(Y)] += CNT
         except:
             continue
-
+    result["SAMPLE"].append(sample)
     # print(HMAP)
     # Apply Gaussian blur with a specified sigma value
 

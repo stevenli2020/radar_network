@@ -1,4 +1,4 @@
-rsync -av --delete rsync -av --exclude saverawdata/app/data/* /app/ /home/steven/project/radar_network/source > /dev/null
-git add . > /dev/null
-git commit -m "auto save" > /dev/null
-git push > /dev/null
+rsync -av --delete rsync -av --exclude saverawdata/app/data/* /app/ /home/steven/project/radar_network/source
+git add . 
+git commit -m "auto save"
+git push

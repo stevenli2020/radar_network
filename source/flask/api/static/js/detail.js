@@ -730,6 +730,9 @@ async function getHistOfVital(t) {
           histVitalTime = gen2STime()
         }
 
+        heartAvg = 60
+        breathAvg = 12
+
         vitalChart.setOption({
           xAxis: [
             {
@@ -748,7 +751,21 @@ async function getHistOfVital(t) {
               emphasis: {
                 focus: "series",
               },
-              data: histVitalData,                  
+              data: histVitalData,    
+              markLine: {
+                silent: true,
+                lineStyle: {
+                  color: '#fff'
+                },
+                data: [
+                  {
+                    yAxis: heartAvg
+                  },
+                  {
+                    yAxis: 100
+                  }
+                ]
+              }              
             },
             {
               name: "Breath Waveform",

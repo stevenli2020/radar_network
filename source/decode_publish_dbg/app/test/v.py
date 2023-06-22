@@ -1,5 +1,5 @@
 import json
-import time
+import time,getdata
 import mysql.connector
 from collections import defaultdict
 

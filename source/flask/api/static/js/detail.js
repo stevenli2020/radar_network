@@ -434,37 +434,38 @@ async function getAnalyticData(){
       // console.log(data.DATA[0]['IN_ROOM_PCT'], data.DATA[0]['IN_BED_PCT']);
       multiBarHoriChart.hideLoading();
       if (data.DATA) { 
-          if(data.DATA[0]['IN_BED_SECONDS_HOUR'] > 0)  
+          if(data.DATA[0]['IN_BED_SECONDS_HOUR'] > 0){
             inBedHour.innerHTML = `${data.DATA[0]['IN_BED_SECONDS_HOUR']} S` 
-          else 
+            if(data.DATA[0]['IN_BED_PCT_HOUR'] > 0)
+          } else 
             inBedHour.innerHTML = '0 S'
-          if(data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 0)  
-            inRoomHour.innerHTML = `${data.DATA[0]['IN_ROOM_SECONDS_HOUR']}`  
-          else
+          if(data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 0){
+            inRoomHour.innerHTML = `${data.DATA[0]['IN_ROOM_SECONDS_HOUR']}`
+          } else
             inRoomHour.innerHTML = '0 S'
-          if(data.DATA[0]['IN_BED_SECONDS_DAY'] > 0)  
-            inBedDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY'])} H` 
-          else 
+          if(data.DATA[0]['IN_BED_SECONDS_DAY'] > 0) {
+            inBedDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY'])} H`
+          } else 
             inBedDay.innerHTML = '0 H'
-          if(data.DATA[0]['IN_ROOM_SECONDS_DAY'] > 0)  
-            inRoomDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY'])} H`  
-          else
+          if(data.DATA[0]['IN_ROOM_SECONDS_DAY'] > 0) {
+            inRoomDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY'])} H`
+          } else
             inRoomDay.innerHTML = '0 H'
-          if(data.DATA[0]['IN_BED_SECONDS_WEEK'] > 0)  
-            inBedWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK'])} H` 
-          else 
+          if(data.DATA[0]['IN_BED_SECONDS_WEEK'] > 0) {
+            inBedWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK'])} H`
+          } else 
             inBedWeek.innerHTML = '0 H'
-          if(data.DATA[0]['IN_ROOM_SECONDS_WEEK'] > 0)  
-            inRoomWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK'])} H`  
-          else
+          if(data.DATA[0]['IN_ROOM_SECONDS_WEEK'] > 0) {
+            inRoomWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK'])} H`
+          } else
             inRoomWeek.innerHTML = '0 H'
-          if(data.DATA[0]['IN_BED_SECONDS_MONTH'] > 0)  
+          if(data.DATA[0]['IN_BED_SECONDS_MONTH'] > 0) {
             inBedMonth.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH'])} H` 
-          else 
+          } else 
             inBedMonth.innerHTML = '0 H'
-          if(data.DATA[0]['IN_ROOM_SECONDS_MONTH'] > 0)  
-            inRoomMonth.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH'])} H`  
-          else
+          if(data.DATA[0]['IN_ROOM_SECONDS_MONTH'] > 0) {
+            inRoomMonth.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH'])} H`
+          } else
             inRoomMonth.innerHTML = ''
           multiBarHoriChart.setOption({
             xAxis: {

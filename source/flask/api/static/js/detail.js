@@ -438,56 +438,56 @@ async function getAnalyticData(){
             inBedHour.innerHTML = `${data.DATA[0]['IN_BED_SECONDS_HOUR']} S` 
             console.log(parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) > 85)
             if(parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) > 85){              
-              inBedHour.style.right = "35%"
+              inBedHour.style.right = "45%"
             }
           } else 
             inBedHour.innerHTML = '0 S'
           if(data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 0){
             inRoomHour.innerHTML = `${data.DATA[0]['IN_ROOM_SECONDS_HOUR']} S`
             if(parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR']) > 85){
-              inRoomHour.style.right = "35%"
+              inRoomHour.style.right = "45%"
             }
           } else
             inRoomHour.innerHTML = '0 S'
           if(data.DATA[0]['IN_BED_SECONDS_DAY'] > 0) {
             inBedDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY'])} H`
             if(parseFloat(data.DATA[0]['IN_BED_PCT_DAY']) > 85){
-              inBedDay.style.right = "35%"
+              inBedDay.style.right = "45%"
             }
           } else 
             inBedDay.innerHTML = '0 H'
           if(data.DATA[0]['IN_ROOM_SECONDS_DAY'] > 0) {
             inRoomDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY'])} H`
             if(parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY']) > 85){
-              inRoomDay.style.right = "35%"
+              inRoomDay.style.right = "45%"
             }
           } else
             inRoomDay.innerHTML = '0 H'
           if(data.DATA[0]['IN_BED_SECONDS_WEEK'] > 0) {
             inBedWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK'])} H`
             if(parseFloat(data.DATA[0]['IN_BED_PCT_WEEK']) > 85){
-              inBedWeek.style.right = "35%"
+              inBedWeek.style.right = "45%"
             }
           } else 
             inBedWeek.innerHTML = '0 H'
           if(data.DATA[0]['IN_ROOM_SECONDS_WEEK'] > 0) {
             inRoomWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK'])} H`
             if(parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK']) > 85){
-              inRoomWeek.style.right = "35%"
+              inRoomWeek.style.right = "45%"
             }
           } else
             inRoomWeek.innerHTML = '0 H'
           if(data.DATA[0]['IN_BED_SECONDS_MONTH'] > 0) {
             inBedMonth.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH'])} H` 
             if(parseFloat(data.DATA[0]['IN_BED_PCT_MONTH']) > 85){
-              inBedMonth.style.right = "35%"
+              inBedMonth.style.right = "45%"
             }
           } else 
             inBedMonth.innerHTML = '0 H'
           if(data.DATA[0]['IN_ROOM_SECONDS_MONTH'] > 0) {
             inRoomMonth.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH'])} H`
             if(parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH']) > 85){
-              inRoomMonth.style.right = "35%"
+              inRoomMonth.style.right = "45%"
             }
           } else
             inRoomMonth.innerHTML = ''

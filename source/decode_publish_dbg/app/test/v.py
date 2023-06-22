@@ -1,4 +1,15 @@
+import json
+import time
+import mysql.connector
+from collections import defaultdict
 
+config = {
+    'user': 'flask',
+    'password': 'CrbI1q)KUV1CsOj-',
+    'host': 'db',
+    'port': '3306',
+    'database': 'Gaitmetrics'
+}
 
 def getHistOfVitalData(data):
     connection = mysql.connector.connect(**config)

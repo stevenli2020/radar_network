@@ -142,7 +142,8 @@ async function onMessageArrived(message) {
         if("heartRate" in d)
           if(d.heartRate != "-" && d.heartRate != null){
             addLineChart(d.heartRate, d.breathRate)
-            checkVitalDataEmpty = new Date()            
+            checkVitalDataEmpty = new Date()   
+            checkRoomEmpty = new Date()         
           }
             
       })

@@ -42,6 +42,14 @@ def on_message(client, obj, msg):
         return
     elif TOPIC[-1]=="STATUS":
         MAC = TOPIC[3]
+        PAYLOAD = msg.payload.decode('utf-8')
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor(dictionary=True)      
+        sql="UPDATE `DEVICES` SET `STATUS`='"+PAYLOAD+"' WHERE MAC='"+MAC+"';"
+        cursor.execute(sql)
+        connection.commit()
+        cursor.close()
+        connection.close()         
         return
     PAYLOAD = json.loads(msg.payload.decode('utf-8'))
     MAC = TOPIC[3]
@@ -125,6 +133,8 @@ def on_message(client, obj, msg):
         cursor.execute(sql)  
         sql="UPDATE `ROOMS_DETAILS` SET `STATUS`="+str(ROOM_STATUS)+",`OCCUPANCY`="+str(OBJECT_COUNT)+",`LAST_DATA_TS`=NOW() WHERE ROOM_UUID='"+devicesTbl[MAC]['ROOM_UUID']+"';"
         cursor.execute(sql)
+        sql="UPDATE `DEVICES` SET `LAST_DATA_RECEIVED`=NOW() WHERE MAC='"+MAC+"';"
+        cursor.execute(sql)       
     connection.commit()
     cursor.close()
     connection.close()   

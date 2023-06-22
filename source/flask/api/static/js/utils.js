@@ -551,6 +551,11 @@ const upload_image = (file, Elname, fileError, imgLink) => {
 
 }
 
+function secondsToHours(seconds){
+  var seconds = Number(seconds);
+  var h = Math.round(seconds / (3600)) 
+}
+
 function secondsToDhms(seconds) {
   seconds = Number(seconds);
   var d = Math.floor(seconds / (3600*24));

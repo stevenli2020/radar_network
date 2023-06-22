@@ -19,7 +19,7 @@ def getHistOfVitalData(data):
     # print(sql)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
-    # print(dbresult)
+    # print(dbresult)   
     try:
         db = dbresult[0].split(',')
         List = "IN ('"+db[0]+"','"+db[1]+"')"

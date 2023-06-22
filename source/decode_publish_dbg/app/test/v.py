@@ -1,6 +1,6 @@
 import json  
 import time
-from getdata import getVitalData
+from getdata import * 
 import mysql.connector
 from collections import defaultdict
 
@@ -17,5 +17,13 @@ def getHistOfVitalData(data):
     result = getVitalData(connection, data)
     return result
     
-DATA = {'ROOM_UUID':'d32231684bd3470b9b0a86dc0b9df524','TIME':'1 DAY'}
-print(getHistOfVitalData(DATA))  
+def getSummaryDataofPosition(data):
+    connection = mysql.connector.connect(**config)
+    result = getPositionData(connection, data)
+    return result    
+    
+# DATA = {'ROOM_UUID':'d32231684bd3470b9b0a86dc0b9df524','TIME':'1 DAY'}
+# print(getHistOfVitalData(DATA))  
+
+DATA = {'DEVICEMAC':'F412FAE26208','TIME':'1 DAY'} 
+print(getSummaryDataofPosition(DATA))  

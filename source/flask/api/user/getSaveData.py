@@ -98,7 +98,7 @@ def getHistOfVitalData(data):
     if not dbresult:
         # print("No data")
         result["ERROR"].append({'Message': 'No data!'})
-        return result
+        return result 
     result['DATA'].append(dbresult)
     sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, data['TIME'])
     cursor.execute(sql)

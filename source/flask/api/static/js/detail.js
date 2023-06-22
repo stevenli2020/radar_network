@@ -325,47 +325,13 @@ function getHistorOfPos(t, XD, YD) {
       }
       if("DATA" in data){
         if (data.DATA.length > 0) {
-          data.DATA.forEach((d) => {
-            // formatD = d.split(",");
-            // let j = 0;
-            // farr = [];
-            // sarr = [];
-            // formatD.forEach((d) => {
-            //   // console.log(d)
-            //   let x;
-            //   x = d.replace(/\[\[|\[|\]/g, "");
-            //   // console.log(x);
-            //   if (j < 3) {
-            //     sarr.push(parseFloat(x));
-            //     j++;
-            //   } else {
-            //     // console.log(sarr);
-            //     farr.push(sarr);
-            //     j = 1;
-            //     sarr = [];
-            //     sarr.push(parseFloat(x));
-            //   }
+          data.SAMPLE.forEach(d => {
+            // xyChange = d.map(function (item) {
+            //   // return [item[0] * 100, item[1] * 100, item[2] || "-"];
+            //   return [item[0], item[1], item[2] || "-"];
             // });
-            // console.log(farr)
-            // for(var i=0; i<XD; i+=0.01){
-            //   for(j=0; j<YD; j+=0.01){
-            //     // console.log(i.toFixed(2), j.toFixed(2))
-            //     let tempArr = [i, j]
-            //     farr.forEach(d => {
-            //       if(d[0][1] == tempArr[i, j]){
-            //         console.log(d)
-            //       } else {
-            //         farr.push([i,j,0])
-            //       }
-            //     })
-            //   }
-            // }
-            // console.log(farr)
-            xyChange = d.map(function (item) {
-              // return [item[0] * 100, item[1] * 100, item[2] || "-"];
-              return [item[0], item[1], item[2] || "-"];
-            });
             // console.log(xyChange);
+            console.log(d)
             hisotryLocHeatmapChart.setOption({
               visualMap: {
                 min: minX,
@@ -375,11 +341,66 @@ function getHistorOfPos(t, XD, YD) {
                 {
                   name: "Person most spend time",
                   type: "heatmap",
-                  data: xyChange,
+                  data: d,
                 },
               ],
             });
-          });
+          })
+          // data.DATA.forEach((d) => {
+          //   // formatD = d.split(",");
+          //   // let j = 0;
+          //   // farr = [];
+          //   // sarr = [];
+          //   // formatD.forEach((d) => {
+          //   //   // console.log(d)
+          //   //   let x;
+          //   //   x = d.replace(/\[\[|\[|\]/g, "");
+          //   //   // console.log(x);
+          //   //   if (j < 3) {
+          //   //     sarr.push(parseFloat(x));
+          //   //     j++;
+          //   //   } else {
+          //   //     // console.log(sarr);
+          //   //     farr.push(sarr);
+          //   //     j = 1;
+          //   //     sarr = [];
+          //   //     sarr.push(parseFloat(x));
+          //   //   }
+          //   // });
+          //   // console.log(farr)
+          //   // for(var i=0; i<XD; i+=0.01){
+          //   //   for(j=0; j<YD; j+=0.01){
+          //   //     // console.log(i.toFixed(2), j.toFixed(2))
+          //   //     let tempArr = [i, j]
+          //   //     farr.forEach(d => {
+          //   //       if(d[0][1] == tempArr[i, j]){
+          //   //         console.log(d)
+          //   //       } else {
+          //   //         farr.push([i,j,0])
+          //   //       }
+          //   //     })
+          //   //   }
+          //   // }
+          //   // console.log(farr)
+          //   xyChange = d.map(function (item) {
+          //     // return [item[0] * 100, item[1] * 100, item[2] || "-"];
+          //     return [item[0], item[1], item[2] || "-"];
+          //   });
+          //   // console.log(xyChange);
+          //   hisotryLocHeatmapChart.setOption({
+          //     visualMap: {
+          //       min: minX,
+          //       max: maxX,
+          //     },
+          //     series: [
+          //       {
+          //         name: "Person most spend time",
+          //         type: "heatmap",
+          //         data: xyChange,
+          //       },
+          //     ],
+          //   });
+          // });
         }
       }
       if("ERROR" in data){

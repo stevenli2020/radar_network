@@ -1,3 +1,4 @@
+#!/bin/bash
 rsync -av --delete rsync -av --exclude saverawdata/app/data/* /app/ /home/steven/project/radar_network/source
 git add . 
 git commit -m "auto save"

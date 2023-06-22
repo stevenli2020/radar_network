@@ -1,4 +1,5 @@
 from collections import defaultdict
+import numpy as np 
 
 def getVitalData(CONN, PARAM):
     cursor = CONN.cursor()
@@ -76,7 +77,7 @@ def getPositionData(CONN, PARAM):
     cursor.close()
     CONN.close() 
     # print("second sql time: %s s"%(time.time()-start_time))
-    print(dbresult)
+    # print(dbresult)
     
     sample = []
     if not dbresult:

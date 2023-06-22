@@ -687,7 +687,11 @@ async function getHistOfVital(t) {
       body: JSON.stringify(vData),
     })
       .then((response) => response.json())
-      .then((data) => {        
+      .then((data) => {   
+        heartLowerAvg = 60
+        heartUpperAvg = 100
+        breathLowerAvg = 12     
+        breathUpperAvg = 20     
         // console.log(data.DATA.length)
         console.log(data);
         vitalChart.hideLoading();
@@ -730,8 +734,7 @@ async function getHistOfVital(t) {
           histVitalTime = gen2STime()
         }
 
-        heartAvg = 60
-        breathAvg = 12
+        
 
         vitalChart.setOption({
           xAxis: [
@@ -759,10 +762,10 @@ async function getHistOfVital(t) {
                 },
                 data: [
                   {
-                    yAxis: heartAvg
+                    yAxis: heartLowerAvg
                   },
                   {
-                    yAxis: 100
+                    yAxis: heartUpperAvg
                   }
                 ]
               }              
@@ -776,7 +779,21 @@ async function getHistOfVital(t) {
               },
               data: histVitalData2,
               xAxisIndex: 1,
-              yAxisIndex: 1,                  
+              yAxisIndex: 1,  
+              markLine: {
+                silent: true,
+                lineStyle: {
+                  color: '#fff'
+                },
+                data: [
+                  {
+                    yAxis: breathLowerAvg
+                  },
+                  {
+                    yAxis: breathUpperAvg
+                  }
+                ]
+              }                
             },
           ],
         });

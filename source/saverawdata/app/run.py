@@ -11,7 +11,8 @@ import numpy as np
 #from json import JSONEncoder
 #from threading import Thread
 import atexit
-import os,runlib
+import os
+from runlib import *
 #import gzip,shutil
 
 brokerAddress="vernemq" 
@@ -51,7 +52,7 @@ def on_connect(client, userdata, flags, rc):
 atexit.register(cleanup)
 mqttc = mqtt.Client(clientID)
 mqttc.username_pw_set(userName, password=userPassword)
-mqttc.on_message = runlib.on_message
+mqttc.on_message = on_message
 mqttc.on_connect = on_connect
 mqttc.on_disconnect = on_disconnect
 mqttc.will_set("/GMT/USVC/SAVERAWDATA/STATUS","DISCONNECTED",qos=1, retain=True)

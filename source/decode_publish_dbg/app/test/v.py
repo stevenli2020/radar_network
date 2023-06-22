@@ -36,10 +36,10 @@ def getHistOfVitalData(data):
         result["ERROR"].append({'Message': 'No data!'})
         return result
     result['DATA'].append(dbresult)
-    # sql = "SELECT ROUND(AVG(HEART_RATE), 2) as HEART_RATE, ROUND(AVG(BREATH_RATE), 2) as BREATH_RATE FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND HEART_RATE > 0 AND TIMESTAMP BETWEEN NOW() - INTERVAL %s AND NOW()"%(data['DEVICEMAC'], data['TIME'])
-    # cursor.execute(sql)
-    # dbresult = cursor.fetchone() 
-    # result["AVG"].append(dbresult)
+    sql = "SELECT ROUND(AVG(HEART_RATE), 2) as HEART_RATE, ROUND(AVG(BREATH_RATE), 2) as BREATH_RATE FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND HEART_RATE > 0 AND TIMESTAMP BETWEEN NOW() - INTERVAL %s AND NOW()"%(data['DEVICEMAC'], data['TIME'])
+    cursor.execute(sql)
+    dbresult = cursor.fetchone() 
+    result["AVG"].append(dbresult)
     cursor.close()
     connection.close()
     return result

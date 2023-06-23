@@ -191,9 +191,9 @@ fetch(`${host}/api/getRLMacRoom`, {
                       id: "bg",
                       type: "image",
                       style: {
-                        image: image,
+                        image: heatMapImage,
                         x: rectheatmap.x,
-                        y: rectheatmap.y -10,
+                        y: rectheatmap.y,
                       },
                     },
                   ],

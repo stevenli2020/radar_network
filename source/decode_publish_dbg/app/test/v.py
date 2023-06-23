@@ -27,3 +27,4 @@ def getSummaryDataofPosition(data):
 
 DATA = {'DEVICEMAC':'F412FAE26208','TIME':'1 MONTH'} 
 print(getSummaryDataofPosition(DATA)["DATA"])  
+ 

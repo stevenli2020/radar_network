@@ -390,7 +390,7 @@ def getSummaryDataofPosition(data):
         for Y in range(0, Y_SHIFT-1):
             DATA.append([round(X, 1),round(Y, 1), round(HMAP2[X,Y],2)])
     # print("after loop: %s s"%(time.time()-start_time))
-    # print(DATA)           
+    print("\nfinal output: " +str(DATA)+"\n")           
     result["DATA"].append(DATA)
     return result
 

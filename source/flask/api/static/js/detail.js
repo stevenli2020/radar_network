@@ -697,7 +697,7 @@ async function getHistOfVital(t) {
         vitalChart.hideLoading();
         if ("AVG" in data){
           heartLowerAvg = data.AVG[0][0] - (data.AVG[0][0]*0.1)
-          heartUpperAvg = data.AVG[0][0] + (data.AVG[0][0]*0.1)
+          heartUpperAvg = data.AVG[0][0] + (data.AVG[0][0]*0.3)
           breathLowerAvg = data.AVG[0][1] - (data.AVG[0][0]*0.1)
           breathUpperAvg = data.AVG[0][1] + (data.AVG[0][0]*0.1)
         }
@@ -745,9 +745,11 @@ async function getHistOfVital(t) {
         vitalChart.setOption({
           xAxis: [
             {
+              show: false,
               data: histVitalTime,
             },
             {
+              show: false,
               data: histVitalTime,
               gridIndex: 1,
             },

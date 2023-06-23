@@ -31,9 +31,11 @@ function addLineChart(heartR, breathR){
   vitalChart.setOption({
     xAxis: [
       {
+        show: true,
         data: categories,
       },
       {
+        show: true,
         data: categories,
         gridIndex: 1,
       },

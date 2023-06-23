@@ -193,7 +193,7 @@ fetch(`${host}/api/getRLMacRoom`, {
                       style: {
                         image: image,
                         x: rectheatmap.x,
-                        y: rectheatmap.y,
+                        y: rectheatmap.y -10,
                       },
                     },
                   ],

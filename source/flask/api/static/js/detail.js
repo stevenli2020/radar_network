@@ -814,6 +814,10 @@ async function getHistOfVital(t) {
       });
   } else {
     vitalChart.hideLoading()
+    heartLowerAvg = 60
+    heartUpperAvg = 100
+    breathLowerAvg = 12
+    breathUpperAvg = 20
     // heartRateData.innerText = "-" 
     // breathRateData.innerText = "-" 
     vitalChart.setOption({
@@ -837,6 +841,20 @@ async function getHistOfVital(t) {
             focus: "series",
           },
           data: vitalData,
+          markLine: {
+            silent: true,
+            lineStyle: {
+              color: '#fff'
+            },
+            data: [
+              {
+                yAxis: heartLowerAvg
+              },
+              {
+                yAxis: heartUpperAvg
+              }
+            ]
+          }
         },
         {
           name: "Breathing Rate",

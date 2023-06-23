@@ -59,15 +59,10 @@ option = {
       formatter: "{value} m",
       interval: 9,
     },
-    // splitArea: {
-    //   show: true,
-    // },
-    axisLine: {
-      show: false
+    splitArea: {
+      show: true,
     },
-    axisTick: {
-      show: false,
-    }
+    
   },
   yAxis: {
     type: "category",

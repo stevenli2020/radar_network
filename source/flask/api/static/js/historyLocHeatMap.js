@@ -58,10 +58,10 @@ option = {
     //   show: true,
     // },
     axisLine: {
-        show: false
+      show: false
     },
     axisTick: {
-        show: false
+      show: false,
     }
   },
   yAxis: {

@@ -405,10 +405,10 @@ function getHistorOfPos(t, XD, YD) {
       }
       if("ERROR" in data){
         // console.log(sampleLocData)
-        xyChange = sampleLocData.map(function (item) {
-          // return [item[0] * 100, item[1] * 100, item[2] || "-"];
-          return [item[0], item[1], item[2] || "-"];
-        });
+        // xyChange = sampleLocData.map(function (item) {
+        //   // return [item[0] * 100, item[1] * 100, item[2] || "-"];
+        //   return [item[0], item[1], item[2] || "-"];
+        // });
         // console.log(xyChange);
         hisotryLocHeatmapChart.setOption({
           visualMap: {
@@ -419,7 +419,7 @@ function getHistorOfPos(t, XD, YD) {
             {
               name: "Person most spend time",
               type: "heatmap",
-              data: xyChange,
+              data: sampleLocData,
             },
           ],
         });
@@ -816,9 +816,11 @@ async function getHistOfVital(t) {
     vitalChart.setOption({
       xAxis: [
         {
+          show: true,
           data: categories,
         },
         {
+          show: true,
           data: categories,
           gridIndex: 1,
         },

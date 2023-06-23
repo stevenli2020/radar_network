@@ -56,6 +56,10 @@ var checkVitalDataEmpty = new Date()
 var sampleLocData = []
 var realTimeLocationRadarInRoom = 1
 var realTimeLocationPerson = 1
+heartLowerAvg = 60
+heartUpperAvg = 100
+breathLowerAvg = 12     
+breathUpperAvg = 20
 setInterval(function(){
   // console.log(Math.round((new Date() - checkRoomEmpty)/1000))
   if(Math.round((new Date() - checkRoomEmpty)/1000)>180){
@@ -689,11 +693,8 @@ async function getHistOfVital(t) {
       body: JSON.stringify(vData),
     })
       .then((response) => response.json())
-      .then((data) => {   
-        heartLowerAvg = 60
-        heartUpperAvg = 100
-        breathLowerAvg = 12     
-        breathUpperAvg = 20     
+      .then((data) => {  
+             
         // console.log(data.DATA.length)
         console.log(data);
         vitalChart.hideLoading();
@@ -847,6 +848,20 @@ async function getHistOfVital(t) {
           data: vitalData2,
           xAxisIndex: 1,
           yAxisIndex: 1,
+          markLine: {
+            silent: true,
+            lineStyle: {
+              color: '#fff'
+            },
+            data: [
+              {
+                yAxis: breathLowerAvg
+              },
+              {
+                yAxis: breathUpperAvg
+              }
+            ]
+          }
         },
       ],
     });

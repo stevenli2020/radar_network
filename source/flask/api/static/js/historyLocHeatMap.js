@@ -55,6 +55,9 @@ option = {
     type: "category",
     data: hours,
     scale: true,
+    axisLabel: {
+      formatter: "{value} m",
+    },
     // splitArea: {
     //   show: true,
     // },
@@ -71,7 +74,10 @@ option = {
     splitArea: {
       show: true,
     },
-    scale: true
+    scale: true,
+    axisLabel: {
+      formatter: "{value} m",
+    },
   },
   visualMap: {
     right: 0,

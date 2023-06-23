@@ -161,14 +161,14 @@ fetch(`${host}/api/getRLMacRoom`, {
                 let i = 0;
                 while (i < roomX) {
                   // X.push(i.toFixed(1));
-                  X.push(i.toFixed(2));
+                  X.push(i.toFixed(1));
                   // i += 0.01;
                   i += 0.1;
                 }
                 let j = 0;
                 while (j < roomY) {
                   // Y.push(j.toFixed(1));
-                  Y.push(j.toFixed(2));
+                  Y.push(j.toFixed(1));
                   // j += 0.01;
                   j += 0.1;
                 }
@@ -295,7 +295,7 @@ homeMacVal = mac;
 function getHistorOfPos(t, XD, YD) {
   console.time()
   lData = {
-    DEVICEMAC: macPos?macPos:macVital,
+    DEVICEMAC: macPos,
     TIME: t,
   };
   Object.assign(lData, RequestData());

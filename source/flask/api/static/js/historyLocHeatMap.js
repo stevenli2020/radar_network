@@ -57,6 +57,7 @@ option = {
     scale: true,
     axisLabel: {
       formatter: "{value} m",
+      interval: 9,
     },
     // splitArea: {
     //   show: true,
@@ -77,6 +78,7 @@ option = {
     scale: true,
     axisLabel: {
       formatter: "{value} m",
+      interval: 9,
     },
   },
   visualMap: {

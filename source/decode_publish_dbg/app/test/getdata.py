@@ -35,7 +35,7 @@ def getVitalData(CONN, PARAM):
     
 def getPositionData(CONN, PARAM):
     N = 10 # N is the dividing factor, e.g. 10 means every meter will be divided to 10 data points
-    sigma = 2
+    sigma = 3
     cursor = CONN.cursor()
     result = defaultdict(list)
     if not 'DEVICEMAC' in PARAM:

@@ -25,5 +25,5 @@ def getSummaryDataofPosition(data):
 # DATA = {'ROOM_UUID':'d32231684bd3470b9b0a86dc0b9df524','TIME':'1 DAY'}
 # print(getHistOfVitalData(DATA))  
 
-DATA = {'DEVICEMAC':'F412FAE26208','TIME':'1 WEEK'} 
+DATA = {'DEVICEMAC':'F412FAE26208','TIME':'1 HOUR'} 
 print(getSummaryDataofPosition(DATA)["DATA"])  

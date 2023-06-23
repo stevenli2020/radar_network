@@ -54,6 +54,7 @@ option = {
   xAxis: {
     type: "category",
     data: hours,
+    scale: true,
     // splitArea: {
     //   show: true,
     // },
@@ -70,6 +71,7 @@ option = {
     splitArea: {
       show: true,
     },
+    scale: true
   },
   visualMap: {
     right: 0,

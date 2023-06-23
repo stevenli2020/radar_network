@@ -307,7 +307,7 @@ def _getAnalyticDataofPosture(data):
 def getSummaryDataofPosition(data):
     # start_time = time.time()
     N = 10 # N is the dividing factor, e.g. 10 means every meter will be divided to 10 data points
-    sigma = 2
+    sigma = 3
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = defaultdict(list)

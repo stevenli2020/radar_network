@@ -695,6 +695,12 @@ async function getHistOfVital(t) {
         // console.log(data.DATA.length)
         console.log(data);
         vitalChart.hideLoading();
+        if ("AVG" in data){
+          heartLowerAvg = data.AVG[0][0] - (data.AVG[0][0]*0.1)
+          heartUpperAvg = data.AVG[0][0] + (data.AVG[0][0]*0.1)
+          breathLowerAvg = data.AVG[0][1] - (data.AVG[0][0]*0.1)
+          breathUpperAvg = data.AVG[0][1] + (data.AVG[0][0]*0.1)
+        }
         histVitalData = []
         histVitalData2 = []
         histVitalTime = []
@@ -711,12 +717,12 @@ async function getHistOfVital(t) {
               // vitalData.shift();
               // vitalData.push(d.HEART_RATE);
               // vitalData2.push(d.BREATH_RATE);
-              if(d[1]<100 && d[1]>60){
+              if(d[1]<heartUpperAvg && d[1]>heartLowerAvg){
                 histVitalData.push({value: d[1], itemStyle: { color: brightGreen}});
               } else {
                 histVitalData.push({value: d[1], itemStyle: { color: brightRed}});
               }
-              if(d[2]<20 && d[2]>12){
+              if(d[2]<breathUpperAvg && d[2]>breathLowerAvg){
                 // vitalData2.shift();
                 histVitalData2.push({value: d[2], itemStyle: { color: brightGreen}});
               } else {

@@ -291,6 +291,7 @@ fetch(`${host}/api/getRLMacRoom`, {
 
 mac = window.location.href.split("=")[1];
 homeMacVal = mac;
+var hourlyPos;
 
 function getHistorOfPos(t, XD, YD) {
   console.time()
@@ -347,6 +348,7 @@ function getHistorOfPos(t, XD, YD) {
           //   });
           // })
           data.DATA.forEach((d) => {
+            hourlyPos = d
             // formatD = d.split(",");
             // let j = 0;
             // farr = [];

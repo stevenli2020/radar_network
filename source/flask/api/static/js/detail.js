@@ -382,10 +382,10 @@ function getHistorOfPos(t, XD, YD) {
             //   }
             // }
             // console.log(farr)
-            xyChange = d.map(function (item) {
-              // return [item[0] * 100, item[1] * 100, item[2] || "-"];
-              return [item[0], item[1], item[2] || "-"];
-            });
+            // xyChange = d.map(function (item) {
+            //   // return [item[0] * 100, item[1] * 100, item[2] || "-"];
+            //   return [item[0], item[1], item[2] || "-"];
+            // });
             // console.log(xyChange);
             hisotryLocHeatmapChart.setOption({
               visualMap: {
@@ -396,7 +396,7 @@ function getHistorOfPos(t, XD, YD) {
                 {
                   name: "Person most spend time",
                   type: "heatmap",
-                  data: xyChange,
+                  data: d,
                 },
               ],
             });

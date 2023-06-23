@@ -34,7 +34,7 @@ def getVitalData(CONN, PARAM):
     return result    
     
 def getPositionData(CONN, PARAM):
-    N = 1 # N is the dividing factor, e.g. 10 means every meter will be divided to 10 data points
+    N = 10 # N is the dividing factor, e.g. 10 means every meter will be divided to 10 data points
     sigma = 2
     cursor = CONN.cursor()
     result = defaultdict(list)

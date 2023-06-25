@@ -324,14 +324,6 @@ def getSummaryDataofPosition(data):
         timeRange = "1 WEEK"
     else:
         timeRange = "1 MONTH"
-
-    sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE FROM ROOMS_DETAILS RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N, N, data['DEVICEMAC'])
-    cursor.execute(sql)
-    dbresult = cursor.fetchone()    
-    X_RANGE = int(dbresult[0])
-    Y_RANGE = int(dbresult[1]) 
-
-       
     sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
@@ -400,7 +392,6 @@ def getSummaryDataofPosition(data):
     # print("after loop: %s s"%(time.time()-start_time))
     print("\nfinal output: " +str(DATA)+"\n")           
     result["DATA"].append(DATA)
-    result["DEBUG"].append([X_SHIFT-1, Y_SHIFT-1])
     return result
 
 

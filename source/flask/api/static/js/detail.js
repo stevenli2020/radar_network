@@ -351,9 +351,11 @@ function getHistorOfPos(t, XD, YD) {
           //     ],
           //   });
           // })
+		  KKK = 0;
           data.DATA.forEach((d) => {
             hourlyPos = d;
-			console.log(d);
+			KKK += 1;
+			console.log(KKK);
             // formatD = d.split(",");
             // let j = 0;
             // farr = [];

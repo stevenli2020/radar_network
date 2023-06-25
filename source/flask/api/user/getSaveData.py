@@ -392,6 +392,7 @@ def getSummaryDataofPosition(data):
     # print("after loop: %s s"%(time.time()-start_time))
     print("\nfinal output: " +str(DATA)+"\n")           
     result["DATA"].append(DATA)
+    result["DEBUG"].append([X_SHIFT-1, Y_SHIFT-1])
     return result
 
 

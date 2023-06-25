@@ -51,6 +51,7 @@ def getPositionData(CONN, PARAM):
         timeRange = "1 WEEK"
     else:
         timeRange = "1 MONTH"
+    sql = "SELECT * FROM `ROOMS_DETAILS` WHERE MAC='%s'"
     sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(PARAM['DEVICEMAC'], timeRange)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
@@ -119,7 +120,7 @@ def getPositionData(CONN, PARAM):
     # print("after loop: %s s"%(time.time()-start_time))
     # print(DATA)           
     result["DATA"].append(DATA)
-    print(X_SHIFT, Y_SHIFT)
+    result["DBG"].append([X_SHIFT, Y_SHIFT])
     return result
 
 def gaussian_blur(array, sigma):

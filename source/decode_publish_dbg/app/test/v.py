@@ -26,5 +26,5 @@ def getSummaryDataofPosition(data):
 # print(getHistOfVitalData(DATA))  
 
 DATA = {'DEVICEMAC':'F412FAE26208','TIME':'1 HOUR'} 
-print(getSummaryDataofPosition(DATA)["DATA"])  
+print(getSummaryDataofPosition(DATA)["DBG"])  
  

@@ -351,12 +351,8 @@ function getHistorOfPos(t, XD, YD) {
           //     ],
           //   });
           // })
-		  _DATA = [];
-		  for (const element of data.DATA) { // You can use `let` instead of `const` if you like
-			console.log(element);
-		  }
           data.DATA.forEach((d) => {
-            hourlyPos = d;
+            hourlyPos = d
             // formatD = d.split(",");
             // let j = 0;
             // farr = [];

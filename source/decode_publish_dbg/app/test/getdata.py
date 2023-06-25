@@ -119,6 +119,7 @@ def getPositionData(CONN, PARAM):
     # print("after loop: %s s"%(time.time()-start_time))
     # print(DATA)           
     result["DATA"].append(DATA)
+    print(X_SHIFT, Y_SHIFT)
     return result
 
 def gaussian_blur(array, sigma):

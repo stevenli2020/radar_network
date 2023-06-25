@@ -122,12 +122,11 @@ def getPositionData(CONN, PARAM):
         for Y in range(0, Y_RANGE):
             if X == X_RANGE-1 and Y == Y_RANGE-1:
                 DATA.append([round(X),round(Y), round(HMAP2[X,Y],2)])
-            elif HMAP2[X,Y]!=0.0:
+            elif round(HMAP2[X,Y],2)!=0.00:
                 DATA.append([round(X),round(Y), round(HMAP2[X,Y],2)])
     # print("after loop: %s s"%(time.time()-start_time))
     # print(DATA)           
     result["DATA"].append(DATA)
-    result["DBG"].append([X_RANGE, Y_RANGE])
     return result
 
 def gaussian_blur(array, sigma):

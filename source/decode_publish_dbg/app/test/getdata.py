@@ -51,7 +51,11 @@ def getPositionData(CONN, PARAM):
         timeRange = "1 WEEK"
     else:
         timeRange = "1 MONTH"
-    sql = "SELECT * FROM `ROOMS_DETAILS` WHERE MAC='%s'"
+    sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE FROM `ROOMS_DETAILS` RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N,N,PARAM['DEVICEMAC'])
+    cursor.execute(sql)
+    dbresult = cursor.fetchone()    
+    X_RANGE = dbresult[0]
+    Y_RANGE = dbresult[1]
     sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(PARAM['DEVICEMAC'], timeRange)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 

@@ -351,11 +351,12 @@ function getHistorOfPos(t, XD, YD) {
           //     ],
           //   });
           // })
-		  KKK = 0;
+		  _DATA = [];
+		  for (const element of data.DATA) { // You can use `let` instead of `const` if you like
+			console.log(element);
+		  }
           data.DATA.forEach((d) => {
             hourlyPos = d;
-			KKK += 1;
-			console.log(KKK);
             // formatD = d.split(",");
             // let j = 0;
             // farr = [];

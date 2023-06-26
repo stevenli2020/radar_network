@@ -116,7 +116,10 @@ def getPositionData(CONN, PARAM):
     
     for X in range(0, X_RANGE):
         for Y in range(0, Y_RANGE):
-            VALUE = round(HMAP2[X,Y],2)
+            try:
+                VALUE = round(HMAP2[X,Y],2)
+            except:
+                VALUE = 0
             if VALUE > 0.2:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     # print("after loop: %s s"%(time.time()-start_time))

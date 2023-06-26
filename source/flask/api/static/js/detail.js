@@ -318,7 +318,7 @@ function getHistorOfPos(t, XD, YD) {
       console.timeEnd()
       hisotryLocHeatmapChart.hideLoading();
       minX = 0;
-      maxX = 2;
+      maxX = 50;
       if (t == "HOUR") {
         maxX = 2;
       } else if (t == "DAY") {
@@ -396,7 +396,7 @@ function getHistorOfPos(t, XD, YD) {
             hisotryLocHeatmapChart.setOption({
               visualMap: {
                 min: minX,
-                max: 30,
+                max: maxX,
               },
               series: [
                 {

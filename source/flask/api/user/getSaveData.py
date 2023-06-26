@@ -406,6 +406,7 @@ def getSummaryDataofPosition(data):
     DATA.append([X_RANGE, Y_RANGE, 0]) 
     DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
+    result["MAX"].append(np.amax(HMAP2))
     # result["_DBG"].append([_X_RANGE,_Y_RANGE])
     return result
 

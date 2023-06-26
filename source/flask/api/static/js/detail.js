@@ -319,15 +319,15 @@ function getHistorOfPos(t, XD, YD) {
       hisotryLocHeatmapChart.hideLoading();
       minX = 0;
       maxX = 50;
-      if (t == "HOUR") {
-        maxX = 2;
-      } else if (t == "DAY") {
-        maxX = 10;
-      } else if (t == "WEEK") {
-        maxX = 20;
-      } else if (t == "MONTH") {
-        maxX = 30;
-      }
+      // if (t == "HOUR") {
+        // maxX = 2;
+      // } else if (t == "DAY") {
+        // maxX = 10;
+      // } else if (t == "WEEK") {
+        // maxX = 20;
+      // } else if (t == "MONTH") {
+        // maxX = 30;
+      // }
       if("DATA" in data){
         if (data.DATA.length > 0) {
           // data.SAMPLE.forEach(d => {
@@ -351,6 +351,7 @@ function getHistorOfPos(t, XD, YD) {
           //     ],
           //   });
           // })
+		  maxX
           data.DATA.forEach((d) => {
             hourlyPos = d
             // formatD = d.split(",");

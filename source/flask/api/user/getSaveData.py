@@ -393,20 +393,20 @@ def getSummaryDataofPosition(data):
     DATA = []
     # print("\nUnpack data:")
     # print("before loop: %s s"%(time.time()-start_time))
-
+    MAX = np.amax(HMAP2)
     for X in range(0, X_RANGE):
         for Y in range(0, Y_RANGE):
             try:
                 VALUE = round(HMAP2[X,Y],2)
             except:
                 VALUE = 0
-            if VALUE > 0.2:
+            if VALUE > 0.03 * MAX:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     # print("after loop: %s s"%(time.time()-start_time))
     DATA.append([X_RANGE, Y_RANGE, 0]) 
     DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
-    result["MAX"].append(np.amax(HMAP2))
+    result["MAX"].append(MAX)
     # result["_DBG"].append([_X_RANGE,_Y_RANGE])
     return result
 

@@ -403,8 +403,9 @@ def getSummaryDataofPosition(data):
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     # print("after loop: %s s"%(time.time()-start_time))
     DATA.append([X_RANGE, Y_RANGE, 0]) 
+    DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
-    result["_DBG"].append([_X_RANGE,_Y_RANGE])
+    # result["_DBG"].append([_X_RANGE,_Y_RANGE])
     return result
 
 

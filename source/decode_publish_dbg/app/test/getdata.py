@@ -109,20 +109,20 @@ def getPositionData(CONN, PARAM):
     # print("MAX VALUE: %f" %(np.max(NEW_HMAP)))
 
     # print("\nShifted HMAP:")
-    HMAP2 = NEW_HMAP[X_SHIFT:X_SHIFT*2,Y_SHIFT:Y_SHIFT*2]
+    HMAP2 = NEW_HMAP[X_SHIFT:,Y_SHIFT:]
     # print(HMAP2)
 
     DATA = []
-    _X_RANGE = X_RANGE if X_RANGE >= X_SHIFT else X_SHIFT
-    _Y_RANGE = Y_RANGE if Y_RANGE >= Y_SHIFT else Y_SHIFT
+    _X_RANGE = X_RANGE if X_RANGE <= X_SHIFT else X_SHIFT
+    _Y_RANGE = Y_RANGE if Y_RANGE <= Y_SHIFT else Y_SHIFT
     
-    for X in range(0, _X_RANGE):
-        for Y in range(0, _Y_RANGE):
+    for X in range(0, X_RANGE):
+        for Y in range(0, Y_RANGE):
             VALUE = round(HMAP2[X,Y],2)
             if VALUE > 0.2:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     # print("after loop: %s s"%(time.time()-start_time))
-    DATA.append([X_RANGE, Y_RANGE, 0]) 
+    DATA.append([[X_RANGE, Y_RANGE, 0]) 
     DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
     # result["_DBG"].append([_X_RANGE,_Y_RANGE])

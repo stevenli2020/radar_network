@@ -53,7 +53,7 @@ var xAxisReal = []
 // check room empty
 var checkRoomEmpty = new Date()
 var checkVitalDataEmpty = new Date() 
-var sampleLocData = []
+var sampleLocData = [[0,0,0]]
 var realTimeLocationRadarInRoom = 1
 var realTimeLocationPerson = 1
 heartLowerAvg = 60
@@ -180,7 +180,7 @@ fetch(`${host}/api/getRLMacRoom`, {
                 
                 for(i=0; i<(element.ROOM_X*10); i++){
                   for(j=0; j<(element.ROOM_Y*10); j++){
-                    sampleLocData.push([parseFloat(i.toFixed(1)), parseFloat(j.toFixed(1)), 0])
+                    // sampleLocData.push([parseFloat(i.toFixed(1)), parseFloat(j.toFixed(1)), 0])
                   }
                 }
                 // console.log(sampleLocData);
@@ -415,7 +415,7 @@ function getHistorOfPos(t, XD, YD) {
         }
       }
       if("ERROR" in data){
-        // console.log(sampleLocData)
+        console.log(sampleLocData)
         // xyChange = sampleLocData.map(function (item) {
         //   // return [item[0] * 100, item[1] * 100, item[2] || "-"];
         //   return [item[0], item[1], item[2] || "-"];

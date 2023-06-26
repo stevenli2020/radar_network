@@ -307,7 +307,7 @@ def _getAnalyticDataofPosture(data):
 def getSummaryDataofPosition(data):
     # start_time = time.time()
     N = 10 # N is the dividing factor, e.g. 10 means every meter will be divided to 10 data points
-    sigma = 3
+    sigma = 2
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = defaultdict(list)
@@ -393,11 +393,9 @@ def getSummaryDataofPosition(data):
     DATA = []
     # print("\nUnpack data:")
     # print("before loop: %s s"%(time.time()-start_time))
-    _X_RANGE = X_RANGE if X_RANGE <= X_SHIFT else X_SHIFT
-    _Y_RANGE = Y_RANGE if Y_RANGE <= Y_SHIFT else Y_SHIFT
     
-    for X in range(0, _X_RANGE):
-        for Y in range(0, _Y_RANGE):
+    for X in range(0, X_RANGE):
+        for Y in range(0, Y_RANGE):
             VALUE = round(HMAP2[X,Y],2)
             if VALUE > 0.2:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])

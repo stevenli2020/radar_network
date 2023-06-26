@@ -396,7 +396,7 @@ function getHistorOfPos(t, XD, YD) {
             hisotryLocHeatmapChart.setOption({
               visualMap: {
                 min: minX,
-                max: maxX,
+                max: 30,
               },
               series: [
                 {

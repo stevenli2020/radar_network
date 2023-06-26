@@ -35,7 +35,7 @@ def getVitalData(CONN, PARAM):
     
 def getPositionData(CONN, PARAM):
     N = 10 # N is the dividing factor, e.g. 10 means every meter will be divided to 10 data points
-    sigma = 3
+    sigma = 2
     cursor = CONN.cursor()
     result = defaultdict(list)
     if not 'DEVICEMAC' in PARAM:
@@ -113,8 +113,6 @@ def getPositionData(CONN, PARAM):
     # print(HMAP2)
 
     DATA = []
-    _X_RANGE = X_RANGE if X_RANGE <= X_SHIFT else X_SHIFT
-    _Y_RANGE = Y_RANGE if Y_RANGE <= Y_SHIFT else Y_SHIFT
     
     for X in range(0, X_RANGE):
         for Y in range(0, Y_RANGE):
@@ -122,7 +120,7 @@ def getPositionData(CONN, PARAM):
             if VALUE > 0.2:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     # print("after loop: %s s"%(time.time()-start_time))
-    DATA.append([[X_RANGE, Y_RANGE, 0]) 
+    DATA.append([X_RANGE, Y_RANGE, 0]) 
     DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
     # result["_DBG"].append([_X_RANGE,_Y_RANGE])

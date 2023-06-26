@@ -83,8 +83,7 @@ def getPositionData(CONN, PARAM):
     CONN.close() 
     # print("second sql time: %s s"%(time.time()-start_time))
     # print(dbresult)
-    
-    sample = []
+
     if not dbresult:
         # print("No data")
         result["ERROR"].append({'DATA': 'No Data!'})
@@ -94,12 +93,10 @@ def getPositionData(CONN, PARAM):
         X,Y = row[0].split(",")   
         CNT = int(row[1])
         # print(int(X), int(Y), X_SHIFT+int(X), Y_SHIFT+int(Y), CNT)
-        # sample.append([int(X), int(Y), int(row[1])])
         try:
             HMAP[X_SHIFT+int(X)][Y_SHIFT+int(Y)] += CNT
         except:
             continue
-    # result["SAMPLE"].append(sample)
     # print(HMAP)
     # Apply Gaussian blur with a specified sigma value
 
@@ -116,16 +113,17 @@ def getPositionData(CONN, PARAM):
     # print(HMAP2)
 
     DATA = []
-    _X_RANGE = X_RANGE if X_RANGE <= X_SHIFT else X_SHIFT
-    _Y_RANGE = Y_RANGE if Y_RANGE <= Y_SHIFT else Y_SHIFT
+    _X_RANGE = X_RANGE if X_RANGE >= X_SHIFT else X_SHIFT
+    _Y_RANGE = Y_RANGE if Y_RANGE >= Y_SHIFT else Y_SHIFT
     
     for X in range(0, _X_RANGE):
         for Y in range(0, _Y_RANGE):
             VALUE = round(HMAP2[X,Y],2)
-            if VALUE >= 0.2:
+            if VALUE > 0.2:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     # print("after loop: %s s"%(time.time()-start_time))
     DATA.append([X_RANGE, Y_RANGE, 0]) 
+    DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
     # result["_DBG"].append([_X_RANGE,_Y_RANGE])
     return result

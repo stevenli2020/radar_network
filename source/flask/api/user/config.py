@@ -4,7 +4,7 @@ def config():
     'password': 'CrbI1q)KUV1CsOj-',
     'host': 'db',
     'port': '3306',
-    'database': 'Gaitmetric'
+    'database': 'Gaitmetrics'
 }
 
 def vernemq():

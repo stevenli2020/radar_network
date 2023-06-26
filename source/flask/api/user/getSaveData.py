@@ -393,11 +393,11 @@ def getSummaryDataofPosition(data):
     DATA = []
     # print("\nUnpack data:")
     # print("before loop: %s s"%(time.time()-start_time))
-    for X in range(0, X_SHIFT-1):
-        for Y in range(0, Y_SHIFT-1):
+    for X in range(0, X_RANGE-1):
+        for Y in range(0, X_RANGE-1):
             DATA.append([round(X, 1),round(Y, 1), round(HMAP2[X,Y],2)])
     # print("after loop: %s s"%(time.time()-start_time))
-         
+        
     result["DATA"].append(DATA)
     return result
 

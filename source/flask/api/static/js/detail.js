@@ -318,7 +318,7 @@ function getHistorOfPos(t, XD, YD) {
       console.timeEnd()
       hisotryLocHeatmapChart.hideLoading();
       minX = 0;
-      maxX = 50;
+      maxX = 30;
       // if (t == "HOUR") {
         // maxX = 2;
       // } else if (t == "DAY") {
@@ -351,7 +351,11 @@ function getHistorOfPos(t, XD, YD) {
           //     ],
           //   });
           // })
-		  maxX
+		  if("MAX" in data){
+			  maxX = Math.round(data.MAX * 0.3)
+			  if (maxX>=30) {maxX = 30;}
+			  
+		  }
           data.DATA.forEach((d) => {
             hourlyPos = d
             // formatD = d.split(",");

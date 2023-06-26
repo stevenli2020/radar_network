@@ -349,7 +349,6 @@ def getSummaryDataofPosition(data):
 
     HMAP = np.zeros((X_SIZE, Y_SIZE))
     HMAP2 = np.zeros((X_SHIFT, X_SHIFT))
-        
 
     sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
     # print(sql)
@@ -375,7 +374,7 @@ def getSummaryDataofPosition(data):
             HMAP[X_SHIFT+int(X)][Y_SHIFT+int(Y)] += CNT
         except:
             continue
-    result["SAMPLE"].append(sample)
+    # result["SAMPLE"].append(sample)
     # print(HMAP)
     # Apply Gaussian blur with a specified sigma value
 
@@ -403,7 +402,7 @@ def getSummaryDataofPosition(data):
     # print("after loop: %s s"%(time.time()-start_time))
     DATA.append([X_RANGE, Y_RANGE, 0]) 
     result["DATA"].append(DATA)
-    # result["_DBG"].append([_X_RANGE,_Y_RANGE])
+    result["_DBG"].append([_X_RANGE,_Y_RANGE])
     return result
 
 

@@ -311,7 +311,7 @@ def getSummaryDataofPosition(data):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = defaultdict(list)
-    result["DBG"] = []
+    result["_DBG"] = []
     if not 'DEVICEMAC' in data:
         result["ERROR"].append({'Message': 'MAC is empty!'})
         return result
@@ -394,13 +394,13 @@ def getSummaryDataofPosition(data):
     DATA = []
     # print("\nUnpack data:")
     # print("before loop: %s s"%(time.time()-start_time))
-    for X in range(0, X_SHIFT-1):
-        for Y in range(0, Y_SHIFT-1):
+    for X in range(0, X_RANGE-1):
+        for Y in range(0, Y_RANGE-1):
             DATA.append([round(X, 1),round(Y, 1), round(HMAP2[X,Y],2)])
     # print("after loop: %s s"%(time.time()-start_time))
         
     result["DATA"].append(DATA)
-    result["DBG"].append([X_RANGE,Y_RANGE])
+    result["_DBG"].append([X_RANGE,Y_RANGE])
     return result
 
 

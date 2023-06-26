@@ -399,7 +399,7 @@ def getSummaryDataofPosition(data):
     for X in range(0, _X_RANGE):
         for Y in range(0, _Y_RANGE):
             VALUE = round(HMAP2[X,Y],2)
-            if VALUE != 0.00:
+            if VALUE > 0.2:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     # print("after loop: %s s"%(time.time()-start_time))
     DATA.append([X_RANGE, Y_RANGE, 0]) 

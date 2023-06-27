@@ -332,23 +332,21 @@ def getSummaryDataofPosition(data):
     X_RANGE = int(dbresult[0])
     Y_RANGE = int(dbresult[1])  
         
-    sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
+    sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
     # print(dbresult)
-    # print("first sql time: %s s"%(time.time()-start_time))
     if dbresult[0] == None and dbresult[1] == None:
         # print("No data")
         result["ERROR"].append({'Message': 'No data!'})
         # print(result)
         return result
-    X_SHIFT = int(dbresult[0]*N)
-    X_SIZE = int(dbresult[0]*N)*4
-    Y_SHIFT = int(dbresult[1]*N)
-    Y_SIZE = int(dbresult[1]*N)*4
+    X_SIZE = int(dbresult[0]*N)
+    Y_SIZE = int(dbresult[1]*N)
+    X_MIN =  int(dbresult[2]*N)
+    Y_MIN =  int(dbresult[3]*N)
 
-    HMAP = np.zeros((X_SIZE, Y_SIZE))
-    HMAP2 = np.zeros((X_SHIFT, X_SHIFT))
+    HMAP = np.zeros((X_RANGE*2, Y_RANGE*2))
 
     sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
     # print(sql)
@@ -359,7 +357,6 @@ def getSummaryDataofPosition(data):
     # print("second sql time: %s s"%(time.time()-start_time))
     print(dbresult)
     
-    # sample = []
     if not dbresult:
         # print("No data")
         result["ERROR"].append({'DATA': 'No Data!'})
@@ -369,46 +366,29 @@ def getSummaryDataofPosition(data):
         X,Y = row[0].split(",")   
         CNT = int(row[1])
         # print(int(X), int(Y), X_SHIFT+int(X), Y_SHIFT+int(Y), CNT)
-        # sample.append([int(X), int(Y), int(row[1])])
         try:
-            HMAP[X_SHIFT+int(X)][Y_SHIFT+int(Y)] += CNT
+            HMAP[X_RANGE+int(X)][Y_RANGE+int(Y)] += CNT
         except:
             continue
-    # result["SAMPLE"].append(sample)
     # print(HMAP)
     # Apply Gaussian blur with a specified sigma value
-
     NEW_HMAP = gaussian_blur(HMAP, sigma)
-    # print("after gaussian time: %s s"%(time.time()-start_time))
-    # print("\nOriginal HMAP:")
-    # print(HMAP)
-    # print("\nBlurred HMAP:")
-    # print(NEW_HMAP)
-    # print("MAX VALUE: %f" %(np.max(NEW_HMAP)))
-
-    # print("\nShifted HMAP:")
-    HMAP2 = NEW_HMAP[X_SHIFT:,Y_SHIFT:]
-    # print(HMAP2)
-
     DATA = []
-    # print("\nUnpack data:")
-    # print("before loop: %s s"%(time.time()-start_time))
-    MAX = np.amax(HMAP2)
+    MAX = np.amax(NEW_HMAP)
     for X in range(0, X_RANGE):
         for Y in range(0, Y_RANGE):
             try:
-                VALUE = round(HMAP2[X,Y],2)
+                VALUE = round(NEW_HMAP[X+X_RANGE,Y+Y_RANGE],2)
             except:
                 VALUE = 0
             if VALUE > 0.03 * MAX:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
-    # print("after loop: %s s"%(time.time()-start_time))
     DATA.append([X_RANGE, Y_RANGE, 0]) 
     DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
     result["MAX"].append(MAX)
-    # result["_DBG"].append([_X_RANGE,_Y_RANGE])
     return result
+
 
 
 

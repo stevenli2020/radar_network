@@ -29,9 +29,9 @@ option = {
   textStyle: {
     color: "#fff",
   },
-  title: {
-    text: "History of Person's Location",
-  },
+  // title: {
+  //   text: "History of Person's Location",
+  // },
   tooltip: {
     position: "top",
     formatter: function (params) {

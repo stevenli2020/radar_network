@@ -57,44 +57,6 @@ async function getRoomData(t = 1) {
         data.DATA.forEach((d) => {
           if (t == 1) addCard(d);
           else updateCard(d);
-          // let posMac = []
-          // let vitalMac = []
-          // let roomName = d.ROOM_NAME
-          // let uuid = d.ROOM_UUID
-          // if(d.POS_MAC != null || d.VITAL_MAC != null){
-          //   if(d.POS_MAC){
-          //     getSpecificDevice(d.POS_MAC)
-          //       .then(data => {
-          //         posMac = data
-          //         getSpecificDevice(d.VITAL_MAC)
-          //           .then(data => {
-          //             vitalMac = data
-          //             // console.log(posMac, vitalMac)
-          //             if(t==1){
-          //               addCard(roomName, posMac, vitalMac, uuid)
-          //             } else{
-          //               // console.log(vitalMac.length)
-          //               if(vitalMac.length > 0){
-          //                 updateCard(vitalMac)
-          //                 updateCard(posMac)
-          //               }
-          //               else
-          //                 updateCard(posMac)
-          //             }
-          //           })
-          //       })
-          //   } else {
-          //     getSpecificDevice(d.VITAL_MAC).then(data => {
-          //       vitalMac = data
-          //       // console.log(posMac, vitalMac)
-          //       if(t==1){
-          //         addCard(roomName, posMac, vitalMac, uuid)
-          //       } else{
-          //         updateCard(vitalMac)
-          //       }
-          //     })
-          //   }
-          // }
         });
       }
     })
@@ -164,13 +126,6 @@ function updateCard(posMac) {
     posMac.LAST_DATA_TS.length - 3
   )}</span>`;
   posOccuTime.innerHTML = `<span class='ag-courses-item_date'>${posMac.OCCUPANCY} people in room</span>`;
-  // vitalUpdateStatus.innerHTML = `Status: <span class='ag-courses-item_date'>${vitalMac[0].STATUS}</span>`;
-  // vitalUpdateTime.innerHTML = `Time: <span class='ag-courses-item_date'>${vitalMac[0].TIMESTAMP.substring(
-  //   0,
-  //   vitalMac[0].TIMESTAMP.length - 3
-  // )}</span>`;
-  // highlightFor(d.Id+"-status", 'yellow', 1);
-  // highlightFor(d.Id+"-timestamp", 'yellow', 1);
 }
 
 function addCard(d) {
@@ -178,9 +133,6 @@ function addCard(d) {
   let aTag = document.createElement("div");
   let secDiv = document.createElement("div");
   let thirdDiv = document.createElement("div");
-  // let fourthDiv = document.createElement("div");
-  // let fifthDiv = document.createElement("div");
-  // let sixthDiv = document.createElement("div");
   let rowS = document.createElement("div");
   firDiv.setAttribute("class", "ag-courses_item");
   secDiv.style.position = "absolute";
@@ -189,32 +141,29 @@ function addCard(d) {
   secDiv.style.padding = "5px";
   secDiv.style.display = "flex";
   secDiv.style.flexDirection = "row-reverse";
-  // aTag.setAttribute("href", `/Detail?room=${d.UUID}`);
   aTag.setAttribute(
     "onclick",
     `window.location.href='${host}/Detail?room=${d.ROOM_UUID}'`
   );
   aTag.style.cursor = "pointer";
   aTag.setAttribute("class", "ag-courses-item_link");
-  // secDiv.setAttribute("class", "ag-courses-item_bg");
   thirdDiv.setAttribute("class", "ag-courses-item_title");
   thirdDiv.innerText = d.ROOM_NAME;
-  // date = new Date( Date.parse(d.LAST_DATA_TS)-28800000 )
-  // dateFormat = date.getFullYear()+""+((date.getMonth()+1)<10?"0"+(date.getMonth()+1):(date.getMonth()+1))+""+date.getDate()+""+date.getHours()+""+date.getMinutes()+""+date.getSeconds()
-  // console.log(d.LAST_DATA_TS, dateFormat)
-  secDiv.innerHTML = `
-  <i style='color: red; margin-right: 20px;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;&nbsp;<i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Update</span></i>
-  `;
+  if(checkAdmin()){
+    secDiv.innerHTML = `
+      <i style='color: red; margin-right: 20px;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;&nbsp;<i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Update</span></i>
+      `;
+  }
+  
   let localSg = "-"
   if(d.LAST_DATA_TS){
     localSg = getTimezoneOffset(d.LAST_DATA_TS)
     localSg = moment(localSg).fromNow()
-  }
-    
+  }  
   
   rowS.innerHTML = `   
       <div class="ag-courses-item_date-box">
-        <span class='ag-courses-item_date'><strong>${d.INFO}</strong></span>
+        <span class='ag-courses-item_date'><strong>${d.INFO?d.INFO:'...'}</strong></span>
       </div>   
       <div class="ag-courses-item_date-box" id="${d.ID}-status">
         Status: <span class='ag-courses-item_date'>${roomStatus(
@@ -225,19 +174,13 @@ function addCard(d) {
         Location: <span class='ag-courses-item_date'>${d.ROOM_LOC}</span>
       </div>
       <div  class="ag-courses-item_date-box" id="${d.ID}-timestamp">
-        Last data received: <span class='ag-courses-item_date'>${localSg}</span>
+        Last data: <span class='ag-courses-item_date'>${localSg}</span>
       </div>
     `;
-
-  // aTag.appendChild(secDiv);
   aTag.appendChild(thirdDiv);
   aTag.appendChild(rowS);
-  // aTag.appendChild(fifthDiv);
-  // aTag.appendChild(sixthDiv);
-
   firDiv.appendChild(aTag);
   firDiv.appendChild(secDiv);
-  // firDiv.appendChild(`<button type='button'>edit</button><button type='button'>delete</button>`)
   indiCard.appendChild(firDiv);
 }
 
@@ -277,11 +220,6 @@ async function addNewRoom() {
     addRoomLocError.innerText = "Room location is empty!";
     addRoomLoc.style.border = borderRed;
   }
-
-  // if(imgUpload.value == ""){
-  //   imgUploadError.innerText = "Please upload room image!"
-  //   imgUpload.style.border = borderRed
-  // }
 
   if (
     addRoomNameError.innerText != "" ||
@@ -357,9 +295,6 @@ async function updateRoom() {
   updateRoomX.style.border = borderOri;
   updateRoomYError.innerHTML = "";
   updateRoomY.style.border = borderOri;
-  // imgUploadError.innerHTML = "";
-  // imgUpload.style.border = borderOri;
-
   if (updateRoomName.value == "") {
     updateRoomNameError.innerText = "Room name is empty!";
     updateRoomName.style.border = borderRed;

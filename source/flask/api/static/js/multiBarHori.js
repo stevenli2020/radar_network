@@ -10,9 +10,9 @@ option = {
   textStyle: {
     color: "#fff",
   },
-  title: {
-    text: "History",
-  },
+  // title: {
+  //   text: "History",
+  // },
   tooltip: {
     trigger: "axis",
     axisPointer: {

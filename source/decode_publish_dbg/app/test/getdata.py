@@ -33,15 +33,18 @@ def getVitalData(CONN, PARAM):
     CONN.close()
     return result    
     
-def getPositionData(CONN, PARAM):
+def getPositionData(connection, data):
+    # start_time = time.time()
     N = 10 # N is the dividing factor, e.g. 10 means every meter will be divided to 10 data points
-    sigma = 2
-    cursor = CONN.cursor()
+    sigma = 3
+    # connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
     result = defaultdict(list)
-    if not 'DEVICEMAC' in PARAM:
+    result["_DBG"] = []
+    if not 'DEVICEMAC' in data:
         result["ERROR"].append({'Message': 'MAC is empty!'})
         return result
-    t = PARAM['TIME']
+    t = data['TIME']
     timeRange = "10 DAY"
     if t == "HOUR":
         timeRange = "1 HOUR"
@@ -50,40 +53,39 @@ def getPositionData(CONN, PARAM):
     elif t == "WEEK":
         timeRange = "1 WEEK"
     else:
-        timeRange = "1 MONTH"
-    sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE FROM ROOMS_DETAILS RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N, N, PARAM['DEVICEMAC'])
+        timeRange = "1 MONTH"   
+
+    sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE FROM ROOMS_DETAILS RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N, N, data['DEVICEMAC'])
     cursor.execute(sql)
     dbresult = cursor.fetchone()    
     X_RANGE = int(dbresult[0])
-    Y_RANGE = int(dbresult[1])   
-    sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(PARAM['DEVICEMAC'], timeRange)
+    Y_RANGE = int(dbresult[1])  
+        
+    sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
     # print(dbresult)
-    # print("first sql time: %s s"%(time.time()-start_time))
     if dbresult[0] == None and dbresult[1] == None:
         # print("No data")
         result["ERROR"].append({'Message': 'No data!'})
         # print(result)
         return result
-    X_SHIFT = int(dbresult[0]*N)
-    X_SIZE = int(dbresult[0]*N)*4
-    Y_SHIFT = int(dbresult[1]*N)
-    Y_SIZE = int(dbresult[1]*N)*4
+    X_SIZE = int(dbresult[0]*N)
+    Y_SIZE = int(dbresult[1]*N)
+    X_MIN =  int(dbresult[2]*N)
+    Y_MIN =  int(dbresult[3]*N)
 
-    HMAP = np.zeros((X_SIZE, Y_SIZE))
-    HMAP2 = np.zeros((X_SHIFT, X_SHIFT))
-        
+    HMAP = np.zeros((X_RANGE*2, Y_RANGE*2))
 
-    sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, PARAM['DEVICEMAC'], timeRange)
+    sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
     # print(sql)
     cursor.execute(sql)
     dbresult = cursor.fetchall() 
     cursor.close()
-    CONN.close() 
+    connection.close() 
     # print("second sql time: %s s"%(time.time()-start_time))
-    # print(dbresult)
-
+    print(dbresult)
+    
     if not dbresult:
         # print("No data")
         result["ERROR"].append({'DATA': 'No Data!'})
@@ -94,39 +96,26 @@ def getPositionData(CONN, PARAM):
         CNT = int(row[1])
         # print(int(X), int(Y), X_SHIFT+int(X), Y_SHIFT+int(Y), CNT)
         try:
-            HMAP[X_SHIFT+int(X)][Y_SHIFT+int(Y)] += CNT
+            HMAP[X_RANGE+int(X)][Y_RANGE+int(Y)] += CNT
         except:
             continue
     # print(HMAP)
     # Apply Gaussian blur with a specified sigma value
-
     NEW_HMAP = gaussian_blur(HMAP, sigma)
-    # print("after gaussian time: %s s"%(time.time()-start_time))
-    # print("\nOriginal HMAP:")
-    # print(HMAP)
-    # print("\nBlurred HMAP:")
-    # print(NEW_HMAP)
-    # print("MAX VALUE: %f" %(np.max(NEW_HMAP)))
-
-    # print("\nShifted HMAP:")
-    HMAP2 = NEW_HMAP[X_SHIFT:,Y_SHIFT:]
-    # print(HMAP2)
-
     DATA = []
-    
+    MAX = np.amax(NEW_HMAP)
     for X in range(0, X_RANGE):
         for Y in range(0, Y_RANGE):
             try:
-                VALUE = round(HMAP2[X,Y],2)
+                VALUE = round(NEW_HMAP[X+X_RANGE,Y+Y_RANGE],2)
             except:
                 VALUE = 0
-            if VALUE > 0.2:
+            if VALUE > 0.03 * MAX:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
-    # print("after loop: %s s"%(time.time()-start_time))
     DATA.append([X_RANGE, Y_RANGE, 0]) 
     DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
-    # result["_DBG"].append([_X_RANGE,_Y_RANGE])
+    result["MAX"].append(MAX)
     return result
 
 

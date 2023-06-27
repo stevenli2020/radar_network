@@ -30,27 +30,6 @@ const categories2 = (function () {
   }
   return res;
 })();
-// const data = (function () {
-//   let res = [];
-//   let len = 100;
-//   while (len--) {
-//     res.push(Math.round(Math.random() * 100));
-//   }
-//   return res;
-// })();
-// const data2 = (function () {
-//   let res = [];
-//   let len = 0;
-//   while (len < 100) {
-//     res.push(+(Math.random() * 30).toFixed(1));
-//     len++;
-//   }
-//   return res;
-// })();
-// const data2 = randR()
-// const data3 = randR()
-// const data2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-// const data3 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 var vitalData = randR()
 var vitalData2 = randR()
 var categories = gen2STime()
@@ -268,36 +247,5 @@ optionLine = {
     }    
   ],
 };
-app.count = 11;
-// setInterval(function () {
-//     let axisData = new Date().toLocaleTimeString().replace(/^\D*/, '');
-//     data.shift();
-//     data.push(+(Math.random(2) * 100).toFixed(1));
-//     data2.shift();
-//     data2.push(+(Math.random(2) * 30).toFixed(1));
-//     categories.shift();
-//     categories.push(axisData);
-//     lineChart.setOption({
-//       xAxis: [
-//         {
-//           data: categories
-//         },
-//         {
-//           data: categories,
-//           gridIndex: 1
-//         }
-//       ],
-//       series: [
-//         {
-//           data: data
-//         },
-//         {
-//           data: data2,
-//           xAxisIndex: 1,
-//           yAxis: 1
-//         }
-//       ]
-//     });
-// }, 2100);
 
 optionLine && vitalChart.setOption(optionLine);

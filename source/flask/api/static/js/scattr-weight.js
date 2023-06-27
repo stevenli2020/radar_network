@@ -34,10 +34,10 @@ option = {
   textStyle: {
     color: "#fff",
   },
-  title: {
-    text: "Real-time location",
-    // subtext: 'Data from: Heinz 2003'
-  },
+  // title: {
+  //   text: "Real-time location",
+  //   // subtext: 'Data from: Heinz 2003'
+  // },
   grid: {
     left: "3%",
     right: "7%",

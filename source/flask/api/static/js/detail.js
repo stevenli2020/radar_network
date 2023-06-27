@@ -415,7 +415,7 @@ function getHistorOfPos(t, XD, YD) {
         }
       }
       if("ERROR" in data){
-        console.log(sampleLocData)
+        // console.log(sampleLocData)
         // xyChange = sampleLocData.map(function (item) {
         //   // return [item[0] * 100, item[1] * 100, item[2] || "-"];
         //   return [item[0], item[1], item[2] || "-"];
@@ -466,103 +466,102 @@ async function getAnalyticData(){
       // console.log(data.DATA[0]['IN_ROOM_PCT'], data.DATA[0]['IN_BED_PCT']);
       multiBarHoriChart.hideLoading();
       if (data.DATA) { 
-          if(data.DATA[0]['IN_BED_SECONDS_HOUR'] > 0){
-            inBedHour.innerHTML = `${data.DATA[0]['IN_BED_SECONDS_HOUR']} sec` 
-            if(parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) > 80){              
-              inBedHour.style.right = "45%"
-              // inBedHour.style.color = "white"
-            }
-          } else 
-            inBedHour.innerHTML = '0 sec'
-          if(data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 0){
-            inRoomHour.innerHTML = `${data.DATA[0]['IN_ROOM_SECONDS_HOUR']} sec`
-            if(parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR']) > 80){
-              inRoomHour.style.right = "45%"
-              // inRoomHour.style.color = "white"
-            }
-          } else
-            inRoomHour.innerHTML = '0 sec'
-          if(data.DATA[0]['IN_BED_SECONDS_DAY'] > 0) {
-            inBedDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY'])}`
-            if(parseFloat(data.DATA[0]['IN_BED_PCT_DAY']) > 80){
-              inBedDay.style.right = "45%"
-              // inBedDay.style.color = "white"
-            }
-          } else 
-            inBedDay.innerHTML = '0 hr'
-          if(data.DATA[0]['IN_ROOM_SECONDS_DAY'] > 0) {
-            inRoomDay.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY'])}`
-            if(parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY']) > 80){
-              inRoomDay.style.right = "45%"
-              // inRoomDay.style.color = "white"
-            }
-          } else
-            inRoomDay.innerHTML = '0 hr'
-          if(data.DATA[0]['IN_BED_SECONDS_WEEK'] > 0) {
-            inBedWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK'])}`
-            if(parseFloat(data.DATA[0]['IN_BED_PCT_WEEK']) > 80){
-              inBedWeek.style.right = "45%"
-              // inBedWeek.style.color = "white"
-            }
-          } else 
-            inBedWeek.innerHTML = '0 hr'
-          if(data.DATA[0]['IN_ROOM_SECONDS_WEEK'] > 0) {
-            inRoomWeek.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK'])}`
-            if(parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK']) > 80){
-              inRoomWeek.style.right = "45%"
-              // inRoomWeek.style.color = "white"
-            }
-          } else
-            inRoomWeek.innerHTML = '0 hr'
-          if(data.DATA[0]['IN_BED_SECONDS_MONTH'] > 0) {
-            inBedMonth.innerHTML = `${secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH'])}` 
-            if(parseFloat(data.DATA[0]['IN_BED_PCT_MONTH']) > 80){
-              inBedMonth.style.right = "45%"
-              // inBedMonth.style.color = "white"
-            }
-          } else 
-            inBedMonth.innerHTML = '0 hr'
-          if(data.DATA[0]['IN_ROOM_SECONDS_MONTH'] > 0) {
-            inRoomMonth.innerHTML = `${secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH'])}`
-            if(parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH']) > 80){
-              inRoomMonth.style.right = "45%"
-              // inRoomMonth.style.color = "white"
-            }
-          } else
-            inRoomMonth.innerHTML = '0 hr'
-          multiBarHoriChart.setOption({
-            xAxis: {
-              max: 100
-            },
-            yAxis: {
-              type: "category",
-              data: ["Month", "Week", "Day", "Hour"],
-            },
-            series: [
-              {
-                name: "In Bed",
-                label: {
-                  show: true,
-                  position: 'right',
-                  valueAnimation: true,
-                  formatter: `{c} %`,
-                },
-                data: [data.DATA[0]['IN_BED_PCT_MONTH'], data.DATA[0]['IN_BED_PCT_WEEK'], data.DATA[0]['IN_BED_PCT_DAY'], data.DATA[0]['IN_BED_PCT_HOUR']],
-                // {value: d[1], itemStyle: { color: brightRed}}
+        let inBedSecHour = data.DATA[0]['IN_BED_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_BED_SECONDS_HOUR']
+        let inRoomSecHour = data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_ROOM_SECONDS_HOUR']
+        let inBedSecDay = secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hr")
+        let inRoomSecDay = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hr")
+        let inBedSecWeek = secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 168 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hr")
+        let inRoomSecWeek = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) > 168 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hr")
+        let inBedSecMonth = secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) > 720 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hr")
+        let inRoomSecMonth = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) > 720 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hr")
+        let inBedPctHour = parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_HOUR'])
+        let inRoomPctHour = parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR'])
+        let inBedPctDay = parseFloat(data.DATA[0]['IN_BED_PCT_DAY']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_DAY'])
+        let inRoomPctDay = parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY'])
+        let inBedPctWeek = parseFloat(data.DATA[0]['IN_BED_PCT_WEEK']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_WEEK'])
+        let inRoomPctWeek = parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK'])
+        let inBedPctMonth = parseFloat(data.DATA[0]['IN_BED_PCT_MONTH']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_MONTH'])
+        let inRoomPctMonth = parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH'])
+        console.log(inBedSecHour, inRoomSecHour, inBedSecDay, inRoomSecDay, inBedSecWeek, inRoomSecWeek, inBedSecMonth, inRoomSecMonth)
+        if(inBedSecHour > 0){
+          inBedHour.innerHTML = `${inBedSecHour} sec` 
+          if(inBedPctHour > 80){              
+            inBedHour.style.right = "45%"
+            // inBedHour.style.color = "white"
+          }
+        } else 
+          inBedHour.innerHTML = '0 sec'
+        if(inRoomSecHour > 0){
+          inRoomHour.innerHTML = `${inBedSecHour} sec` 
+          if(inRoomPctHour > 80){              
+            inRoomHour.style.right = "45%"
+            // inBedHour.style.color = "white"
+          }
+        } else
+          inRoomHour.innerHTML = '0 sec'
+        inBedDay.innerHTML = `${inBedSecDay}`
+        if(inBedPctDay > 80){
+          inBedDay.style.right = "45%"
+          // inBedDay.style.color = "white"
+        }
+        inRoomDay.innerHTML = `${inRoomSecDay}`
+        if(inRoomPctDay > 80){
+          inRoomDay.style.right = "45%"
+          // inRoomDay.style.color = "white"
+        }
+        inBedWeek.innerHTML = `${inBedSecWeek}`
+        if(inBedPctWeek > 80){
+          inBedWeek.style.right = "45%"
+          // inBedWeek.style.color = "white"
+        }
+        inRoomWeek.innerHTML = `${inRoomSecWeek}`
+        if(inRoomPctWeek > 80){
+          inRoomWeek.style.right = "45%"
+          // inRoomWeek.style.color = "white"
+        }
+        inBedMonth.innerHTML = `${inBedSecMonth}` 
+        if(inBedPctMonth > 80){
+          inBedMonth.style.right = "45%"
+          // inBedMonth.style.color = "white"
+        }
+        inRoomMonth.innerHTML = `${inRoomSecMonth}`
+        if(inRoomPctMonth > 80){
+          inRoomMonth.style.right = "45%"
+          // inRoomMonth.style.color = "white"
+        }
+        multiBarHoriChart.setOption({
+          xAxis: {
+            max: 100
+          },
+          yAxis: {
+            type: "category",
+            data: ["Month", "Week", "Day", "Hour"],
+          },
+          series: [
+            {
+              name: "In Bed",
+              label: {
+                show: true,
+                position: 'right',
+                valueAnimation: true,
+                formatter: `{c} %`,
               },
-              {
-                name: "In Room",
-                label: {
-                  show: true,
-                  position: 'right',
-                  valueAnimation: true,
-                  formatter: `{c} %`,
-                },
-                data: [data.DATA[0]['IN_ROOM_PCT_MONTH'], data.DATA[0]['IN_ROOM_PCT_WEEK'], data.DATA[0]['IN_ROOM_PCT_DAY'], data.DATA[0]['IN_ROOM_PCT_HOUR']],
-                // {value: d[1], itemStyle: { color: brightRed}}
-              }
-            ],
-          })
+              data: [inBedPctMonth, inBedPctWeek, inBedPctDay, inBedPctHour],
+              // {value: d[1], itemStyle: { color: brightRed}}
+            },
+            {
+              name: "In Room",
+              label: {
+                show: true,
+                position: 'right',
+                valueAnimation: true,
+                formatter: `{c} %`,
+              },
+              data: [inRoomPctMonth, inRoomPctWeek, inRoomPctDay, inRoomPctHour],
+              // {value: d[1], itemStyle: { color: brightRed}}
+            }
+          ],
+        })
         // if (data.DATA.length > 2) {
         //   // console.log(data.DATA[0].totalCountInOutRoom, data.DATA[1].countInRoom, data.DATA[2].countInBed)
         //   totalCountInOutRoom = convertStrtoInt(data.DATA[0].totalCountInOutRoom);

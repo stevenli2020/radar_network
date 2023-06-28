@@ -883,3 +883,58 @@ input[type=submit] {
 #in-room-month{
     top: 75%;
 }
+/* Popper */
+#popper-firstDiv {
+    display: inline-block;
+    /* width: 134px;
+    height: 120px;
+    background-image: url('https://popper.js.org/images/popcorn-box.svg'); */
+}
+
+#tooltip-popper {
+    display: inline-block;
+    background: #ffffff;
+    color: #643045;
+    font-weight: bold;
+    padding: 5px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+    display: none;
+}
+#tooltip-popper[data-show] {
+    display: block;
+}
+#arrow-popper,
+#arrow-popper::before {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: inherit;
+}
+
+#arrow-popper {
+    visibility: hidden;
+}
+
+#arrow-popper::before {
+    visibility: visible;
+    content: '';
+    transform: rotate(45deg);
+}
+
+#tooltip-popper[data-popper-placement^='top'] > #arrow-popper {
+    bottom: -4px;
+}
+
+#tooltip-popper[data-popper-placement^='bottom'] > #arrow-popper {
+    top: -4px;
+}
+
+#tooltip-popper[data-popper-placement^='left'] > #arrow-popper {
+    right: -4px;
+}
+
+#tooltip-popper[data-popper-placement^='right'] > #arrow-popper {
+    left: -4px;
+}
+  /* End Popper */

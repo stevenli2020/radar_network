@@ -1428,6 +1428,9 @@ def on_message(mosq, obj, msg):
             return
         devicesTbl[devName] = dbresult
         devicesTbl[devName]["DATA_QUEUE"] = {}
+        sql="UPDATE `DEVICES` SET `STATUS`='CONNECTED' WHERE MAC='"+devName+"';"
+        cursor.execute(sql)
+        connection.commit()        
         cursor.close()
         connection.close()        
     # print(devicesTbl)

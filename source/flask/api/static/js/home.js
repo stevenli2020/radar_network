@@ -1,5 +1,4 @@
 const indiCard = document.getElementById("ag-courses_box");
-
 // add room details form
 const addRoomRow = document.getElementById("add-room-button");
 const addRoomName = document.getElementById("room-add-name");
@@ -137,10 +136,10 @@ function addCard(d) {
   firDiv.setAttribute("class", "ag-courses_item");
   secDiv.style.position = "absolute";
   secDiv.style.bottom = "1%";
-  secDiv.style.left = "80%";
-  secDiv.style.padding = "5px";
-  secDiv.style.display = "flex";
-  secDiv.style.flexDirection = "row-reverse";
+  secDiv.style.right = "5%";
+  // secDiv.style.padding = "5px";
+  // secDiv.style.display = "flex";
+  // secDiv.style.flexDirection = "row-reverse";
   aTag.setAttribute(
     "onclick",
     `window.location.href='${host}/Detail?room=${d.ROOM_UUID}'`
@@ -149,21 +148,28 @@ function addCard(d) {
   aTag.setAttribute("class", "ag-courses-item_link");
   thirdDiv.setAttribute("class", "ag-courses-item_title");
   thirdDiv.innerText = d.ROOM_NAME;
-  if(checkAdmin()){
-    secDiv.innerHTML = `
-      <i style='color: red; margin-right: 20px;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;&nbsp;<i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Update</span></i>
-      `;
+  if (checkAdmin()) {
+    // secDiv.innerHTML = `
+    //   <i style='color: red; margin-right: 20px;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;&nbsp;<i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Update</span></i>
+    //   `;
+    secDiv.innerHTML = `<i id="popper-firstDiv" style="cursor: pointer;" class="bi bi-three-dots icon-popper-${d.ROOM_UUID}"  aria-describedby="tooltip-popper"></i>
+    <div id="tooltip-popper" class="tooltip-popper-${d.ROOM_UUID}" role="tooltip-popper">
+      <i style='color: green; cursor: pointer;' class='bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"></i>&nbsp;&nbsp;&nbsp;<i style='color: red; cursor: pointer;' class='bi bi-trash3' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"></i>
+    <div id="arrow-popper" data-popper-arrow></div>
+    </div>`;
   }
-  
-  let localSg = "-"
-  if(d.LAST_DATA_TS){
-    localSg = getTimezoneOffset(d.LAST_DATA_TS)
-    localSg = moment(localSg).fromNow()
-  }  
-  
+
+  let localSg = "-";
+  if (d.LAST_DATA_TS) {
+    localSg = getTimezoneOffset(d.LAST_DATA_TS);
+    localSg = moment(localSg).fromNow();
+  }
+
   rowS.innerHTML = `   
       <div class="ag-courses-item_date-box">
-        <span class='ag-courses-item_date'><strong>${d.INFO?d.INFO:'...'}</strong></span>
+        <span class='ag-courses-item_date'><strong>${
+          d.INFO ? d.INFO : "-"
+        }</strong></span>
       </div>   
       <div class="ag-courses-item_date-box" id="${d.ID}-status">
         Status: <span class='ag-courses-item_date'>${roomStatus(
@@ -181,8 +187,66 @@ function addCard(d) {
   aTag.appendChild(rowS);
   firDiv.appendChild(aTag);
   firDiv.appendChild(secDiv);
+
   indiCard.appendChild(firDiv);
+  const popcornPopper = document.querySelector(`.icon-popper-${d.ROOM_UUID}`);
+  const tooltipPopper = document.querySelector(`.tooltip-popper-${d.ROOM_UUID}`);
+
+  const popperInstance = Popper.createPopper(popcornPopper, tooltipPopper, {
+    modifiers: [
+      {
+        name: 'offset',
+        options: {
+          offset: [0, 8],
+        },
+      },
+    ],
+  });
+  function show() {
+    // Make the tooltip visible
+    tooltipPopper.setAttribute("data-show", "");
+
+    // Enable the event listeners
+    popperInstance.setOptions((options) => ({
+      ...options,
+      modifiers: [
+        ...options.modifiers,
+        { name: "eventListeners", enabled: true },
+      ],
+    }));
+
+    // Update its position
+    popperInstance.update();
+  }
+
+  function hide() {
+    // Hide the tooltip
+    tooltipPopper.removeAttribute("data-show");
+
+    // Disable the event listeners
+    popperInstance.setOptions((options) => ({
+      ...options,
+      modifiers: [
+        ...options.modifiers,
+        { name: "eventListeners", enabled: false },
+      ],
+    }));
+  }
+
+  const showEvents = ["mouseenter", "focus"];
+  // const hideEvents = ["mouseleave", "blur"];
+  const hideEvents = ["onclick"];
+
+  showEvents.forEach((event) => {
+    popcornPopper.addEventListener(event, show);
+  });
+
+  hideEvents.forEach((event) => {
+    popcornPopper.addEventListener(event, hide);
+  });
 }
+
+
 
 async function addNewRoom() {
   addRoomSubmitBtn.disabled = true;

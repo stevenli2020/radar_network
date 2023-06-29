@@ -235,7 +235,7 @@ function addCard(d) {
 
   const showEvents = ["mouseenter", "focus"];
   // const hideEvents = ["mouseleave", "blur"];
-  const hideEvents = ["onclick"];
+  const hideEvents = ["click"];
 
   showEvents.forEach((event) => {
     popcornPopper.addEventListener(event, show);

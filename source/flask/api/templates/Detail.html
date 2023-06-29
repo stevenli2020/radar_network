@@ -5,18 +5,18 @@
         <div class="progress-bar progress-bar-striped progress-bar-animated"></div>
     </div>
     <div id="detail-page-header"></div>
-    <div class="row" id="track-chart-row" >
-        <div class="col-lg-6 col-sm-12">
+    <div class="row mt-5" id="track-chart-row" >
+        <div class="col-lg-6 col-sm-12" id="real-time" style="position: relative;">
             <div style="position: relative;">
-                <h5 id="realtime-location-chart-title" style="position: absolute; z-index: 1;color: white;left: 3%;top: 2%;">Real-time location</h5>
-                <div class="mt-5" id="Scatter" ></div>
-                <div id="empty-lable">Empty Room</div>
+                <h5 id="realtime-location-chart-title" style="position: absolute; z-index: 1;color: white;left: 10px;top: 2%;">Real-time location</h5>
+                <div id="Scatter" ></div>
+                <div id="empty-lable">Empty</div>
             </div>
             
             <br>
         </div>
         <div class="col-lg-6 col-sm-12" style="position: relative;">
-            <ul class="nav nav-tabs justify-content-center" id="myTab" role="tablist">
+            <ul class="nav nav-tabs justify-content-center heatmap-tab" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="hour-loc-tab" data-bs-toggle="tab" data-bs-target="#hour-loc-tab-pane" type="button" role="tab" aria-controls="hour-loc-tab-pane" aria-selected="true">Hour</button>
                 </li>
@@ -30,16 +30,16 @@
                     <button class="nav-link" id="month-loc-tab" data-bs-toggle="tab" data-bs-target="#month-loc-tab-pane" type="button" role="tab" aria-controls="month-loc-tab-pane" aria-selected="false">Month</button>
                 </li>
             </ul>
-            <h5 id="history-location-chart-title" style="position: absolute; z-index: 1;left: 4%;top: 10%;color: white;">History of Person's location</h5>
+            <h5 id="history-location-chart-title" style="position: absolute; z-index: 1;left: 20px;top: 2%;color: white;">Location History</h5>
             <div id="history-loc-heatmap"></div>
         </div>
         
     </div>
     <div class="row">
         <div class="col-lg-6 col-sm-12">
-            <div class="row" id="vital-row" style="backdrop-filter: blur(35px);color: white;">
+            <div class="row mt-5" id="vital-row" style="backdrop-filter: blur(35px);color: white;">
                 <div class="col-3" style="position: relative;">
-                    <h5 id="vital-chart-title" style="position: absolute; z-index: 1;top: 2%;">Vital Signs</h5>
+                    <h5 id="vital-chart-title" style="position: absolute; z-index: 1;left: 1px;top: 2%;">Vital Signs</h5>
                     <h5 id="heart-rate-title">Heart Rate</h5>
                     <h3 id="heart-rate-data">-</h3>
                     <h5 id="breath-rate-title">Breathing Rate</h5>
@@ -69,8 +69,8 @@
         </div>
         <div class="col-lg-6 col-sm-12">
             <div style="position: relative;">
-                <h5 id="history-analytic-chart-title" style="position: absolute; z-index: 1;left: 3%;top: 2%;color: white;">History</h5>
-                <div id="multiBarHori"></div>
+                <h5 id="history-analytic-chart-title" style="position: absolute; z-index: 1;left: 10px;top: 2%;color: white;">Occupancy Status History</h5>
+                <div id="multiBarHori" class="mt-5"></div>
                 <p id="in-bed-hour"></p>
                 <p id="in-room-hour"></p>
                 <p id="in-bed-day"></p>

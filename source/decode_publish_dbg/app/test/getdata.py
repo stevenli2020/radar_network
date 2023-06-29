@@ -138,3 +138,67 @@ def gaussian_blur(array, sigma):
             blurred_array[i, j] = np.sum(window * kernel)
     # print("after Gaussian filter loop: %s s"%(time.time()-start_time))
     return blurred_array
+
+
+def getPostureData(connection, data):
+    # connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    result = defaultdict(list)
+
+    IN_ROOM_SECONDS_HOUR = 0
+    IN_BED_SECONDS_HOUR = 0
+    IN_ROOM_SECONDS_DAY = 0
+    IN_BED_SECONDS_DAY = 0   
+    IN_ROOM_SECONDS_WEEK = 0
+    IN_BED_SECONDS_WEEK = 0
+    IN_ROOM_SECONDS_MONTH = 0
+    IN_BED_SECONDS_MONTH = 0   
+    
+    sql = "SELECT GROUP_CONCAT(MAC) FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID WHERE ROOMS_DETAILS.ROOM_UUID = '%s';" % (data['ROOM_UUID'])
+    # print(sql)
+    cursor.execute(sql)
+    dbresult = cursor.fetchone() 
+    # print(dbresult)
+    try:
+        db = dbresult[0].split(',')
+        # print(db)
+        if len(db) > 1:
+            List = "IN ('"+db[0]+"','"+db[1]+"')"
+        else:
+            List = "IN ('"+db[0]+"')"
+    except:
+        # print("No data related to room name")
+        result["ERROR"].append({'Message': 'No data related to room name!'})
+        return result
+    
+    TIME_RANGE = ['HOUR','DAY','WEEK','MONTH']
+    for T in TIME_RANGE:
+        sql = "SELECT COUNT(CASE WHEN IR>0 THEN 1 END) AS IR_COUNT,COUNT(CASE WHEN IB>0 THEN 1 END) AS IB_COUNT FROM (SELECT DATE_FORMAT(TIMESTAMP, '%%Y-%%m-%%d %%H:%%i') AS T, SUM(OBJECT_LOCATION), (SUM(OBJECT_LOCATION))>0 AS IR, (SUM(IN_BED))>0 AS IB FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 %s) AND OBJECT_LOCATION IS NOT NULL GROUP BY T) AS T1" % (List, T)
+        cursor.execute(sql)
+        dbresult = cursor.fetchall() 
+        # print(dbresult)
+        IR,IB=dbresult[0]
+        if T == 'HOUR':
+            IN_ROOM_SECONDS_HOUR = IR*60
+            IN_BED_SECONDS_HOUR  = IB*60
+            IN_ROOM_PCT_HOUR = round(IR*100/60, 2)
+            IN_BED_PCT_HOUR  = round(IB*100/60, 2)
+        elif T == "DAY":
+            IN_ROOM_SECONDS_DAY = IR*60
+            IN_BED_SECONDS_DAY  = IB*60
+            IN_ROOM_PCT_DAY = round(IR*100/1440, 2)
+            IN_BED_PCT_DAY  = round(IB*100/1440, 2)
+        elif T == "WEEK":
+            IN_ROOM_SECONDS_WEEK = IR*60
+            IN_BED_SECONDS_WEEK  = IB*60
+            IN_ROOM_PCT_WEEK = round(IR*100/10080,2)
+            IN_BED_PCT_WEEK  = round(IB*100/10080,2)           
+        elif T == "MONTH":
+            IN_ROOM_SECONDS_MONTH = IR*60
+            IN_BED_SECONDS_MONTH  = IB*60
+            IN_ROOM_PCT_MONTH = round(IR/432, 2)
+            IN_BED_PCT_MONTH  = round(IB/432, 2)  
+    result['DATA'].append({"IN_ROOM_SECONDS_HOUR": IN_ROOM_SECONDS_HOUR, "IN_BED_SECONDS_HOUR": IN_BED_SECONDS_HOUR, "IN_ROOM_PCT_HOUR": IN_ROOM_PCT_HOUR, "IN_BED_PCT_HOUR": IN_BED_PCT_HOUR, "IN_ROOM_SECONDS_DAY": IN_ROOM_SECONDS_DAY, "IN_BED_SECONDS_DAY": IN_BED_SECONDS_DAY, "IN_ROOM_PCT_DAY": IN_ROOM_PCT_DAY, "IN_BED_PCT_DAY": IN_BED_PCT_DAY, "IN_ROOM_SECONDS_WEEK": IN_ROOM_SECONDS_WEEK, "IN_BED_SECONDS_WEEK": IN_BED_SECONDS_WEEK, "IN_ROOM_PCT_WEEK": IN_ROOM_PCT_WEEK, "IN_BED_PCT_WEEK": IN_BED_PCT_WEEK, "IN_ROOM_SECONDS_MONTH": IN_ROOM_SECONDS_MONTH, "IN_BED_SECONDS_MONTH": IN_BED_SECONDS_MONTH, "IN_ROOM_PCT_MONTH": IN_ROOM_PCT_MONTH, "IN_BED_PCT_MONTH": IN_BED_PCT_MONTH})
+    cursor.close()
+    connection.close()
+    return result

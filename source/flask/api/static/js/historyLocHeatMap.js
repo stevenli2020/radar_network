@@ -78,6 +78,7 @@ option = {
   },
   visualMap: {
     right: 0,
+    top: 110,
     min: 0,
     max: 20,
     calculable: true,
@@ -110,9 +111,13 @@ option = {
         "#ff000095",
       ],
     },
-    // orient: 'vertical',
+    // orient: 'horizontal',
     // left: 'center',
     // bottom: '15%'
+    textStyle: {
+      show: false,
+      color: 'white'
+    }
   },
   series: [
     {

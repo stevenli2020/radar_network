@@ -78,6 +78,7 @@ option = {
     },
   },
   toolbox: {
+    show: false,
     feature: {
       dataZoom: {},
       brush: {
@@ -87,6 +88,7 @@ option = {
   },
   brush: {},
   legend: {
+    show: false,
     data: ["Radar", "Person 1"],
     left: "left",
     // bottom: 10

@@ -298,7 +298,7 @@ homeMacVal = mac;
 var hourlyPos;
 
 function getHistorOfPos(t, XD, YD) {
-  console.time()
+  // console.time()
   lData = {
     DEVICEMAC: macPos,
     TIME: t,
@@ -315,7 +315,7 @@ function getHistorOfPos(t, XD, YD) {
     .then((response) => response.json())
     .then((data) => {
       // console.log(data);
-      console.timeEnd()
+      // console.timeEnd()
       hisotryLocHeatmapChart.hideLoading();
       minX = 0;
       maxX = 30;
@@ -443,7 +443,7 @@ function getHistorOfPos(t, XD, YD) {
 }
 
 async function getAnalyticData(){
-  console.time('history')
+  // console.time('history')
   aData = {
     // DEVICEMAC: mac,
     CUSTOM: 0,
@@ -461,8 +461,8 @@ async function getAnalyticData(){
   })
     .then((response) => response.json())
     .then((data) => {
-      console.timeEnd('history')
-      console.log(data)
+      // console.timeEnd('history')
+      // console.log(data)
       // console.log(data.DATA[0]['IN_ROOM_PCT'], data.DATA[0]['IN_BED_PCT']);
       multiBarHoriChart.hideLoading();
       if (data.DATA) { 
@@ -482,7 +482,7 @@ async function getAnalyticData(){
         let inRoomPctWeek = parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK'])
         let inBedPctMonth = parseFloat(data.DATA[0]['IN_BED_PCT_MONTH']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_MONTH'])
         let inRoomPctMonth = parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH'])
-        console.log(inBedSecHour, inRoomSecHour, inBedSecDay, inRoomSecDay, inBedSecWeek, inRoomSecWeek, inBedSecMonth, inRoomSecMonth)
+        // console.log(inBedSecHour, inRoomSecHour, inBedSecDay, inRoomSecDay, inBedSecWeek, inRoomSecWeek, inBedSecMonth, inRoomSecMonth)
         if(inBedSecHour > 0){
           inBedHour.innerHTML = `${inBedSecHour} sec` 
           if(inBedPctHour > 80){              
@@ -700,9 +700,13 @@ async function getHistOfVital(t) {
       .then((data) => {  
              
         // console.log(data.DATA.length)
-        console.log(data);
+        // console.log(data);
         vitalChart.hideLoading();
+        avgHeart = 60
+        avgBreath = 12
         if ("AVG" in data){
+          avgHeart = data.AVG[0][0]
+          avgBreath = data.AVG[0][1]
           heartLowerAvg = data.AVG[0][0] - (data.AVG[0][0]*0.1)
           heartUpperAvg = data.AVG[0][0] + (data.AVG[0][0]*0.3)
           breathLowerAvg = data.AVG[0][1] - (data.AVG[0][0]*0.1)
@@ -780,6 +784,13 @@ async function getHistOfVital(t) {
                     yAxis: heartLowerAvg
                   },
                   {
+                    name: "Avg",
+                    yAxis: avgHeart,
+                    label: {
+                      formatter: "Avg"
+                    }
+                  },
+                  {
                     yAxis: heartUpperAvg
                   }
                 ]
@@ -803,6 +814,13 @@ async function getHistOfVital(t) {
                 data: [
                   {
                     yAxis: breathLowerAvg
+                  },
+                  {
+                    name: "Avg",
+                    yAxis: avgBreath,
+                    label: {
+                      formatter: "Avg"
+                    }
                   },
                   {
                     yAxis: breathUpperAvg

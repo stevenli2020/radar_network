@@ -78,6 +78,7 @@
 #multiBarHori {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     border-radius: 25px;
+    padding: 1%;
 }
 
 /* tooltip */
@@ -348,17 +349,19 @@ body {
     margin: 0 15px 30px;
     overflow: hidden;
     border-radius: 28px;
+    background-color: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(15px);
 }
 
 .ag-courses-item_link {
     display: block;
     padding: 30px 20px;
     /* background-color: #121212; */
-    background-color: rgba(255, 255, 255, 0.45);
+    /* background-color: rgba(255, 255, 255, 0.45); */
     overflow: hidden;
     position: relative;
     text-decoration: none;
-    backdrop-filter: blur(15px);
+    /* backdrop-filter: blur(15px); */
 }
 
 .ag-courses-item_title {
@@ -802,7 +805,7 @@ input[type=submit] {
 #empty-lable{
     position: absolute;
     top: 40%;
-    left: 25%;
+    left: 40%;
     font-size: -webkit-xxx-large;
     color: coral;
 }
@@ -938,3 +941,10 @@ input[type=submit] {
     left: -4px;
 }
   /* End Popper */
+/* ul tab heatmap */
+.heatmap-tab{
+    position: absolute;
+    z-index: 1;
+    left: 30%;
+}
+/* End ul tab heatmap */

@@ -203,24 +203,16 @@ def getAnalyticDataofPosture(data):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = defaultdict(list)
-    # N,U=data['TIME'].split(" ")
-    # NUM = int(N)
-    TOTAL_SECONDS_HOUR = 3600
-    TOTAL_SECONDS_DAY = 86400
-    TOTAL_SECONDS_WEEK = 604800
-    TOTAL_SECONDS_MONTH = 2592000
-    # if U.upper() == "DAY":
-    #     TOTAL_SECONDS = NUM * 86400
-    # elif U.upper() == "HOUR":
-    #     TOTAL_SECONDS = NUM * 3600
-    # elif U.upper() == "WEEK":
-    #     TOTAL_SECONDS = NUM * 604800
-    # elif U.upper() == "MONTH":
-    #     TOTAL_SECONDS = NUM * 2592000
-    # else:
-    #     print("Time range error, exit")
-    #     result["ERROR"].append({'Message': 'Time range error!'})
-    #     return result
+
+    IN_ROOM_SECONDS_HOUR = 0
+    IN_BED_SECONDS_HOUR = 0
+    IN_ROOM_SECONDS_DAY = 0
+    IN_BED_SECONDS_DAY = 0   
+    IN_ROOM_SECONDS_WEEK = 0
+    IN_BED_SECONDS_WEEK = 0
+    IN_ROOM_SECONDS_MONTH = 0
+    IN_BED_SECONDS_MONTH = 0   
+    
     sql = "SELECT GROUP_CONCAT(MAC) FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID WHERE ROOMS_DETAILS.ROOM_UUID = '%s';" % (data['ROOM_UUID'])
     # print(sql)
     cursor.execute(sql)
@@ -237,37 +229,35 @@ def getAnalyticDataofPosture(data):
         # print("No data related to room name")
         result["ERROR"].append({'Message': 'No data related to room name!'})
         return result
-    # sql = "SELECT COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND OBJECT_LOCATION = 1;" %(List, data['TIME'])
-    # # print(sql)
-    # # exit()
-    # cursor.execute(sql)
-    # dbresult = cursor.fetchone() 
-    # if not dbresult:
-    #     print("No data")
-    #     result["ERROR"].append({'Message': 'No data!'})
-    #     return result
-    # IN_ROOM_SECONDS = int(dbresult[0]*2)
-    # sql = "SELECT COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND IN_BED = 1;" %(List, data['TIME'])
-    # # print(sql)
-    # cursor.execute(sql)
-    # dbresult = cursor.fetchone() 
-    # if not dbresult:
-    #     print("No data")
-    #     result["ERROR"].append({'Message': 'No data!'})
-    #     return result
-    #     # exit()
-    # IN_BED_SECONDS = int(dbresult[0]*2)
-    IN_ROOM_SECONDS_HOUR = queryHistoryAnalytic("1 HOUR", "OBJECT_LOCATION", List)
-    IN_BED_SECONDS_HOUR = queryHistoryAnalytic("1 HOUR", "IN_BED", List)
-    IN_ROOM_SECONDS_DAY = queryHistoryAnalytic("1 DAY", "OBJECT_LOCATION", List)
-    IN_BED_SECONDS_DAY = queryHistoryAnalytic("1 DAY", "IN_BED", List)
-    IN_ROOM_SECONDS_WEEK = queryHistoryAnalytic("1 WEEK", "OBJECT_LOCATION", List)
-    IN_BED_SECONDS_WEEK = queryHistoryAnalytic("1 WEEK", "IN_BED", List)
-    IN_ROOM_SECONDS_MONTH = queryHistoryAnalytic("1 MONTH", "OBJECT_LOCATION", List)
-    IN_BED_SECONDS_MONTH = queryHistoryAnalytic("1 MONTH", "IN_BED", List)
-    print(IN_ROOM_SECONDS_HOUR, IN_BED_SECONDS_HOUR)
-    result['DATA'].append({"IN_ROOM_SECONDS_HOUR": IN_ROOM_SECONDS_HOUR, "IN_BED_SECONDS_HOUR": IN_BED_SECONDS_HOUR, "IN_ROOM_PCT_HOUR": round(IN_ROOM_SECONDS_HOUR*100/TOTAL_SECONDS_HOUR,2), "IN_BED_PCT_HOUR": round(IN_BED_SECONDS_HOUR*100/TOTAL_SECONDS_HOUR,2), "IN_ROOM_SECONDS_DAY": IN_ROOM_SECONDS_DAY, "IN_BED_SECONDS_DAY": IN_BED_SECONDS_DAY, "IN_ROOM_PCT_DAY": round(IN_ROOM_SECONDS_DAY*100/TOTAL_SECONDS_DAY,2), "IN_BED_PCT_DAY": round(IN_BED_SECONDS_DAY*100/TOTAL_SECONDS_DAY,2), "IN_ROOM_SECONDS_WEEK": IN_ROOM_SECONDS_WEEK, "IN_BED_SECONDS_WEEK": IN_BED_SECONDS_WEEK, "IN_ROOM_PCT_WEEK": round(IN_ROOM_SECONDS_WEEK*100/TOTAL_SECONDS_WEEK,2), "IN_BED_PCT_WEEK": round(IN_BED_SECONDS_WEEK*100/TOTAL_SECONDS_WEEK,2), "IN_ROOM_SECONDS_MONTH": IN_ROOM_SECONDS_MONTH, "IN_BED_SECONDS_MONTH": IN_BED_SECONDS_MONTH, "IN_ROOM_PCT_MONTH": round(IN_ROOM_SECONDS_MONTH*100/TOTAL_SECONDS_MONTH,2), "IN_BED_PCT_MONTH": round(IN_BED_SECONDS_MONTH*100/TOTAL_SECONDS_MONTH,2)})
-
+    
+    TIME_RANGE = ['HOUR','DAY','WEEK','MONTH']
+    for T in TIME_RANGE:
+        sql = "SELECT COUNT(CASE WHEN IR>0 THEN 1 END) AS IR_COUNT,COUNT(CASE WHEN IB>0 THEN 1 END) AS IB_COUNT FROM (SELECT DATE_FORMAT(TIMESTAMP, '%%Y-%%m-%%d %%H:%%i') AS T, SUM(OBJECT_LOCATION), (SUM(OBJECT_LOCATION))>0 AS IR, (SUM(IN_BED))>0 AS IB FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 %s) AND OBJECT_LOCATION IS NOT NULL GROUP BY T) AS T1" % (List, T)
+        cursor.execute(sql)
+        dbresult = cursor.fetchall() 
+        # print(dbresult)
+        IR,IB=dbresult[0]
+        if T == 'HOUR':
+            IN_ROOM_SECONDS_HOUR = IR*60
+            IN_BED_SECONDS_HOUR  = IB*60
+            IN_ROOM_PCT_HOUR = round(IR*100/60, 2)
+            IN_BED_PCT_HOUR  = round(IB*100/60, 2)
+        elif T == "DAY":
+            IN_ROOM_SECONDS_DAY = IR*60
+            IN_BED_SECONDS_DAY  = IB*60
+            IN_ROOM_PCT_DAY = round(IR*100/1440, 2)
+            IN_BED_PCT_DAY  = round(IB*100/1440, 2)
+        elif T == "WEEK":
+            IN_ROOM_SECONDS_WEEK = IR*60
+            IN_BED_SECONDS_WEEK  = IB*60
+            IN_ROOM_PCT_WEEK = round(IR*100/10080,2)
+            IN_BED_PCT_WEEK  = round(IB*100/10080,2)           
+        elif T == "MONTH":
+            IN_ROOM_SECONDS_MONTH = IR*60
+            IN_BED_SECONDS_MONTH  = IB*60
+            IN_ROOM_PCT_MONTH = round(IR/432, 2)
+            IN_BED_PCT_MONTH  = round(IB/432, 2)  
+    result['DATA'].append({"IN_ROOM_SECONDS_HOUR": IN_ROOM_SECONDS_HOUR, "IN_BED_SECONDS_HOUR": IN_BED_SECONDS_HOUR, "IN_ROOM_PCT_HOUR": IN_ROOM_PCT_HOUR, "IN_BED_PCT_HOUR": IN_BED_PCT_HOUR, "IN_ROOM_SECONDS_DAY": IN_ROOM_SECONDS_DAY, "IN_BED_SECONDS_DAY": IN_BED_SECONDS_DAY, "IN_ROOM_PCT_DAY": IN_ROOM_PCT_DAY, "IN_BED_PCT_DAY": IN_BED_PCT_DAY, "IN_ROOM_SECONDS_WEEK": IN_ROOM_SECONDS_WEEK, "IN_BED_SECONDS_WEEK": IN_BED_SECONDS_WEEK, "IN_ROOM_PCT_WEEK": IN_ROOM_PCT_WEEK, "IN_BED_PCT_WEEK": IN_BED_PCT_WEEK, "IN_ROOM_SECONDS_MONTH": IN_ROOM_SECONDS_MONTH, "IN_BED_SECONDS_MONTH": IN_BED_SECONDS_MONTH, "IN_ROOM_PCT_MONTH": IN_ROOM_PCT_MONTH, "IN_BED_PCT_MONTH": IN_BED_PCT_MONTH})
     cursor.close()
     connection.close()
     return result

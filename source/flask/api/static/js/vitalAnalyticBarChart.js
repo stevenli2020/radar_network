@@ -89,7 +89,7 @@ optionLine = {
   },
   // legend: {},
   toolbox: {
-    show: true,
+    show: false,
     feature: {
       dataView: { readOnly: false },
       restore: {},

@@ -905,7 +905,7 @@ input[type=submit] {
     display: none;
 }
 #tooltip-popper[data-show] {
-    display: block;
+    display: inline-flex;
 }
 #arrow-popper,
 #arrow-popper::before {

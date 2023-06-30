@@ -492,7 +492,7 @@ async function getAnalyticData(){
         } else 
           inBedHour.innerHTML = '0 sec'
         if(inRoomSecHour > 0){
-          inRoomHour.innerHTML = `${inBedSecHour} sec` 
+          inRoomHour.innerHTML = `${inRoomSecHour} sec` 
           if(inRoomPctHour > 80){              
             inRoomHour.style.right = "45%"
             // inBedHour.style.color = "white"

@@ -154,7 +154,7 @@ function addCard(d) {
     //   `;
     secDiv.innerHTML = `<i id="popper-firstDiv" style="cursor: pointer;" class="bi bi-three-dots icon-popper-${d.ROOM_UUID}"  aria-describedby="tooltip-popper"></i>
     <div id="tooltip-popper" class="tooltip-popper-${d.ROOM_UUID}" role="tooltip-popper">
-      <i style='color: green; cursor: pointer;float: left; width: 50%; margin-top: auto;' class='bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"></i>&nbsp;&nbsp;&nbsp;<i style='color: red; cursor: pointer;float: left; width: 50%; margin-top: auto;' class='bi bi-trash3' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"></i>
+      <i style='color: green; cursor: pointer;float: left; width: 50%; margin-top: 4px;' class='bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"></i>&nbsp;&nbsp;&nbsp;<i style='color: red; cursor: pointer;float: left; width: 50%; margin-top: 4px;' class='bi bi-trash3' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"></i>
     <div id="arrow-popper" data-popper-arrow></div>
     </div>`;
   }

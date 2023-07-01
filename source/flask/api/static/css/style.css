@@ -903,6 +903,7 @@ input[type=submit] {
     font-size: 13px;
     border-radius: 4px;
     display: none;
+    z-index: 5;
 }
 #tooltip-popper[data-show] {
     display: inline-flex;

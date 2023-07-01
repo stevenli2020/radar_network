@@ -103,7 +103,7 @@ def registerNewDevice(req):
         cursor.execute("INSERT INTO Gaitmetrics.DEVICES (MAC, NAME, TYPE, STATUS, DEPLOY_X, DEPLOY_Y, DEPLOY_Z, ROT_X, ROT_Y, ROT_Z, DESCRIPTION) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (req['MAC'], req['NAME'], req['DEVICE_TYPE'], 'DISCONNECTED', req['DEPLOY_X'], req['DEPLOY_Y'], req['DEPLOY_Z'], req['ROT_X'], req['ROT_Y'], req['ROT_Z'], req['DESCRIPTION']))
         connection.commit()
         result["DATA"].append({"MESSAGE": "Device "+req['MAC']+" registered succefully"})  
-    Add_Vernemq_db(req['MAC'])      
+    # Add_Vernemq_db(req['MAC'])      
     cursor.close()
     connection.close()
     

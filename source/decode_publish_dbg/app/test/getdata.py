@@ -1,5 +1,6 @@
 from collections import defaultdict
 import numpy as np 
+import time
 
 def getVitalData(CONN, PARAM):
     cursor = CONN.cursor()
@@ -24,7 +25,25 @@ def getVitalData(CONN, PARAM):
         # print("No data")
         result["ERROR"].append({'Message': 'No data!'})
         return result
-    result['DATA'].append(dbresult)
+    query_data = dbresult
+    # print(query_data[0][0])
+    time_format = "%Y-%m-%d %H:%M"
+    time_start = int(time.mktime(time.strptime(query_data[0][0], time_format)))
+    time_end   = int(time.mktime(time.strptime(query_data[-1][0], time_format)))
+    print(time_start,time_end)
+    data_obj = {}
+    for T in range(time_start, time_end, 60):
+        data_obj[T] = [0,0]
+    print(data_obj)
+    
+    
+    
+    
+    
+    
+    
+    
+    result['DATA'].append(query_data)
     sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, PARAM['TIME'])
     cursor.execute(sql)
     dbresult = cursor.fetchone() 

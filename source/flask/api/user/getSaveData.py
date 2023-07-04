@@ -100,11 +100,26 @@ def getHistOfVitalData(data):
         result["ERROR"].append({'Message': 'No data!'})
         return result 
     query_data = dbresult
-    
-    # print(query_data)
-    
-    
-    result['DATA'].append(query_data)
+    time_format = "%Y-%m-%d %H:%M"
+    time_start = int(time.mktime(time.strptime(query_data[0][0], time_format)))
+    time_end   = int(time.mktime(time.strptime(query_data[-1][0], time_format)))
+    result["TIME_START"].append(time_start)
+    # print(time_start,time_end)
+    data_obj = {}
+    for T in range(time_start, time_end, 60):
+        data_obj[T] = [0,0]
+    # print(data_obj)
+    for d in query_data:
+        t = int(time.mktime(time.strptime(d[0], time_format)))
+        data_obj[t] = [d[1],d[2]]
+    new_query_data = []
+    # new_query_data_str = ""
+    for t, d in data_obj.items():
+        # new_query_data.append([datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M"), d[0], d[1]])
+        # new_query_data_str = new_query_data_str + str(d[0]) + ',' + str(d[1])+';'
+        new_query_data.append(str(d[0]) + ',' + str(d[1]))
+    result['DATA'].append(';'.join(new_query_data))
+    # result['DATA'].append(new_query_data_str)
     sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, data['TIME'])
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
@@ -230,14 +245,14 @@ def getAnalyticDataofPosture(data):
             List = "IN ('"+db[0]+"','"+db[1]+"')"
         else:
             List = "IN ('"+db[0]+"')"
-    except:
+    except: 
         # print("No data related to room name")
         result["ERROR"].append({'Message': 'No data related to room name!'})
         return result
     
     TIME_RANGE = ['HOUR','DAY','WEEK','MONTH']
-    for T in TIME_RANGE:
-        sql = "SELECT COUNT(CASE WHEN IR>0 THEN 1 END) AS IR_COUNT,COUNT(CASE WHEN IB>0 THEN 1 END) AS IB_COUNT FROM (SELECT DATE_FORMAT(TIMESTAMP, '%%Y-%%m-%%d %%H:%%i') AS T, SUM(OBJECT_LOCATION), (SUM(OBJECT_LOCATION))>0 AS IR, (SUM(IN_BED))>0 AS IB FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 %s) AND OBJECT_LOCATION IS NOT NULL GROUP BY T) AS T1" % (List, T)
+    for T in TIME_RANGE: 
+        sql = "SELECT COUNT(CASE WHEN IR>0 THEN 1 END) AS IR_COUNT,COUNT(CASE WHEN IB>0 THEN 1 END) AS IB_COUNT FROM (SELECT DATE_FORMAT(TIMESTAMP, '%%Y-%%m-%%d %%H:%%i') AS T, (SUM(OBJECT_LOCATION))>0 AS IR, (SUM(IN_BED))>0 AS IB FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 %s) AND OBJECT_LOCATION IS NOT NULL GROUP BY T) AS T1" % (List, T)
         cursor.execute(sql)
         dbresult = cursor.fetchall() 
         # print(dbresult)
@@ -326,7 +341,7 @@ def getSummaryDataofPosition(data):
     dbresult = cursor.fetchone()    
     X_RANGE = int(dbresult[0])
     Y_RANGE = int(dbresult[1])  
-        
+    
     sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
@@ -341,7 +356,7 @@ def getSummaryDataofPosition(data):
     X_MIN =  int(dbresult[2]*N)
     Y_MIN =  int(dbresult[3]*N)
 
-    HMAP = np.zeros((X_RANGE*2, Y_RANGE*2))
+    HMAP = np.zeros((X_RANGE*3, Y_RANGE*3))
 
     sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
     # print(sql)
@@ -350,8 +365,8 @@ def getSummaryDataofPosition(data):
     cursor.close()
     connection.close() 
     # print("second sql time: %s s"%(time.time()-start_time))
-    print(dbresult)
-    
+    # print(dbresult)
+    # result["_DBG"]=dbresult
     if not dbresult:
         # print("No data")
         result["ERROR"].append({'DATA': 'No Data!'})
@@ -360,10 +375,12 @@ def getSummaryDataofPosition(data):
         # print(row)
         X,Y = row[0].split(",")   
         CNT = int(row[1])
+        
         # print(int(X), int(Y), X_SHIFT+int(X), Y_SHIFT+int(Y), CNT)
         try:
+            # result["_DBG"].append([X,Y,CNT])
             HMAP[X_RANGE+int(X)][Y_RANGE+int(Y)] += CNT
-        except:
+        except Exception as e:
             continue
     # print(HMAP)
     # Apply Gaussian blur with a specified sigma value
@@ -376,12 +393,14 @@ def getSummaryDataofPosition(data):
                 VALUE = round(NEW_HMAP[X+X_RANGE,Y+Y_RANGE],2)
             except:
                 VALUE = 0
+            # result["_DBG"].append(VALUE)
             if VALUE > 0.03 * MAX:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     DATA.append([X_RANGE, Y_RANGE, 0]) 
     DATA.append([0, 0, 0]) 
     result["DATA"].append(DATA)
     result["MAX"].append(MAX)
+    
     return result
 
 

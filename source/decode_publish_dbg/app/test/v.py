@@ -28,11 +28,11 @@ def getAnalyticDataofPosture(data):
     result = getPostureData(connection, data)
     return result  
     
-DATA = {'ROOM_UUID':'e06ad8b752764b19ae832aaac1330285','TIME':'1 HOUR'}
-print(getHistOfVitalData(DATA)["AVG"])
+DATA = {'ROOM_UUID':'e06ad8b752764b19ae832aaac1330285','TIME':'1 DAY'}
+print(getHistOfVitalData(DATA))
 
-# DATA = {'DEVICEMAC':'F412FAE26208','TIME':'DAY'}   
-# print(getSummaryDataofPosition(DATA)["DATA"][0])  
+# DATA = {'DEVICEMAC':'F412FAE26244','TIME':'DAY'}   
+# print(getSummaryDataofPosition(DATA)["DATA"])  
  
 # DATA = {'ROOM_UUID':'e06ad8b752764b19ae832aaac1330285','TIME':'DAY'}   
 # print(getAnalyticDataofPosture(DATA)) 

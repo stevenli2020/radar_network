@@ -717,29 +717,42 @@ async function getHistOfVital(t) {
         histVitalTime = []
         if ("DATA" in data) {          
           if (data.DATA.length > 0) {
-            data.DATA[0].forEach((d) => {
-              // categories.shift();
-              // console.log(d)
-              if (t == "1 HOUR" || t == "1 DAY") {
-                histVitalTime.push(d[0].substring(11, 16));
-              } else if (t == "1 WEEK" || t == "1 MONTH") {
-                histVitalTime.push(d[0].substring(0, 16));
-              }
-              // vitalData.shift();
-              // vitalData.push(d.HEART_RATE);
-              // vitalData2.push(d.BREATH_RATE);
-              if(d[1]<heartUpperAvg && d[1]>heartLowerAvg){
-                histVitalData.push({value: d[1], itemStyle: { color: brightGreen}});
-              } else {
-                histVitalData.push({value: d[1], itemStyle: { color: brightRed}});
-              }
-              if(d[2]<breathUpperAvg && d[2]>breathLowerAvg){
-                // vitalData2.shift();
-                histVitalData2.push({value: d[2], itemStyle: { color: brightGreen}});
-              } else {
-                histVitalData2.push({value: d[2], itemStyle: { color: brightRed}});
-              }
-            });
+			idx = 0;
+			_idx = 0;
+			data_str = data.DATA[0];
+			time = parseInt(data.TIME_START);
+			while(idx != -1){
+				idx = data_str.indexOf(";", idx+2);
+				d_str = data_str.substr(_idx,idx-_idx);
+				_idx = idx+1;
+				d = [0,0,0];
+				if (d_str!=""){
+					d_arr = d_str.split(",");
+					d[0] = new Date(time*1000).toISOString().slice(0,16).replace('T', ' ');					
+					time = time + 60;
+					d[1] = parseFloat(d_arr[0]);
+					d[2] = parseFloat(d_arr[1]);
+					// console.log(time, d);
+					if (t == "1 HOUR" || t == "1 DAY") {
+						histVitalTime.push(d[0].substring(11, 16));
+					} else if (t == "1 WEEK" || t == "1 MONTH") {
+						histVitalTime.push(d[0].substring(0, 16));
+					}					
+						
+					if(d[1]<heartUpperAvg && d[1]>heartLowerAvg){
+						histVitalData.push({value: d[1], itemStyle: { color: brightGreen}});
+					} else {
+						histVitalData.push({value: d[1], itemStyle: { color: brightRed}});
+					}
+					if(d[2]<breathUpperAvg && d[2]>breathLowerAvg){
+						// vitalData2.shift();
+						histVitalData2.push({value: d[2], itemStyle: { color: brightGreen}});
+					} else {
+						histVitalData2.push({value: d[2], itemStyle: { color: brightRed}});
+					}					
+					
+				}
+			}
             // console.log(`heartRate: ${heartRate} \n breathRate: ${breathRate} \n time: ${timeStamp}`)
             // heartRateData.innerText = data.AVG[0][0]?data.AVG[0][0]+" (Avg)":0 
             // breathRateData.innerText = data.AVG[0][1]?data.AVG[0][1]+" (Avg)":0 

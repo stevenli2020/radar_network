@@ -1,6 +1,7 @@
 from collections import defaultdict
 import numpy as np 
 import time
+from datetime import datetime
 
 def getVitalData(CONN, PARAM):
     cursor = CONN.cursor()
@@ -30,20 +31,21 @@ def getVitalData(CONN, PARAM):
     time_format = "%Y-%m-%d %H:%M"
     time_start = int(time.mktime(time.strptime(query_data[0][0], time_format)))
     time_end   = int(time.mktime(time.strptime(query_data[-1][0], time_format)))
-    print(time_start,time_end)
+    # print(time_start,time_end)
     data_obj = {}
     for T in range(time_start, time_end, 60):
         data_obj[T] = [0,0]
-    print(data_obj)
-    
-    
-    
-    
-    
-    
-    
-    
-    result['DATA'].append(query_data)
+    # print(data_obj)
+    for d in query_data:
+        t = int(time.mktime(time.strptime(d[0], time_format)))
+        data_obj[t] = [d[1],d[2]]
+    # print(data_obj)
+    prev_data_available = True
+    new_query_data = []
+    for t, d in data_obj.items():
+        # new_query_data.append([datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M"), d[0], d[1]])     
+        new_query_data.append([d[0], d[1]])     
+    result['DATA'].append(new_query_data)
     sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, PARAM['TIME'])
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
@@ -94,8 +96,7 @@ def getPositionData(connection, data):
     X_MIN =  int(dbresult[2]*N)
     Y_MIN =  int(dbresult[3]*N)
 
-    HMAP = np.zeros((X_RANGE*2, Y_RANGE*2))
-
+    HMAP = np.zeros((X_RANGE*3, Y_RANGE*3))
     sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
     # print(sql)
     cursor.execute(sql)
@@ -103,7 +104,7 @@ def getPositionData(connection, data):
     cursor.close()
     connection.close() 
     # print("second sql time: %s s"%(time.time()-start_time))
-    print(dbresult)
+    # print(dbresult)
     
     if not dbresult:
         # print("No data")
@@ -129,6 +130,7 @@ def getPositionData(connection, data):
                 VALUE = round(NEW_HMAP[X+X_RANGE,Y+Y_RANGE],2)
             except:
                 VALUE = 0
+            result["_DBG"].append(VALUE)
             if VALUE > 0.03 * MAX:
                 DATA.append([round(X, 1),round(Y, 1), VALUE])
     DATA.append([X_RANGE, Y_RANGE, 0]) 

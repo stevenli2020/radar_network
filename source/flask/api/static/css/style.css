@@ -78,7 +78,7 @@
 #multiBarHori {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     border-radius: 25px;
-    padding: 1%;
+    /* padding: 1%; */
 }
 
 /* tooltip */
@@ -392,7 +392,7 @@ body {
 
 
 .ag-courses-item_date-box {
-    /* font-size: 18px; */
+    font-size: 13px;
     /* color: #FFF; */
     color: #000;
     z-index: 2;
@@ -493,6 +493,10 @@ body {
         left: 22% !important;
     }
 
+    #custom-loc-tab-pane{
+        top: 88% !important;
+    }
+
 }
 
 @media only screen and (max-width: 450px) {
@@ -529,6 +533,10 @@ body {
     }
     #heart-rate-title, #heart-rate-data, #breath-rate-title, #breath-rate-data {
         font-size: medium !important;
+    }
+    #custom-loc-tab-pane{
+        top: 88% !important;
+        left: 20% !important;
     }
 }
 
@@ -832,6 +840,26 @@ input[type=submit] {
     top: 65%;
     left: 32%;
 }
+#average-heart-rate-data{
+    position: absolute;
+    top: 45%;
+    left: 15%;
+}
+#average-breath-rate-data{
+    position: absolute;
+    top: 85%;
+    left: 15%;
+}
+#custom-vital-tab-pane{
+    position: absolute;
+    z-index: 5;
+    width: 55%;
+    right: 1%;
+}
+#vital-datetime-input, #loc-datetime-input{
+    background-color: transparent;
+    color: #86ff07;
+}
 /* wrap text in table */
 #wrap-text-table-phone{
     word-break: break-word;
@@ -947,5 +975,12 @@ input[type=submit] {
     position: absolute;
     z-index: 1;
     left: 30%;
+}
+#custom-loc-tab-pane{
+    position: absolute;
+    z-index: 5;
+    top: 7%;
+    left: 30%;
+    width: 55%;
 }
 /* End ul tab heatmap */

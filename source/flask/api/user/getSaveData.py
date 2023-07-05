@@ -83,6 +83,7 @@ def getHistOfVitalData(data):
     # print(sql)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
+    
     # print(dbresult)
     try:
         db = dbresult[0].split(',')
@@ -91,8 +92,11 @@ def getHistOfVitalData(data):
         # print("No data related to room name")
         result["ERROR"].append({'Message': 'No data related to room name!'})
         return result
-    sql = "SELECT DATE_FORMAT(TIMESTAMP, \'%%Y-%%m-%%d %%H:%%i\') AS T, ROUND(AVG(HEART_RATE),1) AS HR, ROUND(AVG(BREATH_RATE),1) AS BR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s) AND HEART_RATE IS NOT NULL AND HEART_RATE !=0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE !=0 GROUP BY T ORDER BY `T` ASC;" %(List, data['TIME'])
-    # print(sql)
+    if data['CUSTOM'] != 1:
+        sql = "SELECT DATE_FORMAT(TIMESTAMP, \'%%Y-%%m-%%d %%H:%%i\') AS T, ROUND(AVG(HEART_RATE),1) AS HR, ROUND(AVG(BREATH_RATE),1) AS BR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s) AND HEART_RATE IS NOT NULL AND HEART_RATE !=0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE !=0 GROUP BY T ORDER BY `T` ASC;" %(List, data['TIME'])
+    else: 
+        sql = "SELECT DATE_FORMAT(TIMESTAMP, \'%%Y-%%m-%%d %%H:%%i\') AS T, ROUND(AVG(HEART_RATE),1) AS HR, ROUND(AVG(BREATH_RATE),1) AS BR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP BETWEEN '%s' AND '%s' AND HEART_RATE IS NOT NULL AND HEART_RATE !=0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE !=0 GROUP BY T ORDER BY `T` ASC;" %(List, data['TIMESTART'], data['TIMEEND'])
+    print(sql)
     cursor.execute(sql)
     dbresult = cursor.fetchall() 
     if not dbresult:
@@ -100,9 +104,15 @@ def getHistOfVitalData(data):
         result["ERROR"].append({'Message': 'No data!'})
         return result 
     query_data = dbresult
+    time_start = 0
+    time_end = 0
     time_format = "%Y-%m-%d %H:%M"
-    time_start = int(time.mktime(time.strptime(query_data[0][0], time_format)))
-    time_end   = int(time.mktime(time.strptime(query_data[-1][0], time_format)))
+    if data['CUSTOM'] != 1:
+        time_start = int(time.mktime(time.strptime(query_data[0][0], time_format)))
+        time_end   = int(time.mktime(time.strptime(query_data[-1][0], time_format)))
+    else:
+        time_start = int(time.mktime(time.strptime(data['TIMESTART'], time_format)))
+        time_end   = int(time.mktime(time.strptime(data['TIMEEND'], time_format)))
     result["TIME_START"].append(time_start)
     # print(time_start,time_end)
     data_obj = {}
@@ -120,7 +130,10 @@ def getHistOfVitalData(data):
         new_query_data.append(str(d[0]) + ',' + str(d[1]))
     result['DATA'].append(';'.join(new_query_data))
     # result['DATA'].append(new_query_data_str)
-    sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, data['TIME'])
+    if data['CUSTOM'] != 1: 
+        sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, data['TIME'])
+    else:
+        sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP BETWEEN '%s' AND '%s';" %(List, data['TIMESTART'], data['TIMEEND'])
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
     result["AVG"].append(dbresult)
@@ -333,16 +346,18 @@ def getSummaryDataofPosition(data):
         timeRange = "1 DAY"
     elif t == "WEEK":
         timeRange = "1 WEEK"
-    else:
-        timeRange = "1 MONTH"   
+    elif t == "MONTH":
+        timeRange = "1 MONTH" 
 
     sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE FROM ROOMS_DETAILS RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N, N, data['DEVICEMAC'])
     cursor.execute(sql)
     dbresult = cursor.fetchone()    
     X_RANGE = int(dbresult[0])
     Y_RANGE = int(dbresult[1])  
-    
-    sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
+    if t == "CUSTOM":
+        sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'])
+    else:
+        sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
     # print(dbresult)
@@ -357,8 +372,10 @@ def getSummaryDataofPosition(data):
     Y_MIN =  int(dbresult[3]*N)
 
     HMAP = np.zeros((X_RANGE*3, Y_RANGE*3))
-
-    sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
+    if t == "CUSTOM":
+        sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'])
+    else:
+        sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
     # print(sql)
     cursor.execute(sql)
     dbresult = cursor.fetchall() 

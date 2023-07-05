@@ -236,6 +236,7 @@ function addCard(d) {
   const showEvents = ["mouseenter", "focus"];
   // const hideEvents = ["mouseleave", "blur"];
   const hideEvents = ["click"];
+  // const toggleEvents = ["click"];
 
   showEvents.forEach((event) => {
     popcornPopper.addEventListener(event, show);
@@ -244,6 +245,14 @@ function addCard(d) {
   hideEvents.forEach((event) => {
     popcornPopper.addEventListener(event, hide);
   });
+
+  // toggleEvents.forEach((event) => {
+  //   console.log(tooltipPopper.hasAttribute('data-show'))
+  //   if(tooltipPopper.hasAttribute('data-show'))
+  //     popcornPopper.addEventListener(event, hide);
+  //   else
+  //     popcornPopper.addEventListener(event, show);
+  // });
 }
 
 

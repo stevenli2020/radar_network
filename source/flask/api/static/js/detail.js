@@ -25,6 +25,9 @@ const weekHistVital = document.getElementById("week-vital-tab");
 const monthHistVital = document.getElementById("month-vital-tab");
 const heartRateData = document.getElementById('heart-rate-data')
 const breathRateData = document.getElementById('breath-rate-data')
+const avgHeartRateData = document.getElementById('average-heart-rate-data')
+const avgBreathRateData = document.getElementById('average-breath-rate-data')
+const customVitalTime = document.getElementById('vital-datetime-input')
 // history of posture
 // const hourHistPosture = document.getElementById("hour-posture-tab");
 // const dayHistPosture = document.getElementById("day-posture-tab");
@@ -297,12 +300,24 @@ mac = window.location.href.split("=")[1];
 homeMacVal = mac;
 var hourlyPos;
 
-function getHistorOfPos(t, XD, YD) {
+function getHistorOfPos(t, startT=null, endT=null) {
   // console.time()
-  lData = {
-    DEVICEMAC: macPos,
-    TIME: t,
-  };
+  lData = {}
+  if(t == "CUSTOM"){
+    lData = {
+      DEVICEMAC: macPos,
+      TIMESTART: startT,
+      TIMEEND: endT,
+      TIME: "CUSTOM"
+    };
+  } else {
+    lData = {
+      DEVICEMAC: macPos,
+      TIME: t,
+      CUSTOM: 0
+    };
+  }
+  
   Object.assign(lData, RequestData());
   hisotryLocHeatmapChart.showLoading();
   fetch(`${host}/api/getSummaryPositionData`, {
@@ -466,8 +481,8 @@ async function getAnalyticData(){
       // console.log(data.DATA[0]['IN_ROOM_PCT'], data.DATA[0]['IN_BED_PCT']);
       multiBarHoriChart.hideLoading();
       if (data.DATA) { 
-        let inBedSecHour = data.DATA[0]['IN_BED_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_BED_SECONDS_HOUR']
-        let inRoomSecHour = data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_ROOM_SECONDS_HOUR']
+        let inBedSecHour = data.DATA[0]['IN_BED_SECONDS_HOUR'] > 3600 ? 3240 : data.DATA[0]['IN_BED_SECONDS_HOUR']
+        let inRoomSecHour = data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 3600 ? 3240 : data.DATA[0]['IN_ROOM_SECONDS_HOUR']
         let inBedSecDay = secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hr")
         let inRoomSecDay = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hr")
         let inBedSecWeek = secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 168 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hr")
@@ -547,7 +562,7 @@ async function getAnalyticData(){
                 formatter: `{c} %`,
               },
               data: [inBedPctMonth, inBedPctWeek, inBedPctDay, inBedPctHour],
-              // {value: d[1], itemStyle: { color: brightRed}}
+              // {value: d[1], itemStyle: { color: brightOrange}}
             },
             {
               name: "In Room",
@@ -558,7 +573,7 @@ async function getAnalyticData(){
                 formatter: `{c} %`,
               },
               data: [inRoomPctMonth, inRoomPctWeek, inRoomPctDay, inRoomPctHour],
-              // {value: d[1], itemStyle: { color: brightRed}}
+              // {value: d[1], itemStyle: { color: brightOrange}}
             }
           ],
         })
@@ -681,13 +696,24 @@ function convertStrtoInt(arr) {
 
 
 
-async function getHistOfVital(t) {
+async function getHistOfVital(t, tStart=null, tEnd=null) {
+  vitalChart.showLoading();
   if(t != "REALTIME"){
-    vData = {
-      CUSTOM: 0,
-      TIME: t,
-      ROOM_UUID: roomI,
-    };
+    vData = {}
+    if(t != "CUSTOM"){
+      vData = {
+        CUSTOM: 0,
+        TIME: t,
+        ROOM_UUID: roomI,
+      };
+    } else {
+      vData = {
+        CUSTOM: 1,
+        TIMESTART: tStart,
+        TIMEEND: tEnd,
+        ROOM_UUID: roomI,
+      };
+    }    
     Object.assign(vData, RequestData());
     await fetch(`${host}/api/getHistOfVital`, {
       method: "POST",
@@ -707,52 +733,54 @@ async function getHistOfVital(t) {
         if ("AVG" in data){
           avgHeart = data.AVG[0][0]
           avgBreath = data.AVG[0][1]
-          heartLowerAvg = data.AVG[0][0] - (data.AVG[0][0]*0.1)
-          heartUpperAvg = data.AVG[0][0] + (data.AVG[0][0]*0.3)
-          breathLowerAvg = data.AVG[0][1] - (data.AVG[0][0]*0.1)
-          breathUpperAvg = data.AVG[0][1] + (data.AVG[0][0]*0.1)
+          heartLowerAvg = data.AVG[0][0] - (data.AVG[0][0]*0.2)
+          heartUpperAvg = data.AVG[0][0] + (data.AVG[0][0]*0.2)
+          breathLowerAvg = data.AVG[0][1] - (data.AVG[0][0]*0.2)
+          breathUpperAvg = data.AVG[0][1] + (data.AVG[0][0]*0.2)
+          avgHeartRateData.innerHTML = `Average: ${data.AVG[0][0]} bps`
+          avgBreathRateData.innerHTML = `Average: ${data.AVG[0][1]} bps`
         }
         histVitalData = []
         histVitalData2 = []
         histVitalTime = []
         if ("DATA" in data) {          
           if (data.DATA.length > 0) {
-			idx = 0;
-			_idx = 0;
-			data_str = data.DATA[0];
-			time = parseInt(data.TIME_START);
-			while(idx != -1){
-				idx = data_str.indexOf(";", idx+2);
-				d_str = data_str.substr(_idx,idx-_idx);
-				_idx = idx+1;
-				d = [0,0,0];
-				if (d_str!=""){
-					d_arr = d_str.split(",");
-					d[0] = new Date(time*1000).toISOString().slice(0,16).replace('T', ' ');					
-					time = time + 60;
-					d[1] = parseFloat(d_arr[0]);
-					d[2] = parseFloat(d_arr[1]);
-					// console.log(time, d);
-					if (t == "1 HOUR" || t == "1 DAY") {
-						histVitalTime.push(d[0].substring(11, 16));
-					} else if (t == "1 WEEK" || t == "1 MONTH") {
-						histVitalTime.push(d[0].substring(0, 16));
-					}					
-						
-					if(d[1]<heartUpperAvg && d[1]>heartLowerAvg){
-						histVitalData.push({value: d[1], itemStyle: { color: brightGreen}});
-					} else {
-						histVitalData.push({value: d[1], itemStyle: { color: brightRed}});
-					}
-					if(d[2]<breathUpperAvg && d[2]>breathLowerAvg){
-						// vitalData2.shift();
-						histVitalData2.push({value: d[2], itemStyle: { color: brightGreen}});
-					} else {
-						histVitalData2.push({value: d[2], itemStyle: { color: brightRed}});
-					}					
-					
-				}
-			}
+            idx = 0;
+            _idx = 0;
+            data_str = data.DATA[0];
+            time = parseInt(data.TIME_START);
+            while(idx != -1){
+              idx = data_str.indexOf(";", idx+2);
+              d_str = data_str.substr(_idx,idx-_idx);
+              _idx = idx+1;
+              d = [0,0,0];
+              if (d_str!=""){
+                d_arr = d_str.split(",");
+                d[0] = new Date((time*1000)+localGMTVal).toISOString().slice(0,16).replace('T', ' ');					
+                time = time + 60;
+                d[1] = parseFloat(d_arr[0]);
+                d[2] = parseFloat(d_arr[1]);
+                // console.log(time, d);
+                if (t == "1 HOUR" || t == "1 DAY") {
+                  histVitalTime.push(d[0].substring(11, 16));
+                } else if (t == "1 WEEK" || t == "1 MONTH" || t == "CUSTOM") {
+                  histVitalTime.push(d[0].substring(0, 16));
+                }			
+                  
+                if(d[1]<heartUpperAvg && d[1]>heartLowerAvg){
+                  histVitalData.push({value: d[1], itemStyle: { color: brightGreen}});
+                } else {
+                  histVitalData.push({value: d[1], itemStyle: { color: brightOrange}});
+                }
+                if(d[2]<breathUpperAvg && d[2]>breathLowerAvg){
+                  // vitalData2.shift();
+                  histVitalData2.push({value: d[2], itemStyle: { color: brightGreen}});
+                } else {
+                  histVitalData2.push({value: d[2], itemStyle: { color: brightOrange}});
+                }					
+                
+              }
+            }
             // console.log(`heartRate: ${heartRate} \n breathRate: ${breathRate} \n time: ${timeStamp}`)
             // heartRateData.innerText = data.AVG[0][0]?data.AVG[0][0]+" (Avg)":0 
             // breathRateData.innerText = data.AVG[0][1]?data.AVG[0][1]+" (Avg)":0 
@@ -787,27 +815,27 @@ async function getHistOfVital(t) {
                 focus: "series",
               },
               data: histVitalData,    
-              markLine: {
-                silent: true,
-                lineStyle: {
-                  color: '#fff'
-                },
-                data: [
-                  {
-                    yAxis: heartLowerAvg
-                  },
-                  {
-                    name: "Avg",
-                    yAxis: avgHeart,
-                    label: {
-                      formatter: "Avg"
-                    }
-                  },
-                  {
-                    yAxis: heartUpperAvg
-                  }
-                ]
-              }              
+              // markLine: {
+              //   silent: true,
+              //   lineStyle: {
+              //     color: '#fff'
+              //   },
+              //   data: [
+              //     {
+              //       yAxis: heartLowerAvg
+              //     },
+              //     {
+              //       name: "Avg",
+              //       yAxis: avgHeart,
+              //       label: {
+              //         formatter: "Avg"
+              //       }
+              //     },
+              //     {
+              //       yAxis: heartUpperAvg
+              //     }
+              //   ]
+              // }              
             },
             {
               name: "Breath Waveform",
@@ -819,27 +847,27 @@ async function getHistOfVital(t) {
               data: histVitalData2,
               xAxisIndex: 1,
               yAxisIndex: 1,  
-              markLine: {
-                silent: true,
-                lineStyle: {
-                  color: '#fff'
-                },
-                data: [
-                  {
-                    yAxis: breathLowerAvg
-                  },
-                  {
-                    name: "Avg",
-                    yAxis: avgBreath,
-                    label: {
-                      formatter: "Avg"
-                    }
-                  },
-                  {
-                    yAxis: breathUpperAvg
-                  }
-                ]
-              }                
+              // markLine: {
+              //   silent: true,
+              //   lineStyle: {
+              //     color: '#fff'
+              //   },
+              //   data: [
+              //     {
+              //       yAxis: breathLowerAvg
+              //     },
+              //     {
+              //       name: "Avg",
+              //       yAxis: avgBreath,
+              //       label: {
+              //         formatter: "Avg"
+              //       }
+              //     },
+              //     {
+              //       yAxis: breathUpperAvg
+              //     }
+              //   ]
+              // }                
             },
           ],
         });
@@ -876,20 +904,20 @@ async function getHistOfVital(t) {
             focus: "series",
           },
           data: vitalData,
-          markLine: {
-            silent: true,
-            lineStyle: {
-              color: '#fff'
-            },
-            data: [
-              {
-                yAxis: heartLowerAvg
-              },
-              {
-                yAxis: heartUpperAvg
-              }
-            ]
-          }
+          // markLine: {
+          //   silent: true,
+          //   lineStyle: {
+          //     color: '#fff'
+          //   },
+          //   data: [
+          //     {
+          //       yAxis: heartLowerAvg
+          //     },
+          //     {
+          //       yAxis: heartUpperAvg
+          //     }
+          //   ]
+          // }
         },
         {
           name: "Breathing Rate",
@@ -901,20 +929,20 @@ async function getHistOfVital(t) {
           data: vitalData2,
           xAxisIndex: 1,
           yAxisIndex: 1,
-          markLine: {
-            silent: true,
-            lineStyle: {
-              color: '#fff'
-            },
-            data: [
-              {
-                yAxis: breathLowerAvg
-              },
-              {
-                yAxis: breathUpperAvg
-              }
-            ]
-          }
+          // markLine: {
+          //   silent: true,
+          //   lineStyle: {
+          //     color: '#fff'
+          //   },
+          //   data: [
+          //     {
+          //       yAxis: breathLowerAvg
+          //     },
+          //     {
+          //       yAxis: breathUpperAvg
+          //     }
+          //   ]
+          // }
         },
       ],
     });
@@ -1043,35 +1071,55 @@ async function getSelectedData() {
 }
 
 // new DateTimePickerComponent.DateTimeRangePicker('start', 'end');
-// $(function () {
-//   $('input[name="datetimes"]').daterangepicker({
-//     timePicker: true,
-//     showDropdowns: true,
-//     minYear: 1901,
-//     maxYear: parseInt(moment().format("YYYY"), 10),
-//     startDate: moment().startOf("hour"),
-//     endDate: moment().startOf("hour").add(32, "hour"),
-//     // timePicker24Hour: true,
-//     locale: {
-//       format: "YYYY/M/DD H:mm:ss",
-//     },
-//   });
-// });
+$(function () {
+  $('input[name="loc-datetimes"]').daterangepicker({
+    timePicker: true,
+    showDropdowns: true,
+    minYear: 1901,
+    maxYear: parseInt(moment().format("YYYY"), 10),
+    startDate: moment().startOf("hour"),
+    endDate: moment().startOf("hour").add(32, "hour"),
+    // timePicker24Hour: true,
+    locale: {
+      format: "YYYY/M/DD H:mm",
+    },
+  }, function(start, end, label){
+    console.log("A new date selection was made: " + start.format('YYYY-MM-DD H:mm') + ' to ' + end.format('YYYY-MM-DD H:mm'));
+    getHistorOfPos("CUSTOM", start.format('YYYY-MM-DD H:mm'), end.format('YYYY-MM-DD H:mm'))
+  });
+  $('input[name="vital-datetimes"]').daterangepicker({
+    timePicker: true,
+    showDropdowns: true,
+    minYear: 1901,
+    maxYear: parseInt(moment().format("YYYY"), 10),
+    startDate: moment().startOf("hour"),
+    endDate: moment().startOf("hour").add(32, "hour"),
+    // timePicker24Hour: true,
+    locale: {
+      format: "YYYY/M/DD H:mm",
+    },
+  }, function(start, end, label){
+    console.log("A new date selection was made: " + start.format('YYYY-MM-DD H:mm') + ' to ' + end.format('YYYY-MM-DD H:mm'));
+    getHistOfVital("CUSTOM", start.format('YYYY-MM-DD H:mm'), end.format('YYYY-MM-DD H:mm'))
+  });
+});
+
+
 
 hourHistLoc.addEventListener("click", function () {
-  getHistorOfPos("HOUR", roomXD, roomYD);
+  getHistorOfPos("HOUR");
 });
 
 dayHistLoc.addEventListener("click", function () {
-  getHistorOfPos("DAY", roomXD, roomYD);
+  getHistorOfPos("DAY");
 });
 
 weekHistLoc.addEventListener("click", function () {
-  getHistorOfPos("WEEK", roomXD, roomYD);
+  getHistorOfPos("WEEK");
 });
 
 monthHistLoc.addEventListener("click", function () {
-  getHistorOfPos("MONTH", roomXD, roomYD);
+  getHistorOfPos("MONTH");
 });
 
 realtimeHistVital.addEventListener("click", function () {

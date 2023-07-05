@@ -12,9 +12,13 @@ const vitalType = 3
 const brightGreen = "#32d616"
 const brightRed = "#eb0a0a"
 const skyBlue = "#0360f2"
+const brightOrange = "#fa9302"
 // popup message modal
 const popupMessageTitle = document.getElementById("popupMessageTitle")
 const popupMessageBody = document.getElementById("popupMessageBody")
+const localDate = new Date()
+const localGMTVal = Math.abs(localDate.getTimezoneOffset() * 60 * 1000)
+// console.log(localGMTVal)
 
 if(checkLogin()){
   loginId.style.display = 'none'

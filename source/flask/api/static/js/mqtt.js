@@ -172,10 +172,10 @@ async function onMessageArrived(message) {
           //   ["x", "y", "z"],
           //   [radarX, radarY, radarZ],
           // ];
-          legendD = ["Radar"];
-          for (i = 1; i <= data[index].numSubjects; i++) {
-            legendD.push("Person " + i);
-          }
+          // legendD = ["Radar"];
+          // for (i = 1; i <= data[index].numSubjects; i++) {
+          //   legendD.push("Person " + i);
+          // }
           seriesD = [
             {
               name: "Radar",

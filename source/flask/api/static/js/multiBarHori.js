@@ -47,7 +47,9 @@ option = {
         }
     },
   },
-  legend: {},
+  legend: {
+    bottom: 5,
+  },
   // grid: {
   //   left: "3%",
   //   right: "4%",

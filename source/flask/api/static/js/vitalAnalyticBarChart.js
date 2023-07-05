@@ -179,22 +179,22 @@ optionLine = {
   ],
   dataZoom: [
     {
-      top: "3%",
-      start: 90,
+      top: "50%",
+      start: 0,
       end: 100,
-      xAxisIndex: [0],
+      xAxisIndex: [0, 1],
       textStyle: {
         color: "#fff"
       }
     },
-    {
-      start: 90,
-      end: 100,
-      xAxisIndex: [1],
-      textStyle: {
-        color: "#fff"
-      }
-    },
+    // {
+    //   start: 90,
+    //   end: 100,
+    //   xAxisIndex: [1],
+    //   textStyle: {
+    //     color: "#fff"
+    //   }
+    // },
   ],
   series: [
     {
@@ -205,20 +205,20 @@ optionLine = {
         focus: "series",
       },
       data: vitalData,
-      markLine: {
-        silent: true,
-        lineStyle: {
-          color: '#fff'
-        },
-        data: [
-          {
-            yAxis: 60
-          },
-          {
-            yAxis: 100
-          }
-        ]
-      }
+      // markLine: {
+      //   silent: true,
+      //   lineStyle: {
+      //     color: '#fff'
+      //   },
+      //   data: [
+      //     {
+      //       yAxis: 60
+      //     },
+      //     {
+      //       yAxis: 100
+      //     }
+      //   ]
+      // }
     },
     {
       name: "Breath Waveform",
@@ -230,20 +230,20 @@ optionLine = {
       data: vitalData2,
       xAxisIndex: 1,
       yAxisIndex: 1,
-      markLine: {
-        silent: true,
-        lineStyle: {
-          color: '#fff'
-        },
-        data: [
-          {
-            yAxis: 12
-          },
-          {
-            yAxis: 20
-          }
-        ]
-      }
+      // markLine: {
+      //   silent: true,
+      //   lineStyle: {
+      //     color: '#fff'
+      //   },
+      //   data: [
+      //     {
+      //       yAxis: 12
+      //     },
+      //     {
+      //       yAxis: 20
+      //     }
+      //   ]
+      // }
     }    
   ],
 };

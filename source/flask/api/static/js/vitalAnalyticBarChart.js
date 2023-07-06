@@ -38,7 +38,7 @@ function randR() {
   let len = 0;
   while (len < 100) {
     // res.push(+(Math.random() * 2).toFixed(1));
-    res.push(0);
+    res.push({value: 0, itemStyle: { color: brightOrange}});
     len++;
   }
   return res;

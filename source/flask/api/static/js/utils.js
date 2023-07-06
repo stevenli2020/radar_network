@@ -32,6 +32,15 @@ if(!checkAdmin()){
   saveDevicesId.style.display = 'none'
 }
 
+setInterval(() => {
+  if(checkLogin()){
+    loginId.style.display = 'none'
+  } else {
+    logoutId.style.display = 'none'
+    window.location = loginPage
+  }
+}, 15000)
+
 function getTimezoneOffset(dt) {
   function z(n){return (n<10? '0' : '') + n}
   var offset = new Date().getTimezoneOffset();

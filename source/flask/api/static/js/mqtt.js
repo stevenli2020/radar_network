@@ -6,28 +6,40 @@ var Mhost = "143.198.199.16";
 var port = 8888;
 var prevLe = 0;
 var msgInterval = 0;
-
+var vitalLenCounter = 0;
 
 function addLineChart(heartR, breathR){
   heartRateData.innerText = Math.round(heartR, 1)
   breathRateData.innerText = Math.round(breathR, 1)
   vitalData.shift();
-  if(Math.round(heartR, 1)<101 && Math.round(heartR, 1)>59){
+  if(vitalLenCounter <= 100){
+    vitalLenCounter++;
+  }
+  const averageHeartRate = Math.round(vitalData.reduce((total, next) => total + next.value, 0) / vitalLenCounter, 2);
+  const averageBreathRate = Math.round(vitalData2.reduce((total, next) => total + next.value, 0) / vitalLenCounter, 2);
+  avgHeartRateData.innerHTML = `Average: ${averageHeartRate} bps`
+  avgBreathRateData.innerHTML = `Average: ${averageBreathRate} bps`
+  // console.log(averageBreathRate, averageBreathRate)
+  // if(Math.round(heartR, 1)<101 && Math.round(heartR, 1)>59){
+  if(Math.round(heartR, 1)<(averageHeartRate+(averageHeartRate*0.2)) && Math.round(heartR, 1)>(averageHeartRate-(averageHeartRate*0.2))){
     vitalData.push({value: Math.round(heartR, 1), itemStyle: { color: brightGreen}});
   } else {
-    vitalData.push({value: Math.round(heartR, 1), itemStyle: { color: brightRed}});
+    vitalData.push({value: Math.round(heartR, 1), itemStyle: { color: brightOrange}});
   }
   // vitalData.push(Math.round(heartR, 1));
+  
   categories.shift();
   categories.push(getCutTimeWithMilli("Minute"));
   vitalData2.shift();
-  if(Math.round(breathR, 1)<21 && Math.round(breathR, 1)>11){
+  // if(Math.round(breathR, 1)<20 && Math.round(breathR, 1)>12){
+  if(Math.round(breathR, 1)<(averageBreathRate+(averageBreathRate*0.2)) && Math.round(breathR, 1)>(averageBreathRate-(averageBreathRate*0.2))){
     // vitalData2.shift();
     vitalData2.push({value: Math.round(breathR, 1), itemStyle: { color: brightGreen}});
   } else {
-    vitalData2.push({value: Math.round(breathR, 1), itemStyle: { color: brightRed}});
+    vitalData2.push({value: Math.round(breathR, 1), itemStyle: { color: brightOrange}});
   }
   // vitalData2.push(Math.round(breathR, 1));
+  
   vitalChart.setOption({
     xAxis: [
       {
@@ -252,7 +264,8 @@ async function onMessageArrived(message) {
             ]
           }
           // console.log(seriesD)
-          for (i = 0; i < parseInt(data[index].numSubjects); i++) {
+          // for (i = 0; i < parseInt(data[index].numSubjects); i++) {
+          for (i = 0; i < 1; i++) {
             // scatter3D.push([
             //   data[index].trackData[i][1].toFixed(2),
             //   data[index].trackData[i][2].toFixed(2),
@@ -332,27 +345,27 @@ async function onMessageArrived(message) {
             // scatterWeight.setOption(seriesD)
           }
           // console.log(seriesD)
-          if (prevLe > legendD.length) {
-            for (i = 0; i < prevLe - legendD.length; i++) {
-              seriesD.push({
-                name: "",
-                type: "",
-                data: [],
-                markArea: { data: [] },
-                markPoint: { data: [] },
-              });
-            }
-            // console.log(seriesD, prevLe, legendD.length);
-          }
+          // if (prevLe > legendD.length) {
+          //   for (i = 0; i < prevLe - legendD.length; i++) {
+          //     seriesD.push({
+          //       name: "",
+          //       type: "",
+          //       data: [],
+          //       markArea: { data: [] },
+          //       markPoint: { data: [] },
+          //     });
+          //   }
+          //   // console.log(seriesD, prevLe, legendD.length);
+          // }
           // console.log("scatter: ", scatter3D);
           // setData(scatter3D);
-          prevLe = legendD.length;
+          // prevLe = legendD.length;
 
           // chartTime.innerHTML = "Time: " + data[index].timestamp;
           scatterWeight.setOption({
-            legend: {
-              data: legendD,
-            },
+            // legend: {
+            //   data: legendD,
+            // },
             xAxis: [
               {
                 axisLabel: {

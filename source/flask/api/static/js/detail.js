@@ -481,16 +481,16 @@ async function getAnalyticData(){
       // console.log(data.DATA[0]['IN_ROOM_PCT'], data.DATA[0]['IN_BED_PCT']);
       multiBarHoriChart.hideLoading();
       if (data.DATA) { 
-        let inBedSecHour = data.DATA[0]['IN_BED_SECONDS_HOUR'] > 3600 ? 3240 : data.DATA[0]['IN_BED_SECONDS_HOUR']
-        let inRoomSecHour = data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 3600 ? 3240 : data.DATA[0]['IN_ROOM_SECONDS_HOUR']
+        let inBedSecHour = data.DATA[0]['IN_BED_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_BED_SECONDS_HOUR']
+        let inRoomSecHour = data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_ROOM_SECONDS_HOUR']
         let inBedSecDay = secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hr")
         let inRoomSecDay = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hr")
         let inBedSecWeek = secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 168 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hr")
         let inRoomSecWeek = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) > 168 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hr")
         let inBedSecMonth = secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) > 720 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hr")
         let inRoomSecMonth = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) > 720 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hr")
-        let inBedPctHour = parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_HOUR'])
-        let inRoomPctHour = parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR'])
+        let inBedPctHour = parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) > 100 ? 100 : parseFloat(data.DATA[0]['IN_BED_PCT_HOUR'])
+        let inRoomPctHour = parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR']) > 100 ? 100 : parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR'])
         let inBedPctDay = parseFloat(data.DATA[0]['IN_BED_PCT_DAY']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_DAY'])
         let inRoomPctDay = parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY'])
         let inBedPctWeek = parseFloat(data.DATA[0]['IN_BED_PCT_WEEK']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_WEEK'])
@@ -881,6 +881,8 @@ async function getHistOfVital(t, tStart=null, tEnd=null) {
     heartUpperAvg = 100
     breathLowerAvg = 12
     breathUpperAvg = 20
+    avgHeartRateData.innerHTML = `Average: - bps`
+    avgBreathRateData.innerHTML = `Average: - bps`
     // heartRateData.innerText = "-" 
     // breathRateData.innerText = "-" 
     vitalChart.setOption({

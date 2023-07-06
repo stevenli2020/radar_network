@@ -49,6 +49,9 @@ option = {
   },
   legend: {
     bottom: 5,
+    textStyle: {
+      color: "#fff",
+    }
   },
   // grid: {
   //   left: "3%",

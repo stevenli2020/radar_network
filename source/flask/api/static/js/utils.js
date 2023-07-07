@@ -571,6 +571,13 @@ function secondsToHours(seconds){
   return h
 }
 
+function secondsToMin(seconds){
+  var seconds = Number(seconds);
+  var m = Math.round(seconds / (60)) 
+  // var hDisplay = h > 0 ? h + (h == 1 ? " hr" : " hrs") : "0 hr";
+  return m
+}
+
 function secondsToDhms(seconds) {
   seconds = Number(seconds);
   var d = Math.floor(seconds / (3600*24));

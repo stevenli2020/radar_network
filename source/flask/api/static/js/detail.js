@@ -481,39 +481,39 @@ async function getAnalyticData(){
       // console.log(data.DATA[0]['IN_ROOM_PCT'], data.DATA[0]['IN_BED_PCT']);
       multiBarHoriChart.hideLoading();
       if (data.DATA) { 
-        let inBedSecHour = data.DATA[0]['IN_BED_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_BED_SECONDS_HOUR']
-        let inRoomSecHour = data.DATA[0]['IN_ROOM_SECONDS_HOUR'] > 3600 ? 3600 : data.DATA[0]['IN_ROOM_SECONDS_HOUR']
-        let inBedSecDay = secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hr")
-        let inRoomSecDay = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 24 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hr")
-        let inBedSecWeek = secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 168 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hr")
-        let inRoomSecWeek = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) > 168 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hr")
-        let inBedSecMonth = secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) > 720 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hr")
-        let inRoomSecMonth = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) > 720 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hr")
-        let inBedPctHour = parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) > 100 ? 100 : parseFloat(data.DATA[0]['IN_BED_PCT_HOUR'])
-        let inRoomPctHour = parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR']) > 100 ? 100 : parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR'])
-        let inBedPctDay = parseFloat(data.DATA[0]['IN_BED_PCT_DAY']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_DAY'])
-        let inRoomPctDay = parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY'])
-        let inBedPctWeek = parseFloat(data.DATA[0]['IN_BED_PCT_WEEK']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_WEEK'])
-        let inRoomPctWeek = parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK'])
-        let inBedPctMonth = parseFloat(data.DATA[0]['IN_BED_PCT_MONTH']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_MONTH'])
-        let inRoomPctMonth = parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH']) > 100 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH'])
+        let inBedSecHour = secondsToMin(data.DATA[0]['IN_BED_SECONDS_HOUR']) >= 60 ? 60 : secondsToMin(data.DATA[0]['IN_BED_SECONDS_HOUR'])
+        let inRoomSecHour = secondsToMin(data.DATA[0]['IN_ROOM_SECONDS_HOUR']) >= 60 ? 60 : secondsToMin(data.DATA[0]['IN_ROOM_SECONDS_HOUR'])
+        let inBedSecDay = secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) >= 21 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_DAY']) + " hr")
+        let inRoomSecDay = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) >= 21 ? `21 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_DAY']) + " hr")
+        let inBedSecWeek = secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) >= 151 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_WEEK']) + " hr")
+        let inRoomSecWeek = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) >= 151 ? `151 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_WEEK']) + " hr")
+        let inBedSecMonth = secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) >= 648 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_BED_SECONDS_MONTH']) + " hr")
+        let inRoomSecMonth = secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) >= 648 ? `648 hrs` : (secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) > 1 ? secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hrs" : secondsToHours(data.DATA[0]['IN_ROOM_SECONDS_MONTH']) + " hr")
+        let inBedPctHour = parseFloat(data.DATA[0]['IN_BED_PCT_HOUR']) >= 100 ? 100 : parseFloat(data.DATA[0]['IN_BED_PCT_HOUR'])
+        let inRoomPctHour = parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR']) >= 100 ? 100 : parseFloat(data.DATA[0]['IN_ROOM_PCT_HOUR'])
+        let inBedPctDay = parseFloat(data.DATA[0]['IN_BED_PCT_DAY']) >=90 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_DAY'])
+        let inRoomPctDay = parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY']) >= 90 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_DAY'])
+        let inBedPctWeek = parseFloat(data.DATA[0]['IN_BED_PCT_WEEK']) >= 90 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_WEEK'])
+        let inRoomPctWeek = parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK']) >= 90 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_WEEK'])
+        let inBedPctMonth = parseFloat(data.DATA[0]['IN_BED_PCT_MONTH']) >= 90 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_MONTH'])
+        let inRoomPctMonth = parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH']) >= 90 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH'])
         // console.log(inBedSecHour, inRoomSecHour, inBedSecDay, inRoomSecDay, inBedSecWeek, inRoomSecWeek, inBedSecMonth, inRoomSecMonth)
         if(inBedSecHour > 0){
-          inBedHour.innerHTML = `${inBedSecHour} sec` 
+          inBedHour.innerHTML = `${inBedSecHour} min` 
           if(inBedPctHour > 80){              
             inBedHour.style.right = "45%"
             // inBedHour.style.color = "white"
           }
         } else 
-          inBedHour.innerHTML = '0 sec'
+          inBedHour.innerHTML = '0 min'
         if(inRoomSecHour > 0){
-          inRoomHour.innerHTML = `${inRoomSecHour} sec` 
+          inRoomHour.innerHTML = `${inRoomSecHour} min` 
           if(inRoomPctHour > 80){              
             inRoomHour.style.right = "45%"
             // inBedHour.style.color = "white"
           }
         } else
-          inRoomHour.innerHTML = '0 sec'
+          inRoomHour.innerHTML = '0 min'
         inBedDay.innerHTML = `${inBedSecDay}`
         if(inBedPctDay > 80){
           inBedDay.style.right = "45%"

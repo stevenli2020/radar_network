@@ -200,7 +200,7 @@ fetch(`${host}/getRegDevices`, {
 })
   .then((response) => response.json())
   .then((data) => {
-    // console.log(data);
+    console.log(data);
     if (data.DATA) {
       // console.log(screenWidth)
       let tHead = document.createElement('thead')
@@ -220,7 +220,7 @@ fetch(`${host}/getRegDevices`, {
         devicesTalbeId.style.fontSize = "small";
       }
       data.DATA.forEach((d) => {
-        time = String(d["LAST MODIFIED TIME"]);
+        time = String(d["LAST DATA"]);
         let st = ""
         let typ = ""
         if(d.STATUS == "DISCONNECTED"){
@@ -237,8 +237,16 @@ fetch(`${host}/getRegDevices`, {
         } else {
           typ = null
         }
-        da = new Date(d["LAST MODIFIED TIME"])
-        localSg = getTimezoneOffset(d["LAST MODIFIED TIME"])
+        let da = ''
+        let localSg = ''
+        if(d["LAST DATA"] != null){
+          da = new Date(d["LAST DATA"])
+          localSg = getTimezoneOffset(d["LAST DATA"])
+          localSg = moment(localSg).fromNow()
+        } else {
+          localSg = '-'
+        }
+        
         let newRow
         
         // console.log(da)
@@ -321,7 +329,7 @@ fetch(`${host}/getRegDevices`, {
               ", " +
               d.ROT_Z +
               "</td><td>" +
-              moment(localSg).fromNow() +
+              localSg +
               "</td><td>" +
               d.DESCRIPTION +
               "</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='update' data-bs-whatever=" +

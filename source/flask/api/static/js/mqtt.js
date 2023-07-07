@@ -196,6 +196,7 @@ async function onMessageArrived(message) {
             },
           ];
           if((radarX_1>0 || radarY_1>0)&&(radarX_2>0 || radarY_2>0)){
+            console.log('first if')
             radarX = radarX_1
             radarY = radarY_1
             legendD = ["Radar 1", "Radar 2"]
@@ -263,9 +264,9 @@ async function onMessageArrived(message) {
               }
             ]
           }
-          // console.log(seriesD)
+          // console.log(data.length)
           // for (i = 0; i < parseInt(data[index].numSubjects); i++) {
-          for (i = 0; i < 1; i++) {
+          for (i = 0; i < data.length; i++) {
             // scatter3D.push([
             //   data[index].trackData[i][1].toFixed(2),
             //   data[index].trackData[i][2].toFixed(2),

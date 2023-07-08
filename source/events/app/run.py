@@ -7,6 +7,7 @@ import time
 from datetime import datetime, timedelta, timezone
 import atexit
 from messageCallBack import *
+import _thread
 
 brokerAddress="vernemq" 
 clientID="0005"
@@ -31,6 +32,15 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection. Reason: " + mqtt.connack_string(rc))
     
+def status_update(mqtt_client):
+    time.sleep(2)
+    print("Subscribe to topic: "+ "/GMT/DEV/+/STATUS/#")
+    while True:
+        print("Check device statuses: ")
+        mqtt_client.subscribe("/GMT/DEV/+/STATUS/#")
+        time.sleep(60)
+    
+    
 atexit.register(cleanup)
 mqttc = mqtt.Client(clientID)
 mqttc.username_pw_set(userName, password=userPassword)
@@ -45,8 +55,7 @@ print("Subscribe to topic: "+ "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
 mqttc.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
 print("Subscribe to topic: "+ "/GMT/DEV/+/REQ/#")
 mqttc.subscribe("/GMT/DEV/+/REQ/#")
-print("Subscribe to topic: "+ "/GMT/DEV/+/STATUS/#")
-mqttc.subscribe("/GMT/DEV/+/STATUS/#")
+_thread.start_new_thread( status_update, (mqttc, ) )
 time.sleep(1)
 print("Start mqtt receiving loop")
 mqttc.loop_forever()

@@ -348,7 +348,7 @@ def getSummaryDataofPosition(data):
         timeRange = "1 WEEK"
     elif t == "MONTH":
         timeRange = "1 MONTH" 
-
+    # macString = "IN ('"+db[0]+"','"+db[1]+"')"
     sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE FROM ROOMS_DETAILS RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N, N, data['DEVICEMAC'])
     cursor.execute(sql)
     dbresult = cursor.fetchone()    

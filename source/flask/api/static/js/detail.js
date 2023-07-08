@@ -113,7 +113,7 @@ fetch(`${host}/api/getRLMacRoom`, {
 })
   .then((response) => response.json())
   .then((data) => {
-    // console.log(data)
+    console.log(data)
     if ("DATA" in data){
       data.DATA.forEach(d => {
         if(d.TYPE == "1" || d.TYPE == "2"){
@@ -127,7 +127,8 @@ fetch(`${host}/api/getRLMacRoom`, {
           //   radarX_1 = d.DEPLOY_X
           //   radarY_1 = d.DEPLOY_Y
           // }
-          macVital = d.MAC
+          // macVital.push(d.MAC)
+          macVital= d.MAC
           radarX_2 = d.DEPLOY_X
           radarY_2 = d.DEPLOY_Y
         }
@@ -303,6 +304,8 @@ var hourlyPos;
 function getHistorOfPos(t, startT=null, endT=null) {
   // console.time()
   lData = {}
+  // macPosS = macPos.toString()
+  // console.log(macPosS)
   if(t == "CUSTOM"){
     lData = {
       DEVICEMAC: macPos,

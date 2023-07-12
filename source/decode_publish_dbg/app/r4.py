@@ -21,8 +21,8 @@ import atexit
 
 
 brokerAddress="vernemq" 
-clientID="1013"
-userName="decode-publish-dbg-ojb1"  
+clientID="2013"
+userName="decode-publish-dbg-ojb2"  
 userPassword="/-K3tuBhod3-FIzv"
 dataBuffer=[]
 SpecialSensors={}

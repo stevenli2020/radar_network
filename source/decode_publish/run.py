@@ -1311,12 +1311,13 @@ def on_message(mosq, obj, msg):
     in_data = ''
     topicList = msg.topic.split('/')
     if topicList[-1] == "UPDATE_DEV_CONF":
-        print("Received device setting update request for: " + msg.payload.decode("utf-8"))
-        DEV = msg.payload.decode("utf-8").upper()
-        if DEV in devicesTbl:
-            print(DEV)
-            del devicesTbl[DEV]
-        return
+            print("Received device setting update request for: " + msg.payload.decode("utf-8"))
+            DEV = msg.payload.decode("utf-8").upper()
+            if DEV in devicesTbl:
+                print(DEV)
+                del devicesTbl[DEV]
+                print("=====================================================================")
+            return
     devName = ''
     xShift = 0
     yShift = 0
@@ -1330,6 +1331,7 @@ def on_message(mosq, obj, msg):
     devName = topicList[3]
     # print(topicList)
     if devName not in devicesTbl:
+        print("+++++++++++++++++++++++++++++")
         print(devName)
         devicesTbl[devName] = {}  
         connection = mysql.connector.connect(**config)

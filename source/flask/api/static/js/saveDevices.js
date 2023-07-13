@@ -128,12 +128,12 @@ var Mhost = "143.198.199.16";
 var port = 8888;
 var prevLe = 0;
 var msgInterval = 0;
-client = new Paho.MQTT.Client(Mhost, port, "1234");
+client = new Paho.MQTT.Client(Mhost, port, "1235");
 var options = {
   timeout: 3,
   onSuccess: onConnect,
   onFailure: doFail,
-  userName: "js-client",
+  userName: "js-client2",
   password: "c764eb2b5fa2d259dc667e2b9e195218",
   // useSSL: true
 };
@@ -153,7 +153,7 @@ function onConnectionLost(responseObject) {
 	console.log("onConnectionLost:"+responseObject.errorMessage);
 };
 function onMessageArrived(message) {
-  console.log("topic: "+message.destinationName+"\nMessage: "+message.payloadString);
+  // console.log("topic: "+message.destinationName+"\nMessage: "+message.payloadString);
   // client.disconnect();
   if(message.destinationName.includes("DECODE_PUBLISH/R")){
     if(!message.payloadString.includes("CONNECTED")){

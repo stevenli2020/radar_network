@@ -116,13 +116,21 @@ function onConnect() {
   // message.destinationName = 'sensor1';
   // mqtt.send(message);
   mqtt.subscribe("/GMT/DEV/+/DATA/+/JSON");
+  mqtt.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF");
+  console.log("subscribed to /GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF" );
   // mqtt.subscribe("/GMT/DEV/#");
 }
 
 async function onMessageArrived(message) {
   // console.log("onMessageArrived: " + message.payloadString, message.destinationName.split('/'), message);
 
-  // console.log(message)
+  console.log(message.destinationName)
+  let Topic = message.destinationName; 
+  if (Topic == "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF"){
+	  console.log("Update request received");
+	  location.reload();
+	  return;
+  }
   let mac = message.destinationName.split("/");
   let data;
   if ("DATA" in JSON.parse(message.payloadString)) {

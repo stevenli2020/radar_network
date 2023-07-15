@@ -713,8 +713,8 @@ def decode_process_publish(mac, data):
                         [x_pos, dum, z_pos] = np.matmul(rotYMat, [x_pos, 1, z_pos])
                         [x_vel, dum, z_vel] = np.matmul(rotYMat, [x_vel, 1, z_vel])
                         [x_acc, dum, z_acc] = np.matmul(rotYMat, [x_acc, 1, z_acc])
-                        z_pos = z_pos + ceilStateParam[mac]['radar_coord'][0]
-                        x_pos = x_pos + ceilStateParam[mac]['radar_coord'][1]
+                        x_pos = x_pos + ceilStateParam[mac]['radar_coord'][0]
+                        z_pos = z_pos + ceilStateParam[mac]['radar_coord'][1]
 
                         # Tracker velocity (normalized) direction
                         # x_vel_direction = x_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])  # Add epsilon to denominator to prevent run-time warning
@@ -722,14 +722,14 @@ def decode_process_publish(mac, data):
                         # z_vel_direction = z_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
 
                         # For real-time visualization and analytics
-                        ceil_Dict['posX'] = z_pos
-                        ceil_Dict['posY'] = x_pos
+                        ceil_Dict['posX'] = x_pos
+                        ceil_Dict['posY'] = z_pos
                         ceil_Dict['posZ'] = y_pos
-                        ceil_Dict['velX'] = z_vel
-                        ceil_Dict['velY'] = x_vel
+                        ceil_Dict['velX'] = x_vel
+                        ceil_Dict['velY'] = z_vel
                         ceil_Dict['velZ'] = y_vel
-                        ceil_Dict['accX'] = z_acc
-                        ceil_Dict['accY'] = x_acc
+                        ceil_Dict['accX'] = x_acc
+                        ceil_Dict['accY'] = z_acc
                         ceil_Dict['accZ'] = y_acc
 
                     # if dataOk and len(detObj["x"]) > 1:

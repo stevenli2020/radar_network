@@ -574,7 +574,7 @@ regDevUpdateLoc.addEventListener("input", e => {
 
 async function sendDeviceConfiguration(){
   if(regDevUpdateDesc.value != "" && regDevUpdateMac.value != ""){
-    publishToMQTT(regDevUpdateDesc.value, `/GMT/DEV/${regDevUpdateMac.value}/C/SENDCFG`);
+    publishToMQTT(regDevUpdateDesc.value, `/GMT/DEV/${regDevUpdateMac.value}/C/SAVECFG`);
     document.querySelector("#registed-modal-close").click();
     setCookie("deviceConfMac", regDevUpdateMac.value, .0005);
     

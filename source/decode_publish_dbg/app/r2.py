@@ -1432,7 +1432,7 @@ def on_message(mosq, obj, msg):
         devicesTbl[devName]["DATA_QUEUE"] = {}
         cursor.close()
         connection.close()        
-    if not devName == 'F412FAE252E8':
+    if not devName == 'F412FAE25010':
         return
     in_data = str(msg.payload).replace("b'", "").split(',')
     # print(topicList[-1])

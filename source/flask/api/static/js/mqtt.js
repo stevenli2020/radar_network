@@ -24,7 +24,8 @@ function addLineChart(heartR, breathR){
   if(Math.round(heartR, 1)<(averageHeartRate+(averageHeartRate*0.2)) && Math.round(heartR, 1)>(averageHeartRate-(averageHeartRate*0.2))){
     vitalData.push({value: Math.round(heartR, 1), itemStyle: { color: brightGreen}});
   } else {
-    vitalData.push({value: Math.round(heartR, 1), itemStyle: { color: brightOrange}});
+    // vitalData.push({value: Math.round(heartR, 1), itemStyle: { color: brightOrange}});
+	vitalData.push({value: Math.round(heartR, 1), itemStyle: { color: brightGreen}});
   }
   // vitalData.push(Math.round(heartR, 1));
   

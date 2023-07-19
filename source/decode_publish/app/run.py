@@ -132,8 +132,8 @@ def decode_process_publish(mac, data):
                 # Radar Rotation about y-axis, +ve Anti-Clockwise
                 # rotYDegree = DEVICE["ROT_Y"]
                 rotYRadian = rotYDegree * np.pi / 180  # Angle in Radian
-                rotYMat = np.asarray([[np.cos(rotYRadian), 0, -np.sin(rotYRadian)], [0, 1, 0],
-                                      [np.sin(rotYRadian), 0, np.cos(rotYRadian)]])  # Rotation Matrix
+                rotYMat = np.asarray([[np.cos(rotYRadian), 0, np.sin(rotYRadian)], [0, 1, 0],
+                                      [-np.sin(rotYRadian), 0, np.cos(rotYRadian)]])  # Rotation Matrix
                 wallStateParam[mac]['rotYMat'] = rotYMat
 
                 # Radar Azimuth Angle of Rotation, +ve Anti-Clockwise
@@ -437,8 +437,8 @@ def decode_process_publish(mac, data):
                                     # Disable posture estimation if number of subjects > 1 or subject's range > 5m, or subject's
                                     # azimuth or elevation angle > 50 degrees.
                                     if numTracks > 1:
-                                        wallStateParam[mac]['labelCount'][minDistIdx] = 4
-                                        wallStateParam[mac]['labelGuess'][minDistIdx] = 4
+                                        wallStateParam[mac]['labelCount'][minDistIdx] = 5
+                                        wallStateParam[mac]['labelGuess'][minDistIdx] = 5
                                         wall_Dict['state'] = 5
 
                                     elif trackerRange > 5 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 50:
@@ -618,8 +618,8 @@ def decode_process_publish(mac, data):
 
                 # Radar Rotation about y-axis, +ve Anti-Clockwise
                 rotYRadian = rotYDegree * np.pi / 180  # Angle in Radian
-                rotYMat = np.asarray([[np.cos(rotYRadian), 0, -np.sin(rotYRadian)], [0, 1, 0],
-                                      [np.sin(rotYRadian), 0, np.cos(rotYRadian)]])  # Rotation Matrix
+                rotYMat = np.asarray([[np.cos(rotYRadian), 0, np.sin(rotYRadian)], [0, 1, 0],
+                                      [-np.sin(rotYRadian), 0, np.cos(rotYRadian)]])  # Rotation Matrix
                 ceilStateParam[mac]['rotYMat'] = rotYMat
 
                 deltaT = ts - ceilStateParam[mac]['timeNow']
@@ -712,8 +712,9 @@ def decode_process_publish(mac, data):
                         # Tracker coordinates and velocity vector transformation
                         [x_pos, dum, z_pos] = np.matmul(rotYMat, [x_pos, 1, z_pos])
                         [x_vel, dum, z_vel] = np.matmul(rotYMat, [x_vel, 1, z_vel])
+                        [x_acc, dum, z_acc] = np.matmul(rotYMat, [x_acc, 1, z_acc])
                         x_pos = x_pos + ceilStateParam[mac]['radar_coord'][0]
-                        z_pos = z_pos + ceilStateParam[mac]['radar_coord'][2]
+                        z_pos = z_pos + ceilStateParam[mac]['radar_coord'][1]
 
                         # Tracker velocity (normalized) direction
                         # x_vel_direction = x_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])  # Add epsilon to denominator to prevent run-time warning
@@ -721,14 +722,14 @@ def decode_process_publish(mac, data):
                         # z_vel_direction = z_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
 
                         ceil_Dict['posX'] = x_pos
-                        ceil_Dict['posY'] = y_pos
-                        ceil_Dict['posZ'] = z_pos
+                        ceil_Dict['posY'] = z_pos
+                        ceil_Dict['posZ'] = -y_pos
                         ceil_Dict['velX'] = x_vel
-                        ceil_Dict['velY'] = y_vel
-                        ceil_Dict['velZ'] = z_vel
+                        ceil_Dict['velY'] = z_vel
+                        ceil_Dict['velZ'] = -y_vel
                         ceil_Dict['accX'] = x_acc
-                        ceil_Dict['accY'] = y_acc
-                        ceil_Dict['accZ'] = z_acc
+                        ceil_Dict['accY'] = z_acc
+                        ceil_Dict['accZ'] = -y_acc
 
                     # if dataOk and len(detObj["x"]) > 1:
                     if len(ceilStateParam[mac]['previous_pointClouds']) > 0 and "trackIndexes" in outputDict:
@@ -874,8 +875,8 @@ def decode_process_publish(mac, data):
                                     # Disable posture estimation if number of subjects > 1 or subject's range > 5m, or subject's
                                     # azimuth or elevation angle > 50 degrees.
                                     if numTracks > 1:
-                                        ceilStateParam[mac]['labelCount'][minDistIdx] = 4
-                                        ceilStateParam[mac]['labelGuess'][minDistIdx] = 4
+                                        ceilStateParam[mac]['labelCount'][minDistIdx] = 5
+                                        ceilStateParam[mac]['labelGuess'][minDistIdx] = 5
                                         ceil_Dict['state'] = 5
 
                                     elif trackerRange > 5 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 40:

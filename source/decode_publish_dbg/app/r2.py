@@ -724,13 +724,13 @@ def decode_process_publish(mac, data):
                         # For real-time visualization and analytics
                         ceil_Dict['posX'] = x_pos
                         ceil_Dict['posY'] = z_pos
-                        ceil_Dict['posZ'] = y_pos
+                        ceil_Dict['posZ'] = -y_pos
                         ceil_Dict['velX'] = x_vel
                         ceil_Dict['velY'] = z_vel
-                        ceil_Dict['velZ'] = y_vel
+                        ceil_Dict['velZ'] = -y_vel
                         ceil_Dict['accX'] = x_acc
                         ceil_Dict['accY'] = z_acc
-                        ceil_Dict['accZ'] = y_acc
+                        ceil_Dict['accZ'] = -y_acc
 
                     # if dataOk and len(detObj["x"]) > 1:
                     if len(ceilStateParam[mac]['previous_pointClouds']) > 0 and "trackIndexes" in outputDict:

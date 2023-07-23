@@ -89,7 +89,7 @@ option = {
   brush: {},
   legend: {
     show: false,
-    data: ["Radar", "Person 1"],
+    data: ["Radar", "Person"],
     left: "left",
     // bottom: 10
     top: 30,
@@ -172,7 +172,7 @@ option = {
       // },
     },
     {
-      name: "Person 1",
+      name: "Person",
       type: "scatter",
       emphasis: {
         focus: "series",

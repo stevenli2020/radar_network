@@ -125,7 +125,7 @@ function onConnect() {
 async function onMessageArrived(message) {
   // console.log("onMessageArrived: " + message.payloadString, message.destinationName.split('/'), message);
 
-  console.log(message.destinationName)
+  // console.log(message.destinationName)
   let Topic = message.destinationName; 
   if (Topic == "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF"){
 	  console.log("Update request received");
@@ -142,7 +142,7 @@ async function onMessageArrived(message) {
 
   
   let ts = [];
-  var index = 0;
+  var num = 0;
   //  document.querySelector("#home-time-select").value == "REAL TIME"
   // console.log(macPos, macVital)
   if (
@@ -153,13 +153,14 @@ async function onMessageArrived(message) {
     // console.log(message.payloadString);
     // console.log(data)
     
-    timer = 500;
-    timer = parseInt(5000 / data.length);
+    timer = 1000;
+    timer = parseInt(3000 / data.length);
     // timer = parseInt(1000 / data.length);
-    // console.log(data, data.length, timer);
+    console.log(data, data.length, timer);
     // timeOutMultiLoop(data)
+    
     if(realtimeHistVital.classList.contains("active")){
-      if("heartRate" in data[index]){      
+      if("heartRate" in data[num]){      
         // console.log(data)
         data.forEach(d => {
           // console.log(d)
@@ -175,116 +176,73 @@ async function onMessageArrived(message) {
       }
     }
     
-        
-    var interval = setInterval(function () {
-      if ("DATA" in JSON.parse(message.payloadString)) {
-        console.log(message.payloadString)
-        // console.log(data[index])
-        if (data[index].timeStamp.toString().includes(":")) ts.push(data[index].timeStamp);
-        if (data[index].timeStamp.toString().includes("."))
-          ts.push(new Date(parseFloat(data[index].timeStamp) * 1000));
-        if(parseInt(data[index]["numSubjects"]) > 0){
-          document.querySelector('#empty-lable').style.display = 'none'
-          checkRoomEmpty = new Date()
-        }
-        if (parseInt(data[index]["numSubjects"]) > 0) { 
-          // console.log(parseInt(data[index]["numSubjects"]))         
-          // scatter3D = [
-          //   ["x", "y", "z"],
-          //   [radarX, radarY, radarZ],
-          // ];
-          // legendD = ["Radar"];
-          // for (i = 1; i <= data[index].numSubjects; i++) {
-          //   legendD.push("Person " + i);
-          // }
-          seriesD = [
-            {
-              name: "Radar",
-              type: "scatter",
-              data: [[radarX, radarY]],
-            },
-          ];
-          if((radarX_1>0 || radarY_1>0)&&(radarX_2>0 || radarY_2>0)){
-            console.log('first if')
-            radarX = radarX_1
-            radarY = radarY_1
-            legendD = ["Radar 1", "Radar 2"]
-            seriesD = [
-              {
-                name: "Radar 1",
-                type: "scatter",
-                data: [[radarX_1, radarY_1]]
-              },
-              {
-                name: "Radar 2",
-                type: "scatter",
-                emphasis: {
-                  focus: "series",
-                },
-                data: [[radarX_2, radarY_2]],
-                symbol: "diamond",
-                symbolSize: 30,
-                // markArea: {
-                //   silent: true,
-                //   data: [
-                //     [
-                //       {
-                //         name: "Radar 2",
-                //         xAxis: "min",
-                //         yAxis: "min",
-                //       },
-                //       {
-                //         xAxis: "max",
-                //         yAxis: "max",
-                //       },
-                //     ],
-                //   ],
-                // },
-                // markPoint: {
-                //   data: [
-                //     { type: "max", name: "" },
-                //     { type: "min", name: "" },
-                //   ],
-                //   symbol: "diamond",
-                //   symbolSize: 30,
-                // },
-              }
-            ]
-          } else if(radarX_1>0 || radarY_1>0){
-            radarX = radarX_1
-            radarY = radarY_1
-            legendD = ["Radar"]
-            seriesD = [
-              {
-                name: "Radar",
-                type: "scatter",
-                data: [[radarX_1, radarY_1]]
-              }
-            ]
-          } else if(radarX_2>0 || radarY_2>0){
-            radarX = radarX_2
-            radarY = radarY_2
-            legendD = ["Radar"]
-            seriesD = [
-              {
-                name: "Radar",
-                type: "scatter",
-                data: [[radarX_2, radarY_2]]
-              }
-            ]
+    if("numSubjects" in data[num]){
+      var index = 0;
+      var interval = setInterval(function () {        
+        // if ("DATA" in JSON.parse(message.payloadString)) {
+          // console.log(message.payloadString)
+          console.log(data, data[index], index)
+          // if (data[index].timeStamp.toString().includes(":")) ts.push(data[index].timeStamp);
+          // if (data[index].timeStamp.toString().includes("."))
+          //   ts.push(new Date(parseFloat(data[index].timeStamp) * 1000));
+          // if(data[index].hasOwnProperty("numSubjects")){
+          if(parseInt(data[index]["numSubjects"]) > 0){
+            document.querySelector('#empty-lable').style.display = 'none'
+            checkRoomEmpty = new Date()
           }
-          // console.log(data.length)
-          // for (i = 0; i < parseInt(data[index].numSubjects); i++) {
-          for (i = 0; i < data.length; i++) {
-            // scatter3D.push([
-            //   data[index].trackData[i][1].toFixed(2),
-            //   data[index].trackData[i][2].toFixed(2),
-            //   data[index].trackData[i][3].toFixed(2),
-            // ]);
-            // console.log((radarX - data[index].trackData[i][1]).toFixed(2),(radarY - data[index].trackData[i][2]).toFixed(2))
-            // console.log(data[index].posX, data[index].posY)
-            // console.log(Math.abs((radarX - data[index].posX).toFixed(2)), Math.abs((radarY - data[index].posY).toFixed(2)))
-            // console.log(`absX: ${Math.abs((radarX - data[index].trackData[i][1])).toFixed(2)}, absY: ${Math.abs((radarY - data[index].trackData[i][2])).toFixed(2)}, radarX: ${radarX}, radarY: ${radarY}, X: ${data[index].trackData[i][1]}, Y: ${data[index].trackData[i][2]}`)
+          if (parseInt(data[index]["numSubjects"]) > 0) { 
+            seriesD = [
+              {
+                name: "Radar",
+                type: "scatter",
+                data: [[radarX, radarY]],
+              },
+            ];
+            if((radarX_1>0 || radarY_1>0)&&(radarX_2>0 || radarY_2>0)){
+              console.log('first if')
+              radarX = radarX_1
+              radarY = radarY_1
+              legendD = ["Radar 1", "Radar 2"]
+              seriesD = [
+                {
+                  name: "Radar 1",
+                  type: "scatter",
+                  data: [[radarX_1, radarY_1]]
+                },
+                {
+                  name: "Radar 2",
+                  type: "scatter",
+                  emphasis: {
+                    focus: "series",
+                  },
+                  data: [[radarX_2, radarY_2]],
+                  symbol: "diamond",
+                  symbolSize: 30,
+                }
+              ]
+            } else if(radarX_1>0 || radarY_1>0){
+              radarX = radarX_1
+              radarY = radarY_1
+              legendD = ["Radar"]
+              seriesD = [
+                {
+                  name: "Radar",
+                  type: "scatter",
+                  data: [[radarX_1, radarY_1]]
+                }
+              ]
+            } else if(radarX_2>0 || radarY_2>0){
+              radarX = radarX_2
+              radarY = radarY_2
+              legendD = ["Radar"]
+              seriesD = [
+                {
+                  name: "Radar",
+                  type: "scatter",
+                  data: [[radarX_2, radarY_2]]
+                }
+              ]
+            }
             if(data[index].velX == 0 && data[index].velY == 0)
               defaultSymbol = dashCircleFill
             else if(data[index].velX == 0 && data[index].velY > 0)
@@ -337,76 +295,56 @@ async function onMessageArrived(message) {
                   },
                 },
               },
-              name: "Person " + (i + 1),
+              name: "Person",
               type: "scatter",
               symbol: defaultSymbol,
               symbolSize: 30,
               data: [
                 [
-                  // (data[index].posX).toFixed(2),
-                  // (data[index].posY).toFixed(2)
-                  // (radarX - Math.abs(data[index].trackData[i][1])).toFixed(2),
-                  // (radarY - Math.abs(data[index].trackData[i][2])).toFixed(2),
                   Math.abs((data[index].posX??0).toFixed(2)),
                   Math.abs((data[index].posY??0).toFixed(2)),
                 ],
               ],              
             });
-            // scatterWeight.setOption(seriesD)
+            scatterWeight.setOption({
+              // legend: {
+              //   data: legendD,
+              // },
+              xAxis: [
+                {
+                  axisLabel: {
+                    formatter: "{value} m",
+                  },
+                  // min: -6,
+                  // max: 6,
+                  min: 0,
+                  max: roomX
+                },
+              ],
+              yAxis: [
+                {
+                  axisLabel: {
+                    formatter: "{value} m",
+                  },
+                  // min: 0,
+                  // max: 6,
+                  min: 0,
+                  max: roomY
+                },
+              ],
+              series: seriesD,
+            });
           }
-          // console.log(seriesD)
-          // if (prevLe > legendD.length) {
-          //   for (i = 0; i < prevLe - legendD.length; i++) {
-          //     seriesD.push({
-          //       name: "",
-          //       type: "",
-          //       data: [],
-          //       markArea: { data: [] },
-          //       markPoint: { data: [] },
-          //     });
-          //   }
-          //   // console.log(seriesD, prevLe, legendD.length);
-          // }
-          // console.log("scatter: ", scatter3D);
-          // setData(scatter3D);
-          // prevLe = legendD.length;
-
-          // chartTime.innerHTML = "Time: " + data[index].timestamp;
-          scatterWeight.setOption({
-            // legend: {
-            //   data: legendD,
-            // },
-            xAxis: [
-              {
-                axisLabel: {
-                  formatter: "{value} m",
-                },
-                // min: -6,
-                // max: 6,
-                min: 0,
-                max: roomX
-              },
-            ],
-            yAxis: [
-              {
-                axisLabel: {
-                  formatter: "{value} m",
-                },
-                // min: 0,
-                // max: 6,
-                min: 0,
-                max: roomY
-              },
-            ],
-            series: seriesD,
-          });
+          // }        
+        // }
+        index++;
+        // console.log(index == data.length, index, data.length, timer)
+        if (index == data.length) {
+          clearInterval(interval);
         }
-      }
-      index++;
-      if (index == data.length) {
-        clearInterval(interval);
-      }
-    }, timer);
+      }, timer);
+    }
+    
   } 
 }
 

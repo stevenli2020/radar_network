@@ -15,7 +15,7 @@ from json import JSONEncoder
 from parseFrame1 import *
 import copy
 import pytz
-from threading import Thread
+import _thread
 import atexit
 
 
@@ -1385,7 +1385,15 @@ def on_connect(client, userdata, flags, rc):
     print("MQTT server connected")
     client.publish("/GMT/USVC/DECODE_PUBLISH/STATUS","CONNECTED",1,True)
 
+def WatchDog():
+    time.sleep(2)
+    print("WDT XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+    while 1:
+        print("WDT XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+        time.sleep(1)
+
 atexit.register(cleanup)
+_thread.start_new_thread( WatchDog, ())
 mqttc = mqtt.Client(clientID)
 mqttc.username_pw_set(userName, password=userPassword)
 mqttc.on_message = on_message

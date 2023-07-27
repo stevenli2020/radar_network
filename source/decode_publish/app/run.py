@@ -15,7 +15,7 @@ from json import JSONEncoder
 from parseFrame1 import *
 import copy
 import pytz
-from threading import Thread
+import _thread
 import atexit
 
 
@@ -27,6 +27,7 @@ userName="decode-publish"
 userPassword="/-K3tuBhod3-FIzv"
 dataBuffer=[]
 SpecialSensors={}
+
 
 
 config = {
@@ -1390,6 +1391,7 @@ def decode_process_publish(mac, data):
         # print(jsonData)
         # print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")              
         time.sleep(0.1)
+        dataBuffer.append(jsonData)
 
 
 def on_message(mosq, obj, msg):
@@ -1476,6 +1478,24 @@ def on_message(mosq, obj, msg):
 def on_connect(client, userdata, flags, rc):
     print("MQTT server connected")
     client.publish("/GMT/USVC/DECODE_PUBLISH/STATUS","CONNECTED",1,True)
+    
+def on_disconnect(client, userdata, rc):
+    print("MQTT Disconnected")
+    os._exit(1)
+
+def WatchDog():
+    time.sleep(2)
+    while 1:
+        time.sleep(30)
+        DATA_BUFF_LEN = len(dataBuffer)
+        print("WDT Checking if data publishing is still working, dataBuffer[%d]" % DATA_BUFF_LEN)
+        if DATA_BUFF_LEN == 0:
+            print("Empty data buffer, restart")
+            os._exit(1)
+        else:
+            dataBuffer.clear()
+            
+        
 
 atexit.register(cleanup)
 mqttc = mqtt.Client(clientID)
@@ -1490,6 +1510,7 @@ print("Subscribe to topic: "+ "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
 mqttc.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
 time.sleep(1)
 print("Start mqtt receiving loop")
+_thread.start_new_thread( WatchDog, ())
 mqttc.loop_forever()
 
 

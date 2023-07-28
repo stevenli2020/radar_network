@@ -736,12 +736,34 @@ async function getHistOfVital(t, tStart=null, tEnd=null) {
         if ("AVG" in data){
           avgHeart = data.AVG[0][0]
           avgBreath = data.AVG[0][1]
-          heartLowerAvg = data.AVG[0][0] - (data.AVG[0][0]*0.2)
-          heartUpperAvg = data.AVG[0][0] + (data.AVG[0][0]*0.2)
-          breathLowerAvg = data.AVG[0][1] - (data.AVG[0][0]*0.2)
-          breathUpperAvg = data.AVG[0][1] + (data.AVG[0][0]*0.2)
-          avgHeartRateData.innerHTML = `Average: ${data.AVG[0][0]} bps`
-          avgBreathRateData.innerHTML = `Average: ${data.AVG[0][1]} bps`
+          if(avgHeart>200){         
+            avgHeartRateData.innerHTML = `Average: invalid data`
+            avgHeart = 60                                      
+          } else {
+            if(avgHeart<30){
+              avgHeartRateData.innerHTML = `Average: invalid data`
+              avgHeart = 60
+            } else {
+              avgHeartRateData.innerHTML = `Average: ${avgHeart} bps`
+            }            
+          }
+          if(avgBreath>25){
+            avgBreathRateData.innerHTML = `Average: invalid data`
+            avgBreath = 12
+          } else {
+            if(avgBreath<0){
+              avgBreathRateData.innerHTML = `Average: invalid data`
+              avgBreath = 12
+            } else {
+              avgBreathRateData.innerHTML = `Average: ${avgBreath} bps`
+            }            
+          }
+          heartLowerAvg = avgHeart - (avgHeart*0.2)
+          heartUpperAvg = avgHeart + (avgHeart*0.2)
+          breathLowerAvg = avgBreath - (avgBreath*0.2)
+          breathUpperAvg = avgBreath + (avgBreath*0.2)
+          
+          
         }
         histVitalData = []
         histVitalData2 = []

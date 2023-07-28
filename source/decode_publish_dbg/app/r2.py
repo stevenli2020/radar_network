@@ -1158,6 +1158,11 @@ def decode_process_publish(mac, data):
                         elif curBreathRate < 6:
                             curBreathRate = 6
 
+                        if curHeartRate > 200:
+                            curHeartRate = 200
+                        elif curHeartRate < 30:
+                            curHeartRate = 30
+
                         vital_dict['breathRate'] = curBreathRate
                         vital_dict['heartRate'] = curHeartRate
                         vitalStateParam[mac]['prevBreathRate'] = curBreathRate

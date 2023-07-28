@@ -1154,9 +1154,14 @@ def decode_process_publish(mac, data):
                                 curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
 
                         if curBreathRate > 25:
-                            curBreathRate = 25
+                            curBreathRate = None
                         elif curBreathRate < 6:
-                            curBreathRate = 6
+                            curBreathRate = None
+
+                        if curHeartRate > 200:
+                            curHeartRate = None
+                        elif curHeartRate < 30:
+                            curHeartRate = None
 
                         vital_dict['breathRate'] = curBreathRate
                         vital_dict['heartRate'] = curHeartRate

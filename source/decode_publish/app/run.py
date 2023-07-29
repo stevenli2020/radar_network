@@ -55,6 +55,8 @@ radarType = 'vital'
 mac = '123456'
 aggregate_period = 2 # seconds
 
+breathRate_MA = 0 
+heartRate_MA = 0
 
 def cleanup():
     global mqttc
@@ -73,7 +75,7 @@ class NumpyArrayEncoder(JSONEncoder):
 # Decode, Process, and Publish MQTT Data Packets from Radar
 # def decode_process_publish(mac, data, radarType, xShift, yShift, zShift, rotXDegree, rotYDegree, rotZDegree, aggregate_period):
 def decode_process_publish(mac, data):
-    global mqttc, aggregate_period, devicesTbl
+    global mqttc, aggregate_period, devicesTbl, breathRate_MA, heartRate_MA
     my_list = []
     # for x in data:
     for ts_str, byteAD in data.items():
@@ -1153,15 +1155,33 @@ def decode_process_publish(mac, data):
                             elif vitalStateParam[mac]['prevBreathRate'] - curBreathRate > 1:
                                 curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
 
-                        if curBreathRate > 25:
-                            curBreathRate = None
-                        elif curBreathRate < 6:
-                            curBreathRate = None
+                        # if curBreathRate > 25:
+                            # curBreathRate = None
+                        # elif curBreathRate < 6:
+                            # curBreathRate = None
 
-                        if curHeartRate > 200:
-                            curHeartRate = None
-                        elif curHeartRate < 30:
-                            curHeartRate = None
+                        # if curHeartRate > 200:
+                            # curHeartRate = None
+                        # elif curHeartRate < 30:
+                            # curHeartRate = None
+
+                        if breathRate_MA!=0 and curBreathRate != None:
+                            if curBreathRate > 3*breathRate_MA or curBreathRate < 0.3*breathRate_MA:
+                                curBreathRate = None
+                            else:
+                                breathRate_MA = (breathRate_MA + curBreathRate)/2
+                        else:
+                            breathRate_MA = curBreathRate
+                            
+                        if heartRate_MA!=0 and curHeartRate != None:
+                            if curHeartRate > 3*heartRate_MA or curHeartRate < 0.3*heartRate_MA:
+                                curHeartRate = None
+                            else:
+                                heartRate_MA = (heartRate_MA + curHeartRate)/2     
+                        else:
+                            heartRate_MA = curHeartRate
+                                
+
 
                         vital_dict['breathRate'] = curBreathRate
                         vital_dict['heartRate'] = curHeartRate

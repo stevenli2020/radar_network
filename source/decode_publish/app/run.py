@@ -89,7 +89,7 @@ def decode_process_publish(mac, data):
                 outputDict = parseStandardFrame(byteAD)
             except:
                 outputDict = None
-            # print(mac)
+            print(mac)
             # print(byteAD)
             # print(outputDict)
             # --------------------------------- Wall-Mounted Radar Tracking and Posture Analysis -------------------------------
@@ -526,81 +526,82 @@ def decode_process_publish(mac, data):
                   if 'pointCloud' in outputDict:
                     wallStateParam[mac]['previous_pointClouds'] = outputDict['pointCloud']
 
-                # Time Series Data Aggregation                
-                if wallStateParam[mac]['pandasDF'].empty:
-                    # Append data frame
-                    wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                # Time Series Data Aggregation 
+                if "pandasDF" in wallStateParam[mac]:
+                    if wallStateParam[mac]['pandasDF'].empty:
+                        # Append data frame
+                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
-                elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+                    elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
-                    aggregate_dict = {}
-                    aggregate_dict['timeStamp'] = round(wallStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
-                    aggregate_dict['numSubjects'] = wallStateParam[mac]['pandasDF']['numSubjects'].mean(skipna=True)
-                    aggregate_dict['roomOccupancy'] = wallStateParam[mac]['pandasDF']['roomOccupancy'].mean(skipna=True)
-                    aggregate_dict['posX'] = wallStateParam[mac]['pandasDF']['posX'].mean(skipna=True)
-                    aggregate_dict['posY'] = wallStateParam[mac]['pandasDF']['posY'].mean(skipna=True)
-                    aggregate_dict['posZ'] = wallStateParam[mac]['pandasDF']['posZ'].mean(skipna=True)
-                    aggregate_dict['velX'] = wallStateParam[mac]['pandasDF']['velX'].mean(skipna=True)
-                    aggregate_dict['velY'] = wallStateParam[mac]['pandasDF']['velY'].mean(skipna=True)
-                    aggregate_dict['velZ'] = wallStateParam[mac]['pandasDF']['velZ'].mean(skipna=True)
-                    aggregate_dict['accX'] = wallStateParam[mac]['pandasDF']['accX'].max(skipna=True)
-                    aggregate_dict['accY'] = wallStateParam[mac]['pandasDF']['accY'].max(skipna=True)
-                    aggregate_dict['accZ'] = wallStateParam[mac]['pandasDF']['accZ'].max(skipna=True)
-                    if not wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).empty:
-                        aggregate_dict['state'] = wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).iloc[0]
+                        aggregate_dict = {}
+                        aggregate_dict['timeStamp'] = round(wallStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
+                        aggregate_dict['numSubjects'] = wallStateParam[mac]['pandasDF']['numSubjects'].mean(skipna=True)
+                        aggregate_dict['roomOccupancy'] = wallStateParam[mac]['pandasDF']['roomOccupancy'].mean(skipna=True)
+                        aggregate_dict['posX'] = wallStateParam[mac]['pandasDF']['posX'].mean(skipna=True)
+                        aggregate_dict['posY'] = wallStateParam[mac]['pandasDF']['posY'].mean(skipna=True)
+                        aggregate_dict['posZ'] = wallStateParam[mac]['pandasDF']['posZ'].mean(skipna=True)
+                        aggregate_dict['velX'] = wallStateParam[mac]['pandasDF']['velX'].mean(skipna=True)
+                        aggregate_dict['velY'] = wallStateParam[mac]['pandasDF']['velY'].mean(skipna=True)
+                        aggregate_dict['velZ'] = wallStateParam[mac]['pandasDF']['velZ'].mean(skipna=True)
+                        aggregate_dict['accX'] = wallStateParam[mac]['pandasDF']['accX'].max(skipna=True)
+                        aggregate_dict['accY'] = wallStateParam[mac]['pandasDF']['accY'].max(skipna=True)
+                        aggregate_dict['accZ'] = wallStateParam[mac]['pandasDF']['accZ'].max(skipna=True)
+                        if not wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).empty:
+                            aggregate_dict['state'] = wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).iloc[0]
+                        else:
+                            aggregate_dict['state'] = np.nan
+                        aggregate_dict['kidOrAdult'] = wallStateParam[mac]['pandasDF']['kidOrAdult'].mean(skipna=True)
+ 
+                        # if aggregate_dict['state'].dropna().empty:
+                        # print(aggregate_dict)
+                        if math.isnan(aggregate_dict['state']):
+                            aggregate_dict['state'] = None
+                        elif wallStateParam[mac]['pandasDF']['state'].isin([3]).sum() > 0:
+                            aggregate_dict['state'] = 'Fall'
+                        # elif aggregate_dict['state'].isin([4]).sum() == 0:
+                        elif aggregate_dict['state'] != 4:
+                            aggregate_dict['state'] = wallStateParam[mac]['label_state'][
+                                int(aggregate_dict['state'])]
+                        else:
+                            aggregate_dict['state'] = None
+
+                        # if aggregate_dict['kidOrAdult'].dropna().empty:
+                        if math.isnan(aggregate_dict['kidOrAdult']):
+                            aggregate_dict['kidOrAdult'] = None
+                        # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 0:
+                        elif int(round(aggregate_dict['kidOrAdult'])) == 0:
+                            aggregate_dict['kidOrAdult'] = 'Kid'
+                        # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 1:
+                        elif int(round(aggregate_dict['kidOrAdult'])) == 1:
+                            aggregate_dict['kidOrAdult'] = 'Adult'
+
+                        # aggregate_dict = aggregate_dict.to_dict('r')
+                        # if aggregate_dict:
+                            # print("YYYYYYYYY")
+                            # aggregate_dict = aggregate_dict[0]
+                        if not math.isnan(aggregate_dict['numSubjects']):
+                            aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
+                        if not math.isnan(aggregate_dict['roomOccupancy']):
+                            aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
+                        for key, value in aggregate_dict.items():
+                            if str(value)[0:3] == 'nan':
+                                aggregate_dict[key] = None
+
+                        # print(aggregate_dict['state'])
+                        dict_copy = copy.deepcopy(aggregate_dict)
+                        my_list.append(dict_copy)
+                        # print(json_string)
+
+                        # Update the new data frame
+                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
+
                     else:
-                        aggregate_dict['state'] = np.nan
-                    aggregate_dict['kidOrAdult'] = wallStateParam[mac]['pandasDF']['kidOrAdult'].mean(skipna=True)
+                        # Append data frame
+                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
-                    # if aggregate_dict['state'].dropna().empty:
-                    # print(aggregate_dict)
-                    if math.isnan(aggregate_dict['state']):
-                        aggregate_dict['state'] = None
-                    elif wallStateParam[mac]['pandasDF']['state'].isin([3]).sum() > 0:
-                        aggregate_dict['state'] = 'Fall'
-                    # elif aggregate_dict['state'].isin([4]).sum() == 0:
-                    elif aggregate_dict['state'] != 4:
-                        aggregate_dict['state'] = wallStateParam[mac]['label_state'][
-                            int(aggregate_dict['state'])]
-                    else:
-                        aggregate_dict['state'] = None
-
-                    # if aggregate_dict['kidOrAdult'].dropna().empty:
-                    if math.isnan(aggregate_dict['kidOrAdult']):
-                        aggregate_dict['kidOrAdult'] = None
-                    # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 0:
-                    elif int(round(aggregate_dict['kidOrAdult'])) == 0:
-                        aggregate_dict['kidOrAdult'] = 'Kid'
-                    # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 1:
-                    elif int(round(aggregate_dict['kidOrAdult'])) == 1:
-                        aggregate_dict['kidOrAdult'] = 'Adult'
-
-                    # aggregate_dict = aggregate_dict.to_dict('r')
-                    # if aggregate_dict:
-                        # print("YYYYYYYYY")
-                        # aggregate_dict = aggregate_dict[0]
-                    if not math.isnan(aggregate_dict['numSubjects']):
-                        aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
-                    if not math.isnan(aggregate_dict['roomOccupancy']):
-                        aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
-                    for key, value in aggregate_dict.items():
-                        if str(value)[0:3] == 'nan':
-                            aggregate_dict[key] = None
-
-                    # print(aggregate_dict['state'])
-                    dict_copy = copy.deepcopy(aggregate_dict)
-                    my_list.append(dict_copy)
-                    # print(json_string)
-
-                    # Update the new data frame
-                    wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
-                    wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
-
-                else:
-                    # Append data frame
-                    wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
-
-                # print(wallStateParam)
+                    # print(wallStateParam)
     
             # --------------------------------- Ceil-Mounted Radar Tracking and Posture Analysis -------------------------------
             # ------------------------------------------------------------------------------------------------------------------

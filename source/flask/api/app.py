@@ -609,6 +609,11 @@ def getRLMacRoom():
                 return {"ERROR": 'Not authorized!'}
         else:
             return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/test', methods=['GET'])
+def getTest():
+    if request.method == 'GET':
+        return {"ERROR": 'Empty json!'}
 
 # get device status
 # @app.route('/api/getDeviceStatus', methods=['POST'])

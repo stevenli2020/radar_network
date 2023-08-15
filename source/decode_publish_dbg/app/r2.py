@@ -81,7 +81,8 @@ def decode_process_publish(mac, data):
             print(e)
             continue
 
-        if len(byteAD) > 52:
+        # if len(byteAD) > 52:
+        if len(byteAD) > 0:
             try:
                 outputDict = parseStandardFrame(byteAD)
             except:
@@ -153,7 +154,6 @@ def decode_process_publish(mac, data):
                 # Parameters Re-Initialization if Time Interval between Consecutive Data Frames Larger than Certain Threshold
                 # For Robust Analytics with Data Frames / Packets Drop
 
-                # print(deltaT)
                 if deltaT > 5:
                     wallStateParam[mac]['x_coord_multi'] = []
                     wallStateParam[mac]['y_coord_multi'] = []
@@ -310,6 +310,10 @@ def decode_process_publish(mac, data):
                         points[:, 1] = points[:, 1] + wallStateParam[mac]['radar_coord'][1]
                         # points[:, 2] = points[:, 2] + wallStateParam[mac]['radar_coord'][2]
                        
+                        x_coord = points[:, 0]
+                        y_coord = points[:, 1]
+                        z_coord = points[:, 2]
+
                         # Process individual tracker's data for Posture Analytics
                         for trackIdx in range(numTracks):
 
@@ -757,6 +761,10 @@ def decode_process_publish(mac, data):
                         points = np.transpose(points)
                         points[:, 0] = points[:, 0] + ceilStateParam[mac]['radar_coord'][0]
                         points[:, 2] = points[:, 2] + ceilStateParam[mac]['radar_coord'][2]
+
+                        x_coord = points[:, 0]
+                        y_coord = points[:, 1]
+                        z_coord = points[:, 2]
 
                         # Read and draw trackers' information
                         for trackIdx in range(numTracks):
@@ -1437,7 +1445,7 @@ def on_message(mosq, obj, msg):
         devicesTbl[devName]["DATA_QUEUE"] = {}
         cursor.close()
         connection.close()        
-    if not devName == 'F412FAE25010':
+    if devName == 'F412FAE261C8':
         return
     in_data = str(msg.payload).replace("b'", "").split(',')
     # print(topicList[-1])

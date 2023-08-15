@@ -4,7 +4,7 @@
     <div class="progress" role="progressbar" aria-label="Animated striped example" aria-valuemin="0" aria-valuemax="100" hidden>
         <div class="progress-bar progress-bar-striped progress-bar-animated"></div>
     </div>
-    <h1 class="mt-5">Room 101 (Detailed analysis for one week)</h1>
+    <h1 class="mt-5"><span id="room-name">-</span> (Detailed analysis for one week)</h1>
     <div class="row mt-5">
         <div class="col-lg-6 col-sm-12" style="position: relative;">
             <div style="position: relative;">
@@ -154,4 +154,5 @@
     
 </div>
 
+<script src="{{ url_for('static', filename='js/utils.js')}}"></script>
 <script src="{{ url_for('static', filename='js/test.js')}}"></script>

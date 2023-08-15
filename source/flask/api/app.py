@@ -57,6 +57,7 @@ from user.uploadManager import uploadImgFile
 from werkzeug.utils import secure_filename
 # search device api
 from user.searchDevManager import searchDevDetail
+from user.laymanDetail import getLaymanData
 
 import os
 
@@ -633,9 +634,31 @@ def getTest():
 def admin():
     return redirect(url_for("home"))
 
-@app.route('/test', methods=['GET'])
-def test():
-    return render_template('test.html')
+@app.route('/Detail/Layman', methods=['GET'])
+def Layman():
+    room_id = request.args.get('room', type=str)
+    if room_id is not None:
+
+        # Render the HTML template with the data and ID
+        return render_template('Layman.html')
+    else:
+        return "Room ID not provided."
+
+@app.route('/api/getRoomLaymanDetail', methods=['POST'])
+def getRoomLaymanDetail():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = True ,True#auth(data)
+            if login:              
+                if "room_id" in data:              
+                    return getLaymanData(data.get("room_id"))
+                else:
+                    return {"ERROR": 'Please provide room id!'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

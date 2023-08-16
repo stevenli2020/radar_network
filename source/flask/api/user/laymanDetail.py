@@ -19,14 +19,14 @@ def getLaymanData(room_id):
             },
             "bed_time":{
                 "average":"-",
-                "longest":"-",
-                "shortest":"-",
+                "latest":"-",
+                "earliest":"-",
                 "previous_average":"-"
             },
             "wake_up_time":{
                 "average":"-",
-                "longest":"-",
-                "shortest":"-",
+                "latest":"-",
+                "earliest":"-",
                 "previous_average":"-"
             },
             "time_in_bed":{
@@ -39,6 +39,12 @@ def getLaymanData(room_id):
                 "average":"-",
                 "longest":"-",
                 "shortest":"-",
+                "previous_average":"-"
+            },
+            "sleep_disruption":{
+                "average":"-",
+                "most":"-",
+                "least":"-",
                 "previous_average":"-"
             }
         }
@@ -58,6 +64,8 @@ def getLaymanData(room_id):
         result["data"]["time_in_bed"] = analysis["time_in_bed"]
         result["data"]["wake_up_time"] = analysis["wake_up_time"]
         result["data"]["bed_time"] = analysis["bed_time"]
+        result["data"]["in_room"] = analysis["in_room"]
+        result["data"]["sleep_disruption"] = analysis["sleep_disruption"]
 
     #     print(data)
     #     result["DATA"].append({"id":data["Id"]})
@@ -68,38 +76,52 @@ def getLaymanData(room_id):
     return result
 
 def analyseLaymanData(data):
-    #seconds
+    # in seconds
     threshold = 60 * 10
     sleeping_threshold = 60 * 15
+    inroom_threshold = 60
 
-    analysis = {
-        "timeslot":[]
-    }
+    analysis = {"timeslot":[]}
+    inroom_analysis = {}
 
     curr_timeslot = 0
-
+    curr_day_timeslot = 0
     last_row = None
-
+    inroom_last_row = None
     sleeping = False
-
     cache = []
+    inroom_cache = []
+    disruptions = []
+
+    current_disruption = 0
 
     for row in data:
 
         if (len(analysis["timeslot"]) <= curr_timeslot):
+            disruptions.append(current_disruption)
+            current_disruption = 0
             analysis["timeslot"].append([])
+
+        date_str = str(row["TIMESTAMP"].date())
+
+        if (date_str not in inroom_analysis):
+            curr_day_timeslot = 0
+            inroom_analysis[date_str] = []
+
+        if (len(inroom_analysis[date_str]) <= curr_day_timeslot):
+            inroom_analysis[date_str].append([])
 
         if (row["STATE"] == 2 and row["IN_BED"] == 1):
             sleeping = True
             if (len(cache)>0):
+                if (len(cache) > 50):
+                    current_disruption += 1
                 analysis["timeslot"][curr_timeslot] += cache
                 cache = []
             analysis["timeslot"][curr_timeslot].append(row)
         else:
-
             if (sleeping):
                 cache.append(row)
-
             if (last_row):
                 diff = row["TIMESTAMP"] - last_row["TIMESTAMP"]
 
@@ -111,12 +133,25 @@ def analyseLaymanData(data):
         if (row["STATE"] == 2 and row["IN_BED"] == 1):
             last_row = row
 
-    result = []
+        if (inroom_last_row):
+            diff = row["TIMESTAMP"] - inroom_last_row["TIMESTAMP"]
 
+            if ((diff.total_seconds()) > inroom_threshold):
+                curr_day_timeslot += 1
+                inroom_analysis[date_str].append([])
+
+        if (len(inroom_analysis[date_str][curr_day_timeslot]) <= 1):
+            inroom_analysis[date_str][curr_day_timeslot].append(row)
+        else:
+            inroom_analysis[date_str][curr_day_timeslot][-1] = row
+        inroom_last_row = row
+
+    result = []
     sleeping_hours = []
     time_in_bed = []
     start_sleep_time = []
     wake_up_time = []
+    inroom_seconds = []
 
     for timeslot in analysis["timeslot"]:
         if (len(timeslot)>1):
@@ -135,6 +170,15 @@ def analyseLaymanData(data):
                     "end":timeslot[-1]
                 })
 
+
+    for date in inroom_analysis:
+        inroom_second = 0
+        for ts in inroom_analysis[date]:
+            diff = ts[-1]["TIMESTAMP"] - ts[0]["TIMESTAMP"]
+            inroom_second += diff.total_seconds()
+
+        inroom_seconds.append(inroom_second)
+
     sleeping_longest = int(max(sleeping_hours))
     sleeping_shortest = int(min(sleeping_hours))
     sleeping_average = int(sum(sleeping_hours) / len(sleeping_hours))
@@ -143,10 +187,19 @@ def analyseLaymanData(data):
     bed_shortest = int(min(time_in_bed))
     bed_average = int(sum(time_in_bed) / len(time_in_bed))
 
-    
+    inroom_longest = int(max(inroom_seconds))
+    inroom_shortest = int(min(inroom_seconds))
+    inroom_average = int(sum(inroom_seconds) / len(inroom_seconds))
 
     average_bedtime,earliest_bedtime,latest_bedtime = process_time(start_sleep_time)
     average_waketime,earliest_waketime,latest_waketime = process_time(wake_up_time)
+
+    disruptions.append(current_disruption)
+    disruptions = disruptions[1:]
+
+    disruption_most = int(max(disruptions))
+    disruption_least = int(min(disruptions))
+    disruption_average = sum(disruptions) / len(disruptions)
 
     return {
         "sleeping_hour":{
@@ -163,15 +216,27 @@ def analyseLaymanData(data):
         },
         "bed_time":{
             "average":average_bedtime,
-            "longest":latest_bedtime,
-            "shortest":earliest_bedtime,
+            "latest":latest_bedtime,
+            "earliest":earliest_bedtime,
             "previous_average": "-",
         },
         "wake_up_time":{
             "average":average_waketime,
-            "longest":latest_waketime,
-            "shortest":earliest_waketime,
+            "latest":latest_waketime,
+            "earliest":earliest_waketime,
             "previous_average": "-",
+        },
+        "in_room":{
+            "average":seconds_to_text(inroom_average),
+            "longest":seconds_to_text(inroom_longest),
+            "shortest":seconds_to_text(inroom_shortest),
+            "previous_average":"-"
+        },
+        "sleep_disruption":{
+            "average":disruption_average,
+            "most":disruption_most,
+            "least":disruption_least,
+            "previous_average":"-"
         }
     }
 
@@ -186,7 +251,7 @@ def seconds_to_text(seconds):
         result += f"{hours}h"
     if minutes > 0:
         result += f"{minutes}m"
-    if seconds > 0:
+    if seconds > 0 and result == '':
         result += f"{seconds}s"
 
     return result

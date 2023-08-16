@@ -99,6 +99,11 @@ if (!checkLogin()) {
 
 roomI = window.location.href.split("=")[1];
 
+const laymanButton = document.getElementById("layman-button")
+laymanButton.addEventListener("click", function () {
+  window.location.href=`http://143.198.199.16:5000/Detail/Layman?room=${roomI}`
+});
+
 roomD = {
   ROOM_UUID: roomI,
   // DETAIL_PAGE: "detail"

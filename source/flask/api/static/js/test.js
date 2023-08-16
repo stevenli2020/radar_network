@@ -30,6 +30,12 @@ const inroomWeeklyLongest = document.getElementById("inroom-weekly-longest");
 const inroomWeeklyShortest = document.getElementById("inroom-weekly-shortest");
 const inroomExWeeklyAverage = document.getElementById("inroom-ex-weekly-average");
 
+// Sleep disruption
+const disruptionWeeklyAverage = document.getElementById("disruption-weekly-average");
+const disruptionWeeklyMost = document.getElementById("disruption-weekly-most");
+const disruptionWeeklyLeast = document.getElementById("disruption-weekly-least");
+const disruptionExWeeklyAverage = document.getElementById("disruption-ex-weekly-average");
+
 roomI = window.location.href.split("=")[1];
 
 roomD = {
@@ -57,15 +63,15 @@ fetch(`${host}/api/getRoomLaymanDetail`, {
 
         if ("bed_time" in data["data"]){
             bedWeeklyAverage.innerText = data["data"]["bed_time"]["average"]
-            bedWeeklyLongest.innerText = data["data"]["bed_time"]["longest"]
-            bedWeeklyShortest.innerText = data["data"]["bed_time"]["shortest"]
+            bedWeeklyLongest.innerText = data["data"]["bed_time"]["latest"]
+            bedWeeklyShortest.innerText = data["data"]["bed_time"]["earliest"]
             bedExWeeklyAverage.innerText = data["data"]["bed_time"]["previous_average"]
         }
 
         if ("wake_up_time" in data["data"]){
             wakeWeeklyAverage.innerText = data["data"]["wake_up_time"]["average"]
-            wakeWeeklyLongest.innerText = data["data"]["wake_up_time"]["longest"]
-            wakeWeeklyShortest.innerText = data["data"]["wake_up_time"]["shortest"]
+            wakeWeeklyLongest.innerText = data["data"]["wake_up_time"]["latest"]
+            wakeWeeklyShortest.innerText = data["data"]["wake_up_time"]["earliest"]
             wakeExWeeklyAverage.innerText = data["data"]["wake_up_time"]["previous_average"]
         }
 
@@ -81,6 +87,13 @@ fetch(`${host}/api/getRoomLaymanDetail`, {
             inroomWeeklyLongest.innerText = data["data"]["in_room"]["longest"]
             inroomWeeklyShortest.innerText = data["data"]["in_room"]["shortest"]
             inroomExWeeklyAverage.innerText = data["data"]["in_room"]["previous_average"]
+        }
+
+        if ("sleep_disruption" in data["data"]){
+            disruptionWeeklyAverage.innerText = data["data"]["sleep_disruption"]["average"]
+            disruptionWeeklyMost.innerText = data["data"]["sleep_disruption"]["most"]
+            disruptionWeeklyLeast.innerText = data["data"]["sleep_disruption"]["least"]
+            disruptionExWeeklyAverage.innerText = data["data"]["sleep_disruption"]["previous_average"]
         }
     }
 })

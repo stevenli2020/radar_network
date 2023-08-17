@@ -1445,7 +1445,7 @@ def on_message(mosq, obj, msg):
         devicesTbl[devName]["DATA_QUEUE"] = {}
         cursor.close()
         connection.close()        
-    # if devName == 'F412FAE261C8':
+    # if not devName == 'F412FAE26244' and not devName == 'F412FAE261C8':
     #     return
     in_data = str(msg.payload).replace("b'", "").split(',')
     # print(topicList[-1])
@@ -1457,11 +1457,18 @@ def on_message(mosq, obj, msg):
         except Exception as e:
             print(e)
             continue
-        if "'" in hexD:
-            hexD = hexD.replace("'", "")
-            byteAD = bytearray.fromhex(hexD)
-        else:
-            byteAD = bytearray.fromhex(hexD)
+        while 1:
+            if "'" in hexD:
+                hexD = hexD.replace("'", "")
+            elif " " in hexD:
+                hexD = hexD.replace(" ", "")
+            else:
+                break
+        try:
+            int(hexD, 16)
+        except:
+            continue
+        byteAD = bytearray.fromhex(hexD)
         # if len(hexD)>1:
             # print(hexD)  
         devicesTbl[devName]["DATA_QUEUE"][ts_str]=byteAD

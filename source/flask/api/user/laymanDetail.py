@@ -114,7 +114,7 @@ def analyseLaymanData(data):
         if (row["STATE"] == 2 and row["IN_BED"] == 1):
             sleeping = True
             if (len(cache)>0):
-                if (len(cache) > 50):
+                if (len(cache) > 100):
                     current_disruption += 1
                 analysis["timeslot"][curr_timeslot] += cache
                 cache = []
@@ -233,7 +233,7 @@ def analyseLaymanData(data):
             "previous_average":"-"
         },
         "sleep_disruption":{
-            "average":disruption_average,
+            "average":round(disruption_average,3),
             "most":disruption_most,
             "least":disruption_least,
             "previous_average":"-"

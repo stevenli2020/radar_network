@@ -1465,12 +1465,9 @@ def on_message(mosq, obj, msg):
             else:
                 break
         try:
-            int(hexD, 16)
+            byteAD = bytearray.fromhex(hexD)
         except:
             continue
-        byteAD = bytearray.fromhex(hexD)
-        # if len(hexD)>1:
-            # print(hexD)  
         devicesTbl[devName]["DATA_QUEUE"][ts_str]=byteAD
     devicesTbl[devName]["DATA_QUEUE"] = dict(sorted(devicesTbl[devName]["DATA_QUEUE"].items()))
     # DQ = list(devicesTbl[devName]["DATA_QUEUE"])

@@ -1,0 +1,7 @@
+decode_publish/
+decode_publish_dbg/
+events/
+saverawdata/
+server_status/
+traefik/
+vernemq/

@@ -84,7 +84,10 @@ def decode_process_publish(mac, data):
         except Exception as e:
             print(e)
             continue
-        if len(byteAD) > 52:
+        # if len(byteAD) > 52:
+        if len(byteAD) > 0:
+            # Error happens occasionally when decoding the raw data frame,
+            # may require error analysis in future to find out the actual cause.
             try:
                 outputDict = parseStandardFrame(byteAD)
             except:
@@ -313,6 +316,10 @@ def decode_process_publish(mac, data):
                         points[:, 1] = points[:, 1] + wallStateParam[mac]['radar_coord'][1]
                         # points[:, 2] = points[:, 2] + wallStateParam[mac]['radar_coord'][2]
                        
+                        x_coord = points[:, 0]
+                        y_coord = points[:, 1]
+                        z_coord = points[:, 2]
+
                         # Process individual tracker's data for Posture Analytics
                         for trackIdx in range(numTracks):
 
@@ -760,6 +767,10 @@ def decode_process_publish(mac, data):
                         points = np.transpose(points)
                         points[:, 0] = points[:, 0] + ceilStateParam[mac]['radar_coord'][0]
                         points[:, 2] = points[:, 2] + ceilStateParam[mac]['radar_coord'][2]
+
+                        x_coord = points[:, 0]
+                        y_coord = points[:, 1]
+                        z_coord = points[:, 2]
 
                         # Read and draw trackers' information
                         for trackIdx in range(numTracks):
@@ -1477,11 +1488,17 @@ def on_message(mosq, obj, msg):
         except Exception as e:
             print(e)
             continue
-        if "'" in hexD:
-            hexD = hexD.replace("'", "")
+        while 1:
+            if "'" in hexD:
+                hexD = hexD.replace("'", "")
+            else:
+                break
+        # Error happens occasionally when converting the raw data representation,
+        # may require error analysis in future to find out the actual cause.
+        try:
             byteAD = bytearray.fromhex(hexD)
-        else:
-            byteAD = bytearray.fromhex(hexD)
+        except:
+            continue
         # if len(hexD)>1:
             # print(hexD)  
         devicesTbl[devName]["DATA_QUEUE"][ts_str]=byteAD

@@ -506,52 +506,64 @@ async function getAnalyticData(){
         let inBedPctMonth = parseFloat(data.DATA[0]['IN_BED_PCT_MONTH']) >= 90 ? 90 : parseFloat(data.DATA[0]['IN_BED_PCT_MONTH'])
         let inRoomPctMonth = parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH']) >= 90 ? 90 : parseFloat(data.DATA[0]['IN_ROOM_PCT_MONTH'])
         // console.log(inBedSecHour, inRoomSecHour, inBedSecDay, inRoomSecDay, inBedSecWeek, inRoomSecWeek, inBedSecMonth, inRoomSecMonth)
+        let resize = false;
         if(inBedSecHour > 0){
           inBedHour.innerHTML = `${inBedSecHour} min` 
           if(inBedPctHour > 80){              
-            inBedHour.style.right = "45%"
+            // inBedHour.style.right = "45%"
             // inBedHour.style.color = "white"
+            resize = true
           }
         } else 
           inBedHour.innerHTML = '0 min'
         if(inRoomSecHour > 0){
           inRoomHour.innerHTML = `${inRoomSecHour} min` 
           if(inRoomPctHour > 80){              
-            inRoomHour.style.right = "45%"
+            // inRoomHour.style.right = "45%"
             // inBedHour.style.color = "white"
+            resize = true;
           }
         } else
           inRoomHour.innerHTML = '0 min'
         inBedDay.innerHTML = `${inBedSecDay}`
         if(inBedPctDay > 80){
-          inBedDay.style.right = "45%"
+          // inBedDay.style.right = "45%"
           // inBedDay.style.color = "white"
+          resize = true
         }
         inRoomDay.innerHTML = `${inRoomSecDay}`
         if(inRoomPctDay > 80){
-          inRoomDay.style.right = "45%"
+          // inRoomDay.style.right = "45%"
           // inRoomDay.style.color = "white"
+          resize = true;
         }
         inBedWeek.innerHTML = `${inBedSecWeek}`
         if(inBedPctWeek > 80){
-          inBedWeek.style.right = "45%"
+          // inBedWeek.style.right = "45%"
           // inBedWeek.style.color = "white"
+          resize = true;
         }
         inRoomWeek.innerHTML = `${inRoomSecWeek}`
         if(inRoomPctWeek > 80){
-          inRoomWeek.style.right = "45%"
+          // inRoomWeek.style.right = "45%"
           // inRoomWeek.style.color = "white"
+          resize = true;
         }
         inBedMonth.innerHTML = `${inBedSecMonth}` 
         if(inBedPctMonth > 80){
-          inBedMonth.style.right = "45%"
+          // inBedMonth.style.right = "45%"
           // inBedMonth.style.color = "white"
+          resize = true;
         }
         inRoomMonth.innerHTML = `${inRoomSecMonth}`
         if(inRoomPctMonth > 80){
-          inRoomMonth.style.right = "45%"
+        //   inRoomMonth.style.right = "45%"
           // inRoomMonth.style.color = "white"
+          resize = true;
         }
+
+        
+
         multiBarHoriChart.setOption({
           xAxis: {
             max: 100
@@ -679,6 +691,12 @@ async function getAnalyticData(){
         //     ],
         //   });
         // }
+
+        if (resize){
+          document.getElementById("multiBarHori").style.width = "90%";
+          // $('#multiBarHori').css('width', '90%');
+          // multiBarHoriDom.style.width = "90%"
+        }
       }
     })
     .catch((error) => {

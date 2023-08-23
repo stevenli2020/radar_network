@@ -142,7 +142,7 @@ function addCard(d) {
   // secDiv.style.flexDirection = "row-reverse";
   aTag.setAttribute(
     "onclick",
-    `window.location.href='${host}/Detail?room=${d.ROOM_UUID}'`
+    `window.location.href='${host}/Detail/Layman?room=${d.ROOM_UUID}'`
   );
   aTag.style.cursor = "pointer";
   aTag.setAttribute("class", "ag-courses-item_link");

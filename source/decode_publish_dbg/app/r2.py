@@ -106,6 +106,9 @@ def decode_process_publish(mac, data):
             rotYDegree = DEVICE["ROT_Y"]
             rotZDegree = DEVICE["ROT_Z"]
 
+            if not radarType == 'wall':
+                return
+
             if radarType == 'wall':
                 global wallStateParam
 
@@ -169,6 +172,7 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['trackPos'] = np.zeros((0, 3))  # tracker position
                     wallStateParam[mac]['trackVelocity'] = np.zeros((0, 3))  # tracker velocity
                     wallStateParam[mac]['trackIDs'] = np.zeros((0))  # trackers ID
+                    wallStateParam[mac]['isHuman'] = np.zeros((0)) # tracker is human or not
                     wallStateParam[mac]['previous_pointClouds'] = np.zeros((0, 7))  # previous point clouds
                     wallStateParam[mac]['trackerInvalid'] = np.zeros((0))
                     wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'numSubjects', 'roomOccupancy',
@@ -186,11 +190,11 @@ def decode_process_publish(mac, data):
                     # trackIndices = trackIndices - trackIndices.min()
 
                     # Room Occupancy Detection
-                    wall_Dict['numSubjects'] = numTracks
-                    if numTracks > 0:
-                      wall_Dict['roomOccupancy'] = True
-                    elif numTracks == 0:
-                      wall_Dict['roomOccupancy'] = False
+                    # wall_Dict['numSubjects'] = numTracks
+                    # if numTracks > 0:
+                    #   wall_Dict['roomOccupancy'] = True
+                    # elif numTracks == 0:
+                    #   wall_Dict['roomOccupancy'] = False
 
                     # Decode 3D People Counting Target List TLV
                     # MMWDEMO_OUTPUT_MSG_TRACKERPROC_3D_TARGET_LIST
@@ -210,61 +214,61 @@ def decode_process_publish(mac, data):
                     # float        confidenceLevel;    /*! @brief   Tracker confidence metric*/
                     trackData = outputDict['trackData']
 
-                    if numTracks == 1:
+                    # if numTracks == 1:
 
-                        # Tracker position and velocity obtained from Extended Kalman Filter (EKF) algorithm
-                        trackId = trackData[0, 0]
-                        x_pos = trackData[0, 1]
-                        y_pos = trackData[0, 2]
-                        z_pos = trackData[0, 3]
-                        x_vel = trackData[0, 4]
-                        y_vel = trackData[0, 5]
-                        z_vel = trackData[0, 6]
-                        x_acc = trackData[0, 7]
-                        y_acc = trackData[0, 8]
-                        z_acc = trackData[0, 9]
+                    #     # Tracker position and velocity obtained from Extended Kalman Filter (EKF) algorithm
+                    #     trackId = trackData[0, 0]
+                    #     x_pos = trackData[0, 1]
+                    #     y_pos = trackData[0, 2]
+                    #     z_pos = trackData[0, 3]
+                    #     x_vel = trackData[0, 4]
+                    #     y_vel = trackData[0, 5]
+                    #     z_vel = trackData[0, 6]
+                    #     x_acc = trackData[0, 7]
+                    #     y_acc = trackData[0, 8]
+                    #     z_acc = trackData[0, 9]
 
-                        # Tracker polar coordinates
-                        trackerRangeXY = np.linalg.norm([x_pos, y_pos], ord=2)  # tracker range projected onto the x-y plane
-                        trackerRange = np.linalg.norm([x_pos, y_pos, z_pos], ord=2)
-                        trackerAzimuth = np.arctan(x_pos / y_pos) * 180 / np.pi  # Azimuth angle in radian
-                        trackerElevation = np.arctan(z_pos / trackerRangeXY) * 180 / np.pi  # Elevation angle in radian
-                        # trackerRadialVelocityXY = (x_pos * x_vel + y_pos * y_vel) / trackerRangeXY # tracker radial velocity projected onto the x-y plane
-                        # trackerRadialVelocity = (x_pos * x_vel + y_pos * y_vel + z_pos * z_vel) / trackerRange
-                        # trackerAzimuthVelocity = (x_vel * y_pos - x_pos * y_vel) / (trackerRangeXY**2)
-                        # trackerElevationVelocity
-                        # print(trackerRange, trackerAzimuth)
+                    #     # Tracker polar coordinates
+                    #     trackerRangeXY = np.linalg.norm([x_pos, y_pos], ord=2)  # tracker range projected onto the x-y plane
+                    #     trackerRange = np.linalg.norm([x_pos, y_pos, z_pos], ord=2)
+                    #     trackerAzimuth = np.arctan(x_pos / y_pos) * 180 / np.pi  # Azimuth angle in radian
+                    #     trackerElevation = np.arctan(z_pos / trackerRangeXY) * 180 / np.pi  # Elevation angle in radian
+                    #     # trackerRadialVelocityXY = (x_pos * x_vel + y_pos * y_vel) / trackerRangeXY # tracker radial velocity projected onto the x-y plane
+                    #     # trackerRadialVelocity = (x_pos * x_vel + y_pos * y_vel + z_pos * z_vel) / trackerRange
+                    #     # trackerAzimuthVelocity = (x_vel * y_pos - x_pos * y_vel) / (trackerRangeXY**2)
+                    #     # trackerElevationVelocity
+                    #     # print(trackerRange, trackerAzimuth)
 
-                        # Rotation of tracker's position and velocity coordinates
-                        [x_pos, y_pos, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_pos, y_pos, 1])
-                        [x_vel, y_vel, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_vel, y_vel, 1])
-                        [x_acc, y_acc, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_acc, y_acc, 1])
-                        [dum, y_pos, z_pos] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_pos, z_pos])
-                        [dum, y_vel, z_vel] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_vel, z_vel])
-                        [dum, y_acc, z_acc] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_acc, z_acc])
-                        [x_pos, dum, z_pos] = np.matmul(wallStateParam[mac]['rotYMat'], [x_pos, 1, z_pos])
-                        [x_vel, dum, z_vel] = np.matmul(wallStateParam[mac]['rotYMat'], [x_vel, 1, z_vel])
-                        [x_acc, dum, z_acc] = np.matmul(wallStateParam[mac]['rotYMat'], [x_acc, 1, z_acc])
+                    #     # Rotation of tracker's position and velocity coordinates
+                    #     [x_pos, y_pos, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_pos, y_pos, 1])
+                    #     [x_vel, y_vel, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_vel, y_vel, 1])
+                    #     [x_acc, y_acc, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_acc, y_acc, 1])
+                    #     [dum, y_pos, z_pos] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_pos, z_pos])
+                    #     [dum, y_vel, z_vel] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_vel, z_vel])
+                    #     [dum, y_acc, z_acc] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_acc, z_acc])
+                    #     [x_pos, dum, z_pos] = np.matmul(wallStateParam[mac]['rotYMat'], [x_pos, 1, z_pos])
+                    #     [x_vel, dum, z_vel] = np.matmul(wallStateParam[mac]['rotYMat'], [x_vel, 1, z_vel])
+                    #     [x_acc, dum, z_acc] = np.matmul(wallStateParam[mac]['rotYMat'], [x_acc, 1, z_acc])
 
-                        # Horizontal shifting of tracker's position coordinates
-                        x_pos = x_pos + wallStateParam[mac]['radar_coord'][0]
-                        y_pos = y_pos + wallStateParam[mac]['radar_coord'][1]
-                        # z_pos = z_pos + wallStateParam[mac]['radar_coord'][2]
+                    #     # Horizontal shifting of tracker's position coordinates
+                    #     x_pos = x_pos + wallStateParam[mac]['radar_coord'][0]
+                    #     y_pos = y_pos + wallStateParam[mac]['radar_coord'][1]
+                    #     # z_pos = z_pos + wallStateParam[mac]['radar_coord'][2]
 
-                        # Tracker velocity (normalized) direction
-                        # x_vel_direction = x_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])  # Add epsilon to denominator to prevent run-time warning
-                        # y_vel_direction = y_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
-                        # z_vel_direction = z_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
+                    #     # Tracker velocity (normalized) direction
+                    #     # x_vel_direction = x_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])  # Add epsilon to denominator to prevent run-time warning
+                    #     # y_vel_direction = y_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
+                    #     # z_vel_direction = z_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
 
-                        wall_Dict['posX'] = x_pos
-                        wall_Dict['posY'] = y_pos
-                        wall_Dict['posZ'] = z_pos
-                        wall_Dict['velX'] = x_vel
-                        wall_Dict['velY'] = y_vel
-                        wall_Dict['velZ'] = z_vel
-                        wall_Dict['accX'] = x_acc
-                        wall_Dict['accY'] = y_acc
-                        wall_Dict['accZ'] = z_acc
+                    #     wall_Dict['posX'] = x_pos
+                    #     wall_Dict['posY'] = y_pos
+                    #     wall_Dict['posZ'] = z_pos
+                    #     wall_Dict['velX'] = x_vel
+                    #     wall_Dict['velY'] = y_vel
+                    #     wall_Dict['velZ'] = z_vel
+                    #     wall_Dict['accX'] = x_acc
+                    #     wall_Dict['accY'] = y_acc
+                    #     wall_Dict['accZ'] = z_acc
 
                     # Read parsed data from radar output dictionary
                     # Radar Point Clouds + Trackers' Data Extraction and Processing
@@ -372,6 +376,7 @@ def decode_process_publish(mac, data):
                             # if len(trackPos) == 0 or np.amin(dist) > 1 or np.amin(distVelocity) > 3:
                             if len(wallStateParam[mac]['trackPos']) == 0 or np.sum(wallStateParam[mac]['trackIDs'] == trackId) == 0:
                                 wallStateParam[mac]['trackIDs'] = np.concatenate((wallStateParam[mac]['trackIDs'], [trackId]), axis=0)
+                                wallStateParam[mac]['isHuman'] = np.concatenate((wallStateParam[mac]['isHuman'], [0]), axis=0)
                                 wallStateParam[mac]['trackPos'] = np.concatenate((wallStateParam[mac]['trackPos'], [[x_pos, y_pos, z_pos]]), axis=0)
                                 wallStateParam[mac]['trackVelocity'] = np.concatenate((wallStateParam[mac]['trackVelocity'], [[x_vel, y_vel, z_vel]]), axis=0)
                                 wallStateParam[mac]['trackerInvalid'] = np.concatenate((wallStateParam[mac]['trackerInvalid'], [0]), axis=0)
@@ -431,16 +436,26 @@ def decode_process_publish(mac, data):
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
                                     deltaY = wallStateParam[mac]['averageY'][minDistIdx][-1] - wallStateParam[mac]['averageY'][minDistIdx][-10]
                                     deltaZ = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-10]
-                                    del wallStateParam[mac]['averageX'][minDistIdx][0]
-                                    del wallStateParam[mac]['averageY'][minDistIdx][0]
-                                    del wallStateParam[mac]['averageZ'][minDistIdx][0]
+
+                                    if len(wallStateParam[mac]['averageX'][minDistIdx]) >= 100:
+                                        aveDispX = np.max(wallStateParam[mac]['averageX'][minDistIdx]) - np.min(wallStateParam[mac]['averageX'][minDistIdx])
+                                        aveDispY = np.max(wallStateParam[mac]['averageY'][minDistIdx]) - np.min(wallStateParam[mac]['averageY'][minDistIdx])
+                                        aveDispZ = np.max(wallStateParam[mac]['averageZ'][minDistIdx]) - np.min(wallStateParam[mac]['averageZ'][minDistIdx])
+                                        aveDisp = np.sqrt(aveDispX ** 2 + aveDispY ** 2 + aveDispZ ** 2)
+                                        # print("Average Displacement =", aveDisp)
+                                        if aveDisp > 0.5:
+                                            wallStateParam[mac]['isHuman'][minDistIdx] = 1
+                                        del wallStateParam[mac]['averageX'][minDistIdx][0]
+                                        del wallStateParam[mac]['averageY'][minDistIdx][0]
+                                        del wallStateParam[mac]['averageZ'][minDistIdx][0]
 
                                     deltaDisp = np.sqrt(deltaX ** 2 + deltaY ** 2 + deltaZ ** 2)
                                     deltaDist = np.sqrt(deltaX ** 2 + deltaY ** 2)
 
                                     # Disable posture estimation if number of subjects > 1 or subject's range > 5m, or subject's
                                     # azimuth or elevation angle > 50 degrees.
-                                    if numTracks > 1:
+                                    # if numTracks > 1:
+                                    if np.sum(wallStateParam[mac]['isHuman'] == 1) > 1:
                                         wallStateParam[mac]['labelCount'][minDistIdx] = 5
                                         wallStateParam[mac]['labelGuess'][minDistIdx] = 5
                                         wall_Dict['state'] = 5
@@ -450,7 +465,8 @@ def decode_process_publish(mac, data):
                                         wallStateParam[mac]['labelGuess'][minDistIdx] = 4
 
                                     # elif len(x_coord[trackIndices == trackId]) > 10:
-                                    elif numTracks == 1:
+                                    # elif numTracks == 1:
+                                    elif np.sum(wallStateParam[mac]['isHuman'] == 1) == 1 and wallStateParam[mac]['isHuman'][minDistIdx] == 1:
 
                                         if deltaDisp > 0.05 and len(x_coord[trackIndices == trackId]) > 10:
                                             x_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['x_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
@@ -496,8 +512,26 @@ def decode_process_publish(mac, data):
                                                 # wall_Dict['state'] = wallStateParam[mac]['label_state'][wallStateParam[mac]['labelCount'][minDistIdx]]
                                                 wall_Dict['state'] = wallStateParam[mac]['labelCount'][minDistIdx]
 
+                                if np.sum(wallStateParam[mac]['isHuman'] == 1) == 1 and wallStateParam[mac]['isHuman'][minDistIdx] == 1:
+                                    wall_Dict['posX'] = x_pos
+                                    wall_Dict['posY'] = y_pos
+                                    wall_Dict['posZ'] = z_pos
+                                    wall_Dict['velX'] = x_vel
+                                    wall_Dict['velY'] = y_vel
+                                    wall_Dict['velZ'] = z_vel
+                                    wall_Dict['accX'] = x_acc
+                                    wall_Dict['accY'] = y_acc
+                                    wall_Dict['accZ'] = z_acc
+                                                               
                                 # ----------------------------------------------------
                                 # ----------------------------------------------------
+
+                        # Room Occupancy Detection
+                        wall_Dict['numSubjects'] = np.sum(wallStateParam[mac]['isHuman'] == 1)
+                        if np.sum(wallStateParam[mac]['isHuman'] == 1) > 0:
+                            wall_Dict['roomOccupancy'] = True
+                        elif np.sum(wallStateParam[mac]['isHuman'] == 1) == 0:
+                            wall_Dict['roomOccupancy'] = False
 
                         # Remove unused trackers' information and parameters
                         trackerInvalidIdx = np.arange(len(wallStateParam[mac]['trackerInvalid']))

@@ -98,6 +98,7 @@ def analyseLaymanData(data):
 
     analysis = {"timeslot":[]}
     inroom_analysis = {}
+    onbed_analysis = {}
 
     curr_timeslot = 0
     curr_day_timeslot = 0
@@ -134,6 +135,9 @@ def analyseLaymanData(data):
 
         if (len(inroom_analysis[date_str]) <= curr_day_timeslot):
             inroom_analysis[date_str].append([])
+
+        if (date_str not in onbed_analysis):
+            onbed_analysis[date_str] = []
 
         if (row["STATE"] == 2 and row["IN_BED"] == 1):
             sleeping = True
@@ -185,6 +189,32 @@ def analyseLaymanData(data):
             
             time_in_bed.append(diff.total_seconds())
 
+            start_date_str = str(timeslot[0]["TIMESTAMP"].date())
+            end_date_str = str(timeslot[-1]["TIMESTAMP"].date())
+            if (start_date_str == end_date_str):
+                onbed_analysis[start_date_str].append(diff.total_seconds())
+            else:
+                start_date = None
+                previous_date = None
+                for i in range(len(timeslot)):
+                    if previous_date == None:
+                        previous_date = timeslot[i]
+
+                    if start_date == None:
+                        start_date = timeslot[i]
+
+                    date_str = str(timeslot[i]["TIMESTAMP"].date())
+
+                    if (str(previous_date["TIMESTAMP"].date()) != date_str):
+                        onbed_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
+                        start_date = timeslot[i]
+
+                    previous_date = timeslot[i]
+
+                if (previous_date and start_date):
+                    onbed_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
+
+
             sleep_percentage = 0
             sleep_count = 0
             for t in timeslot:
@@ -217,15 +247,22 @@ def analyseLaymanData(data):
 
         inroom_seconds.append(inroom_second)
 
-    print(result)
+    onbed_seconds = []
+
+    for date in onbed_analysis:
+        onbed_second = 0
+        for s in onbed_analysis[date]:
+            onbed_second += s
+
+        onbed_seconds.append(onbed_second)
 
     sleeping_longest = int(max(sleeping_hours))
     sleeping_shortest = int(min(sleeping_hours))
     sleeping_average = int(sum(sleeping_hours) / len(sleeping_hours))
 
-    bed_longest = int(max(time_in_bed))
-    bed_shortest = int(min(time_in_bed))
-    bed_average = int(sum(time_in_bed) / len(time_in_bed))
+    bed_longest = int(max(onbed_seconds))
+    bed_shortest = int(min(onbed_seconds))
+    bed_average = int(sum(onbed_seconds) / len(onbed_seconds))
 
     inroom_longest = int(max(inroom_seconds))
     inroom_shortest = int(min(inroom_seconds))

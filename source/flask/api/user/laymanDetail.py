@@ -67,7 +67,7 @@ def getLaymanData(room_id):
     if (room_name):
         result["data"]["room_name"] = room_name["room_name"]
 
-    sql = "SELECT pd.`TIMESTAMP`,pd.`STATE`,pd.`IN_BED`,pd.`BREATH_RATE`,pd.`HEART_RATE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC=pd.MAC WHERE WEEK(pd.`TIMESTAMP`, 1) = WEEK('2023-08-18', 1) AND YEAR(pd.`TIMESTAMP`) = YEAR('2023-08-18') AND rrm.ROOM_UUID='%s' ORDER BY TIMESTAMP;"%(room_id)
+    sql = "SELECT pd.`TIMESTAMP`,pd.`STATE`,pd.`IN_BED`,pd.`BREATH_RATE`,pd.`HEART_RATE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC=pd.MAC WHERE WEEK(pd.`TIMESTAMP`, 1) = WEEK(CURDATE(), 1) AND YEAR(pd.`TIMESTAMP`) = YEAR(CURDATE()) AND rrm.ROOM_UUID='%s' ORDER BY TIMESTAMP;"%(room_id)
     cursor.execute(sql)
     processed_data = cursor.fetchall()
     if (processed_data):

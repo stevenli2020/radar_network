@@ -15,7 +15,7 @@ from user.DeviceSaveData import getDeviceListsOfStatus
 from user.DeviceSaveData import getSaveDeviceDetail
 from user.DeviceSaveData import updateSaveDeviceDataTime
 from user.DeviceSaveData import deleteSaveDeviceDataTime
-from user.getSaveData import getHistOfVitalData
+from user.getSaveData import getHistOfVitalData, getHistOfVitalMovingAverageData
 from user.getSaveData import getAnalyticDataofPosture
 from user.getSaveData import getSummaryDataofPosition
 # from user.getSaveData import getSaveRawData
@@ -401,6 +401,20 @@ def getData():
                 return {"ERROR": 'Not authorized!'}
         else:
             return {"ERROR": 'Empty json!'}  
+        
+@app.route('/api/getHistOfVitalMovingAverage', methods=["POST"])
+def getMovingAverageData():
+    if request.method == 'POST':
+        data = request.json   
+        if data:                 
+            login, admin = auth(data)
+            if login:
+                return getHistOfVitalMovingAverageData(data)  
+                # return getSaveRawData(data)  
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}  
 
 # retrieve summary saved data of vitals
 @app.route('/api/getAnalyticData', methods=["POST"])
@@ -651,8 +665,8 @@ def getRoomLaymanDetail():
         if data:    
             login, admin = True ,True#auth(data)
             if login:              
-                if "room_id" in data:              
-                    return getLaymanData(data.get("room_id"))
+                if "room_id" in data and "eow" in data:              
+                    return getLaymanData(data.get("eow"),data.get("room_id"))
                 else:
                     return {"ERROR": 'Please provide room id!'}
             else:

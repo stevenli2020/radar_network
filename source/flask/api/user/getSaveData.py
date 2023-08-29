@@ -141,6 +141,72 @@ def getHistOfVitalData(data):
     connection.close()
     return result
 
+def getHistOfVitalMovingAverageData(data):
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    result = defaultdict(list)    
+    sql = "SELECT GROUP_CONCAT(MAC) FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID WHERE ROOMS_DETAILS.ROOM_UUID ='%s'" % (data["ROOM_UUID"])
+    # print(sql)
+    cursor.execute(sql)
+    dbresult = cursor.fetchone() 
+    
+    # print(dbresult)
+    try:
+        db = dbresult[0].split(',')
+        List = "IN ('"+db[0]+"','"+db[1]+"')"
+    except:
+        # print("No data related to room name")
+        result["ERROR"].append({'Message': 'No data related to room name!'})
+        return result
+    if data['CUSTOM'] != 1:
+        sql = "SELECT DATE_FORMAT(TIMESTAMP, \'%%Y-%%m-%%d %%H:%%i\') AS T, ROUND(AVG(HEART_RATE),1) AS HR, ROUND(AVG(BREATH_RATE),1) AS BR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s) AND HEART_RATE IS NOT NULL AND HEART_RATE !=0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE !=0 GROUP BY T ORDER BY `T` ASC;" %(List, data['TIME'])
+    else: 
+        sql = "SELECT DATE_FORMAT(TIMESTAMP, \'%%Y-%%m-%%d %%H:%%i\') AS T, ROUND(AVG(HEART_RATE),1) AS HR, ROUND(AVG(BREATH_RATE),1) AS BR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP BETWEEN '%s' AND '%s' AND HEART_RATE IS NOT NULL AND HEART_RATE !=0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE !=0 GROUP BY T ORDER BY `T` ASC;" %(List, data['TIMESTART'], data['TIMEEND'])
+    print(sql)
+    cursor.execute(sql)
+    dbresult = cursor.fetchall() 
+    if not dbresult:
+        # print("No data")
+        result["ERROR"].append({'Message': 'No data!'})
+        return result 
+    query_data = dbresult
+    time_start = 0
+    time_end = 0
+    time_format = "%Y-%m-%d %H:%M"
+    if data['CUSTOM'] != 1:
+        time_start = int(time.mktime(time.strptime(query_data[0][0], time_format)))
+        time_end   = int(time.mktime(time.strptime(query_data[-1][0], time_format)))
+    else:
+        time_start = int(time.mktime(time.strptime(data['TIMESTART'], time_format)))
+        time_end   = int(time.mktime(time.strptime(data['TIMEEND'], time_format)))
+    result["TIME_START"].append(time_start)
+    # print(time_start,time_end)
+    data_obj = {}
+    for T in range(time_start, time_end, 60):
+        data_obj[T] = [0,0]
+    # print(data_obj)
+    for d in query_data:
+        t = int(time.mktime(time.strptime(d[0], time_format)))
+        data_obj[t] = [d[1],d[2]]
+    new_query_data = []
+    # new_query_data_str = ""
+    for t, d in data_obj.items():
+        # new_query_data.append([datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M"), d[0], d[1]])
+        # new_query_data_str = new_query_data_str + str(d[0]) + ',' + str(d[1])+';'
+        new_query_data.append(str(d[0]) + ',' + str(d[1]))
+    result['DATA'].append(';'.join(new_query_data))
+    # result['DATA'].append(new_query_data_str)
+    if data['CUSTOM'] != 1: 
+        sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, data['TIME'])
+    else:
+        sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP BETWEEN '%s' AND '%s';" %(List, data['TIMESTART'], data['TIMEEND'])
+    cursor.execute(sql)
+    dbresult = cursor.fetchone() 
+    result["AVG"].append(dbresult)
+    cursor.close()
+    connection.close()
+    return result
+
 def _getHistOfVitalData(data):
     # SELECT series.TIMESTAMP as TIMESTAMP, COALESCE(dt.HEART_RATE, 0) as HEART_RATE, COALESCE(dt.BREATH_RATE, 0) as BREATH_RATE FROM (SELECT FROM_UNIXTIME(FLOOR((UNIX_TIMESTAMP(TIMESTAMP)) DIV 900)*900) AS TIMESTAMP, AVG(HEART_RATE) as HEART_RATE, AVG(BREATH_RATE) as BREATH_RATE FROM PROCESSED_DATA WHERE HEART_RATE > 0 AND TIMESTAMP BETWEEN NOW() - INTERVAL 1 DAY AND NOW() GROUP BY TIMESTAMP) dt RIGHT JOIN (SELECT date_format(date_add(NOW() - INTERVAL 1 DAY, INTERVAL @num:=@num+900 SECOND), '%Y-%m-%d %H:%i:00') TIMESTAMP FROM PROCESSED_DATA, (select @num:=-900) num LIMIT 97) series ON TIMEDIFF(series.TIMESTAMP,dt.TIMESTAMP) < '00:04:59' AND TIMEDIFF(series.TIMESTAMP,dt.TIMESTAMP) > '-00:00:01' GROUP BY `TIMESTAMP` ORDER BY TIMESTAMP ASC;
     connection = mysql.connector.connect(**config)
@@ -178,10 +244,20 @@ def _getHistOfVitalData(data):
     cursor.execute(sql)
     dbresult = cursor.fetchall()    
     # print(dbresult)    
-    
+    hr = []
+    br = []
+    alpha = 0.2
     # result["SQL"].append({"SQL": sql})
     for row in dbresult:
-        result["DATA"].append({"TIMESTAMP": row[0], "HEART_RATE": row[1], "BREATH_RATE": row[2]})
+        hr.append(row[1])
+        br.append(row[2])
+
+    hr = calculate_ema(hr,alpha)
+    br = calculate_ema(br,alpha)
+
+    for index in range(len(dbresult)):
+        result["DATA"].append({"TIMESTAMP": dbresult[index][0], "HEART_RATE": hr[index], "BREATH_RATE": br[index]})
+
     sql = "SELECT ROUND(AVG(HEART_RATE), 2) as HEART_RATE, ROUND(AVG(BREATH_RATE), 2) as BREATH_RATE FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND HEART_RATE > 0 AND TIMESTAMP BETWEEN NOW() - INTERVAL %s AND NOW()"%(data['DEVICEMAC'], data['TIME'])
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
@@ -189,6 +265,15 @@ def _getHistOfVitalData(data):
     cursor.close()
     connection.close()
     return result
+
+def calculate_ema(data, alpha):
+    ema = [data[0]]  # Initialize EMA with the first data point
+    
+    for i in range(1, len(data)):
+        ema_value = alpha * data[i] + (1 - alpha) * ema[i - 1]
+        ema.append(ema_value)
+    
+    return ema
 
 def getSaveData(data):
     connection = mysql.connector.connect(**config)

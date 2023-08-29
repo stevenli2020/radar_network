@@ -1,24 +1,18 @@
 version: "3"
 services:
-  evt:
-    build: .
-    container_name: cron
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cron_container
     restart: always
-    networks:
-      - net01
-    logging:
-      driver: "json-file"
-      options:
-        max-size: 10m      
-    environment:
-      DATABASE: 'db'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=net01" 
     volumes:
-      - ./app:/app      
-
+      - ./run.py:/app/run.py
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - net01    
+  
 networks:
   net01:
     external: true
-    name: net01

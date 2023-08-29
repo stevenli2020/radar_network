@@ -1,3 +1,4 @@
+from datetime import datetime as dt,timedelta
 import schedule
 import datetime
 import time
@@ -16,7 +17,6 @@ config = {
     # 'port': '2203',
     # 'database': 'Gaitmetrics'
 }
-
 
 def get_rooms():
     global config
@@ -42,7 +42,7 @@ def getLaymanData(date,room_uuid):
     breath_rate = None
     heart_rate = None
 
-    sql = "SELECT pd.`TIMESTAMP`,pd.`STATE`,pd.`IN_BED`,pd.`BREATH_RATE`,pd.`HEART_RATE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC=pd.MAC WHERE WEEK(pd.`TIMESTAMP`, 1) = WEEK('%s', 1) AND YEAR(pd.`TIMESTAMP`) = YEAR('%s') AND rrm.ROOM_UUID='%s' ORDER BY TIMESTAMP;"%(date,date,room_uuid)
+    sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
     cursor.execute(sql)
     processed_data = cursor.fetchall()
     if (processed_data):
@@ -71,7 +71,6 @@ def insert_data(date,room_id,type,data):
         cursor = connection.cursor(dictionary=True)
 
         query = f"SELECT * FROM ANALYSIS WHERE `EOW`='{date}' AND `ROOM_ID`='{room_id}' AND `TYPE`='{type}';"
-        print(query)
         cursor.execute(query)
         existing_data = cursor.fetchone()
 
@@ -86,6 +85,9 @@ def insert_data(date,room_id,type,data):
             connection.commit()
             
         else:
+            max = data.get("max")
+            min = data.get("min")
+            average = data.get("average")
             try:
                 update_query = f"UPDATE ANALYSIS SET `MAX`='{max}',`MIN`='{min}',`AVERAGE`='{average}' WHERE `EOW`='{date}' AND `ROOM_ID`='{room_id}' AND `TYPE`='{type}';"
                 cursor.execute(update_query)
@@ -98,21 +100,18 @@ def insert_data(date,room_id,type,data):
 def current_layman():
     curr = str(datetime.datetime.now(timezone("Asia/Singapore"))).split(' ')[0]
     print("Running current layman")
-    sow, eow = get_week_start_end(curr)
-    eow= str(eow)
     rooms = get_rooms()
     for room in rooms:
-        print(eow,room["ID"],room["ROOM_UUID"])
+        print(curr,room["ID"],room["ROOM_UUID"])
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate = getLaymanData(eow,room["ROOM_UUID"])
-        insert_data(eow,room["ID"],"sleeping_hour",sleeping_hour)
-        insert_data(eow,room["ID"],"time_in_bed",time_in_bed)
-        insert_data(eow,room["ID"],"bed_time",bed_time)
-        insert_data(eow,room["ID"],"wake_up_time",wake_up_time)
-        insert_data(eow,room["ID"],"in_room",in_room)
-        insert_data(eow,room["ID"],"sleep_disruption",sleep_disruption)
-        insert_data(eow,room["ID"],"breath_rate",breath_rate)
-        insert_data(eow,room["ID"],"heart_rate",heart_rate)
-    # print("I'm working...", str(datetime.datetime.now()))
+        insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
+        insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
+        insert_data(curr,room["ID"],"bed_time",bed_time)
+        insert_data(curr,room["ID"],"wake_up_time",wake_up_time)
+        insert_data(curr,room["ID"],"in_room",in_room)
+        insert_data(curr,room["ID"],"sleep_disruption",sleep_disruption)
+        insert_data(curr,room["ID"],"breath_rate",breath_rate)
+        insert_data(curr,room["ID"],"heart_rate",heart_rate)
 
 def previous_week():
     curr = str(datetime.datetime.now(timezone("Asia/Singapore"))).split(' ')[0]
@@ -264,27 +263,29 @@ def analyseLaymanData(data):
             sleep_percentage = sleep_count/len(timeslot)
 
             if (diff.total_seconds() > sleeping_threshold and sleep_percentage >= 0.3):
-                start_sleep_time.append(timeslot[0]["TIMESTAMP"])
-                wake_up_time.append(timeslot[-1]["TIMESTAMP"])
-                sleeping_hours.append(diff.total_seconds())
-                
-                result.append({
-                    "data_length":len(timeslot),
-                    "start":timeslot[0],
-                    "end":timeslot[-1]
-                })
+                if (len(timeslot) > 1):
+                    start_sleep_time.append(timeslot[0]["TIMESTAMP"])
+                    wake_up_time.append(timeslot[-1]["TIMESTAMP"])
+                    sleeping_hours.append(diff.total_seconds())
+                    
+                    result.append({
+                        "data_length":len(timeslot),
+                        "start":timeslot[0],
+                        "end":timeslot[-1]
+                    })
 
     inroom_arr = []
 
     for date in inroom_analysis:
         inroom_second = 0
         for ts in inroom_analysis[date]:
-            inroom_arr.append({
-                "from":ts[0]["TIMESTAMP"],
-                "to":ts[-1]["TIMESTAMP"]
-            })
-            diff = ts[-1]["TIMESTAMP"] - ts[0]["TIMESTAMP"]
-            inroom_second += diff.total_seconds()
+            if (len(ts) > 1):
+                inroom_arr.append({
+                    "from":ts[0]["TIMESTAMP"],
+                    "to":ts[-1]["TIMESTAMP"]
+                })
+                diff = ts[-1]["TIMESTAMP"] - ts[0]["TIMESTAMP"]
+                inroom_second += diff.total_seconds()
 
         inroom_seconds.append(inroom_second)
 
@@ -511,23 +512,35 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-#previous
-schedule.every().sunday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+start_date = "2023-06-05"
+end_date = "2023-08-27"
 
-#current week
-for i in ["04:00","08:00","12:00","16:53","18:00","22:00"]:
+def get_dates_between(start_date_str, end_date_str):
+    start_date = dt.strptime(start_date_str, "%Y-%m-%d")
+    end_date = dt.strptime(end_date_str, "%Y-%m-%d")
     
-    schedule.every().monday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().tuesday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().wednesday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().thursday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().friday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().saturday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().sunday.at(i, timezone("Asia/Singapore")).do(current_layman)
+    dates = []
+    current_date = start_date
     
+    while current_date <= end_date:
+        dates.append(current_date.strftime("%Y-%m-%d"))
+        current_date += timedelta(days=1)
+    
+    return dates
 
+dates_between = get_dates_between(start_date, end_date)
 
-while True:
-    print(datetime.datetime.now(timezone("Asia/Singapore")))
-    schedule.run_pending()
-    time.sleep(30)
+for curr in dates_between:
+    print("Running current layman")
+    rooms = get_rooms()
+    for room in rooms:
+        print(curr,room["ID"],room["ROOM_UUID"])
+        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate = getLaymanData(curr,room["ROOM_UUID"])
+        insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
+        insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
+        insert_data(curr,room["ID"],"bed_time",bed_time)
+        insert_data(curr,room["ID"],"wake_up_time",wake_up_time)
+        insert_data(curr,room["ID"],"in_room",in_room)
+        insert_data(curr,room["ID"],"sleep_disruption",sleep_disruption)
+        insert_data(curr,room["ID"],"breath_rate",breath_rate)
+        insert_data(curr,room["ID"],"heart_rate",heart_rate)

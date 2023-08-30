@@ -84,6 +84,11 @@ function changeWeek(weekChange) {
 
 roomI = window.location.href.split("=")[1];
 
+const historicalButton = document.getElementById("historical-button")
+historicalButton.addEventListener("click", function () {
+  window.location.href=`${host}/Detail?room=${roomI}`
+});
+
 roomD = {
   room_id: roomI,
 };

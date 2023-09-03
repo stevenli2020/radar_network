@@ -139,6 +139,7 @@ def analyseLaymanData(data):
     analysis = {"timeslot":[]}
     inroom_analysis = {}
     onbed_analysis = {}
+    sleeping_analysis = {}
 
     curr_timeslot = 0
     curr_day_timeslot = 0
@@ -178,6 +179,9 @@ def analyseLaymanData(data):
 
         if (date_str not in onbed_analysis):
             onbed_analysis[date_str] = []
+        
+        if (date_str not in sleeping_analysis):
+            sleeping_analysis[date_str] = []
 
         if (row["STATE"] == 2 and row["IN_BED"] == 1):
             sleeping = True
@@ -267,6 +271,29 @@ def analyseLaymanData(data):
                     start_sleep_time.append(timeslot[0]["TIMESTAMP"])
                     wake_up_time.append(timeslot[-1]["TIMESTAMP"])
                     sleeping_hours.append(diff.total_seconds())
+
+                    if (start_date_str == end_date_str):
+                        sleeping_analysis[start_date_str].append(diff.total_seconds())
+                    else:
+                        start_date = None
+                        previous_date = None
+                        for i in range(len(timeslot)):
+                            if previous_date == None:
+                                previous_date = timeslot[i]
+
+                            if start_date == None:
+                                start_date = timeslot[i]
+
+                            date_str = str(timeslot[i]["TIMESTAMP"].date())
+
+                            if (str(previous_date["TIMESTAMP"].date()) != date_str):
+                                sleeping_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
+                                start_date = timeslot[i]
+
+                            previous_date = timeslot[i]
+
+                        if (previous_date and start_date):
+                            sleeping_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
                     
                     result.append({
                         "data_length":len(timeslot),
@@ -297,11 +324,22 @@ def analyseLaymanData(data):
             onbed_second += s
 
         onbed_seconds.append(onbed_second)
+
+    sleeping_seconds = []
+
+    for date in sleeping_analysis:
+        sleeping_second = 0
+        for s in sleeping_analysis[date]:
+            sleeping_second += s
+
+        sleeping_seconds.append(sleeping_second)
+
+    sleeping_seconds = list(filter(filter_non_zero, sleeping_seconds))
     
     try:
-        sleeping_longest = int(max(sleeping_hours))
-        sleeping_shortest = int(min(sleeping_hours))
-        sleeping_average = int(sum(sleeping_hours) / len(sleeping_hours))
+        sleeping_longest = int(max(sleeping_seconds))
+        sleeping_shortest = int(min(sleeping_seconds))
+        sleeping_average = int(sum(sleeping_seconds) / len(sleeping_seconds))
 
         sleeping_hour_result = {
             "average":seconds_to_text(sleeping_average),
@@ -310,6 +348,8 @@ def analyseLaymanData(data):
         }
     except Exception as e:
         sleeping_hour_result = None
+
+    onbed_seconds = list(filter(filter_non_zero, onbed_seconds))
 
     try:
         bed_longest = int(max(onbed_seconds))
@@ -323,6 +363,8 @@ def analyseLaymanData(data):
         }
     except Exception as e:
         time_in_bed_result = None
+
+    inroom_seconds = list(filter(filter_non_zero, inroom_seconds))
 
     try:
         inroom_longest = int(max(inroom_seconds))
@@ -398,6 +440,9 @@ def analyseLaymanData(data):
         heart_rate_result = None
 
     return sleeping_hour_result,time_in_bed_result,bed_time_result,wake_up_time_result,in_room_result,sleep_disruption_result,breath_rate_result,heart_rate_result
+
+def filter_non_zero(number):
+    return number != 0
 
 def seconds_to_text(seconds):
     # Calculate hours, minutes, and remaining seconds
@@ -513,7 +558,7 @@ def waketime_processing(arr):
     return average_waketime,earliest_waketime,latest_waketime
 
 start_date = "2023-06-05"
-end_date = "2023-08-27"
+end_date = "2023-09-02"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")

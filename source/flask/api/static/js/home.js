@@ -51,7 +51,6 @@ async function getRoomData(t = 1) {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log(data);
       if (data.DATA) {
         data.DATA.forEach((d) => {
           if (t == 1) addCard(d);
@@ -148,6 +147,9 @@ function addCard(d) {
   aTag.setAttribute("class", "ag-courses-item_link");
   thirdDiv.setAttribute("class", "ag-courses-item_title");
   thirdDiv.innerText = d.ROOM_NAME;
+  if (d.ALERTS.length > 0){
+    thirdDiv.innerHTML += '  <i id="popper-alerts" style="cursor: pointer;" class="bi bi-exclamation-triangle-fill"  aria-describedby="tooltip-popper"></i>';
+  }
   if (checkAdmin()) {
     // secDiv.innerHTML = `
     //   <i style='color: red; margin-right: 20px;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;&nbsp;<i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Update</span></i>

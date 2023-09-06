@@ -32,6 +32,9 @@ def getRoomData(req, admin):
     # one device one room
     # result["DATA"] = [{"ID": ID, "ROOM_NAME": ROOM_NAME, "MAC": MAC, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "RADAR_X_LOC": RADAR_X_LOC, "RADAR_Y_LOC":RADAR_Y_LOC, "IMAGE_NAME": IMAGE_NAME} for (ID, ROOM_NAME, MAC, ROOM_X, ROOM_Y, RADAR_X_LOC, RADAR_Y_LOC, IMAGE_NAME) in cursor]
     result["DATA"] = [{"ID": ID, "ROOM_LOC": ROOM_LOC, "ROOM_NAME": ROOM_NAME, "ROOM_UUID":ROOM_UUID, "IMAGE_NAME": IMAGE_NAME, "INFO": INFO, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "STATUS":STATUS, "OCCUPANCY":OCCUPANCY, "LAST_DATA_TS":LAST_DATA_TS, "LAST_DATA_RECEIVED": LAST_DATA_RECEIVED} for (ID, ROOM_LOC, ROOM_NAME, ROOM_UUID, IMAGE_NAME, INFO, ROOM_X, ROOM_Y, STATUS, OCCUPANCY, LAST_DATA_TS, LAST_DATA_RECEIVED) in cursor]
+    for room in result["DATA"]:
+        cursor.execute(f"""SELECT `URGENCY`, COUNT(*) AS `COUNT` FROM `ALERT` WHERE `ROOM_ID`={room["ID"]} AND `NOTIFY`=0 GROUP BY `URGENCY` ORDER BY `URGENCY` DESC;""")
+        room["ALERTS"] = [{"URGENCY": URGENCY, "COUNT": COUNT} for (URGENCY,COUNT ) in cursor]
     cursor.close()
     connection.close()
     return result
@@ -168,3 +171,35 @@ def deleteRoomDetail(data, uploadsLoc):
     result['DATA'].append({"CODE": 0})
     return result
 
+def getRoomAlertsData(room_uuid,unread = True):
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    result = defaultdict(list)
+    option = ';'
+    if (unread):
+        option = ' AND a.`NOTIFY`=0;'
+    sql = f"SELECT a.`ID`,a.`TIMESTAMP`,a.`URGENCY`,a.`TYPE`,a.`DETAILS`,a.`NOTIFY` ,a.`NOTIFY_TIMESTAMP` FROM `ALERT` a LEFT JOIN `ROOMS_DETAILS` r ON a.`ROOM_ID`=r.`ID` WHERE r.`ROOM_UUID`='{room_uuid}'" + option
+    cursor.execute(sql)   
+    result["DATA"] = [{"ID": ID, "TIMESTAMP": TIMESTAMP, "URGENCY":URGENCY, "TYPE":TYPE, "DETAILS":DETAILS, "NOTIFY":NOTIFY, "NOTIFY_TIMESTAMP": NOTIFY_TIMESTAMP} for (ID, TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP) in cursor]
+    cursor.close()
+    connection.close()
+    return result
+
+def readRoomAlertsData(alerts):
+    try:
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor()
+        alerts = tuple(alerts)
+        sql = f"UPDATE `ALERT` SET `NOTIFY`=1,`NOTIFY_TIMESTAMP`=NOW() WHERE `ID` IN {alerts}"
+        cursor.execute(sql)  
+        connection.commit() 
+        cursor.close()
+        connection.close()
+        return {
+            "RESULT": True
+        }
+    except Exception as e:
+        print(e)
+        return {
+            "RESULT": False
+        }

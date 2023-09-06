@@ -64,6 +64,15 @@ dateInput.max = formattedDate
 const prevWeekButton = document.getElementById("prev-week");
 const nextWeekButton = document.getElementById("next-week");
 
+
+const closeModalBtn = document.getElementById('closeModalBtn');
+const modal = document.getElementById('alertModal');
+const noAlertText = document.getElementById('no-alert-text');
+
+closeModalBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
 // Add event listeners to the buttons
 prevWeekButton.addEventListener("click", () => changeWeek(-1));
 nextWeekButton.addEventListener("click", () => changeWeek(1));
@@ -94,16 +103,104 @@ roomD = {
 };
 
 Object.assign(roomD, RequestData());
+getAlerts()
+
+const alertHistoryButton = document.getElementById("alert-history-button")
+alertHistoryButton.addEventListener("click", function () {
+  getAlerts(unread=false)
+  modal.style.display = 'flex';
+});
+
+function getAlerts(unread=true){
+
+    let body = Object.assign({}, roomD);
+    body["unread"] = unread
+
+    fetch(`${host}/api/getRoomAlerts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }).then((response) => response.json()).then((data) => {
+        
+            const table = document.getElementById('dataTable');
+          if (data["DATA"].length > 0){
+
+            
+            const tableBody = document.getElementById('tableBody');
+
+            while (tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
+
+            let alerts_id = []
+
+            // Iterate through the data and create table rows
+            data["DATA"].forEach(item => {
+                alerts_id.push(item.ID)
+                const newRow = document.createElement('tr');
+                let urgency = ''
+                if (item.URGENCY == 0){
+                    urgency = `<td style="color:green;">Information</td>`
+                }else if (item.URGENCY == 1){
+                    urgency = `<td style="color:yellow;">Attention</td>`
+                }else if (item.URGENCY == 2){
+                    urgency = `<td style="color:orange;">Escalated</td>`
+                }else{
+                    urgency = `<td style="color:red;">Urgent</td>`
+                }
+
+                newRow.innerHTML = `
+                    <td>${item.TIMESTAMP}</td>
+                    ${urgency}
+                    <td>${item.DETAILS}</td>
+                `;
+                tableBody.appendChild(newRow);
+            });
+
+            let read_body = {
+                alerts: alerts_id
+            }
+
+            console.log(read_body)
+
+            Object.assign(read_body, RequestData());
+
+            if (alerts_id.length > 0){
+                fetch(`${host}/api/readRoomAlerts`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(read_body),
+                  }).then((response) => response.json()).then((data) => {
+                    console.log(data)
+                  })
+            }
+
+            table.style.display = 'table';
+            noAlertText.style.display = 'none';
+            modal.style.display = 'flex';
+          }else{
+            table.style.display = 'none';
+            noAlertText.style.display = 'block';
+          }
+
+          
+      })
+}
 
 function setLaymanDetails(){
+    let body = Object.assign({}, roomD);
     let curr = dateInput.value
-    roomD["eow"] = curr
+    body["eow"] = curr
     fetch(`${host}/api/getRoomLaymanDetail`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(roomD),
+        body: JSON.stringify(body),
       }).then((response) => response.json()).then((data) => {
           if ("data" in data){
               if ("room_name" in data["data"] && data["data"]["room_name"]){

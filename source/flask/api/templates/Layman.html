@@ -4,15 +4,19 @@
     <div class="progress" role="progressbar" aria-label="Animated striped example" aria-valuemin="0" aria-valuemax="100" hidden>
         <div class="progress-bar progress-bar-striped progress-bar-animated"></div>
     </div>
-    <div class="w-100 mt-2" style="height: 30px;"><button type="button" class="btn btn-primary" id="historical-button" style="position: absolute;right: 20px;">History</button></div>
-    <h1 class="mt-3"><span id="room-name">-</span> (Detailed analysis for one week)</h1>
-    <form>
-        <div class="d-flex justify-content-center align-items-center">
-            <button type="button" class="btn btn-secondary" id="prev-week">&lt;</button>
-            <input type="date" id="dateInput" data-date-format="YYYY-MM-DD" name="date" class="form-control mx-2" required style="width: fit-content;"/>
-            <button type="button" class="btn btn-secondary" id="next-week">&gt;</button>
-        </div>
-    </form>
+    <div class="w-100 mt-2" style="height: 40px;">
+        <button type="button" class="btn btn-primary" id="historical-button" style="float: right;">History</button>
+        <button type="button" class="btn btn-primary" id="alert-history-button" style="float: right;margin-right: 10px;">Alerts</button>
+    </div>
+    <div class="d-flex justify-content-center align-items-center">
+        <h1 class="mt-3"><span id="room-name">-</span></h1>
+    </div>
+    <div class="d-flex justify-content-center align-items-center">
+        <h2>Weekly Report&nbsp;&nbsp;</h2>
+        <button type="button" class="btn btn-secondary" id="prev-week">&lt;</button>
+        <input type="date" id="dateInput" data-date-format="YYYY-MM-DD" name="date" class="form-control mx-2" required style="width: fit-content;"/>
+        <button type="button" class="btn btn-secondary" id="next-week">&gt;</button>
+    </div>
     <div class="row">
         <div class="col-lg-4 col-sm-12" style="position: relative;">
             <div style="position: relative;">
@@ -24,11 +28,11 @@
                             <h2 id="sleeping-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Longest</p>
                                 <h3 id="sleeping-weekly-longest" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Shortest</p>
                                 <h3 id="sleeping-weekly-shortest" class="font-weight-bold">-</h3>
                             </div>
@@ -36,7 +40,9 @@
                     </div>
                     <hr>
                     <div class="layman-card-footer">
-                        Previous Week's Average <b id="sleeping-ex-weekly-average">-</b>
+                        <div>
+                            Previous Week's Average <b id="sleeping-ex-weekly-average">-</b>
+                        </div>
                     </div>
                 </div>
             </div> 
@@ -51,11 +57,11 @@
                             <h2 id="bed-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Latest</p>
                                 <h3 id="bed-weekly-longest" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Earliest</p>
                                 <h3 id="bed-weekly-shortest" class="font-weight-bold">-</h3>
                             </div>
@@ -79,11 +85,11 @@
                             <h2 id="wake-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Latest</p>
                                 <h3 id="wake-weekly-longest" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Earliest</p>
                                 <h3 id="wake-weekly-shortest" class="font-weight-bold">-</h3>
                             </div>
@@ -111,11 +117,11 @@
                             <h2 id="inbed-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Longest</p>
                                 <h3 id="inbed-weekly-longest" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Shortest</p>
                                 <h3 id="inbed-weekly-shortest" class="font-weight-bold">-</h3>
                             </div>
@@ -139,11 +145,11 @@
                             <h2 id="inroom-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Longest</p>
                                 <h3 id="inroom-weekly-longest" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Shortest</p>
                                 <h3 id="inroom-weekly-shortest" class="font-weight-bold">-</h3>
                             </div>
@@ -167,11 +173,11 @@
                             <h2 id="disruption-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Most</p>
                                 <h3 id="disruption-weekly-most" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Least</p>
                                 <h3 id="disruption-weekly-least" class="font-weight-bold">-</h3>
                             </div>
@@ -200,11 +206,11 @@
                             <h2 id="breath-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Highest</p>
                                 <h3 id="breath-weekly-highest" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Lowest</p>
                                 <h3 id="breath-weekly-lowest" class="font-weight-bold">-</h3>
                             </div>
@@ -228,11 +234,11 @@
                             <h2 id="heart-weekly-average" class="font-weight-bold">-</h2>
                         </div>
                         <div class="col-sm-6 my-auto">
-                            <div>
+                            <div class="max-min-container">
                                 <p>Highest</p>
                                 <h3 id="heart-weekly-highest" class="text-danger font-weight-bold">-</h3>
                             </div>
-                            <div>
+                            <div class="max-min-container">
                                 <p>Lowest</p>
                                 <h3 id="heart-weekly-lowest" class="font-weight-bold">-</h3>
                             </div>
@@ -248,6 +254,25 @@
     </div>
     <br>
     
+    <div class="custom-modal" id="alertModal">
+        <div class="custom-modal-content">
+            <span class="model-close" id="closeModalBtn">&times;</span>
+            <h2><i id="popper-alerts" style="cursor: pointer;" class="bi bi-exclamation-triangle-fill"  aria-describedby="tooltip-popper"></i> Alert</h2>
+            <p id="no-alert-text">No alert for this room!</p>
+            <table class="table" id="dataTable">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Urgency</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Table rows will be added here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/utils.js')}}"></script>

@@ -157,7 +157,7 @@ optionLine = {
       type: "value",
       scale: true,
     //   name: "Breath Waveform",
-      max: 25,
+      max: 30,
       min: 0,
       boundaryGap: [0.2, 0.2],
       gridIndex: 1,

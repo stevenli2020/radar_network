@@ -46,6 +46,8 @@ from user.sentMailManager import resetPasswordLink
 # get Room details
 from user.roomManager import getRoomData
 from user.roomManager import getSpecificRoomData
+from user.roomManager import getRoomAlertsData
+from user.roomManager import readRoomAlertsData
 
 # add new room
 from user.roomManager import addNewRoomDetail
@@ -669,6 +671,38 @@ def getRoomLaymanDetail():
                     return getLaymanData(data.get("eow"),data.get("room_id"))
                 else:
                     return {"ERROR": 'Please provide room id!'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/getRoomAlerts', methods=['POST'])
+def getRoomAlerts():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                if "room_id" in data:              
+                    return getRoomAlertsData(data.get("room_id"),unread=data.get("unread",False))
+                else:
+                    return {"ERROR": 'Please provide room id!'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/readRoomAlerts', methods=['POST'])
+def readRoomAlerts():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                if "alerts" in data:              
+                    return readRoomAlertsData(data.get("alerts"))
+                else:
+                    return {"ERROR": 'Please provide alerts id!'}
             else:
                 return {"ERROR": 'Not authorized!'}
         else:

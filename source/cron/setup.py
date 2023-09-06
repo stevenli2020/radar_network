@@ -134,7 +134,8 @@ def analyseLaymanData(data):
     threshold = 60 * 20
     sleeping_threshold = 60 * 30
     inroom_threshold = 60
-    disruption_threshold = 60 * 5
+    disruption_threshold = 60 * 3
+    disruption_restore_threshold = 60 * 10
 
     analysis = {"timeslot":[]}
     inroom_analysis = {}
@@ -154,6 +155,7 @@ def analyseLaymanData(data):
     heart_rate = []
 
     current_disruption = 0
+    last_disruption_time = None
 
     for row in data:
 
@@ -188,9 +190,16 @@ def analyseLaymanData(data):
             if (len(cache)>0):
                 diff = cache[-1]["TIMESTAMP"] - cache[0]["TIMESTAMP"]
                 if (diff.total_seconds() > disruption_threshold):
-                    current_disruption += 1
+                    # current_disruption += 1
+                    last_disruption_time = cache[-1]["TIMESTAMP"]
                 analysis["timeslot"][curr_timeslot] += cache
                 cache = []
+            else:
+                if last_disruption_time is not None:
+                    diff = row["TIMESTAMP"] - last_disruption_time
+                    if (diff.total_seconds() > disruption_restore_threshold):
+                        last_disruption_time = None
+                        current_disruption += 1
             analysis["timeslot"][curr_timeslot].append(row)
         else:
             if (sleeping):
@@ -412,7 +421,14 @@ def analyseLaymanData(data):
             "min":disruption_least,
         }
     except Exception as e:
-        sleep_disruption_result = None
+        if (len(sleeping_seconds)>0):
+            sleep_disruption_result = {
+                "average":0,
+                "max":0,
+                "min":0,
+            }
+        else:
+            sleep_disruption_result = None
 
     try:
         breath_highest = max(breath_rate)

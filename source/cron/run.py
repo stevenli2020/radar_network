@@ -413,6 +413,7 @@ def analyseLaymanData(data):
     disruptions = disruptions[1:]
 
     try:
+        print(disruptions)
         disruption_most = int(max(disruptions))
         disruption_least = int(min(disruptions))
         disruption_average = sum(disruptions) / len(disruptions)
@@ -422,6 +423,8 @@ def analyseLaymanData(data):
             "min":disruption_least,
         }
     except Exception as e:
+        print("Error:",e)
+        print(len(sleeping_seconds))
         if (len(sleeping_seconds)>0):
             sleep_disruption_result = {
                 "average":0,

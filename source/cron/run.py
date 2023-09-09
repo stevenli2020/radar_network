@@ -135,7 +135,7 @@ def analyseLaymanData(data):
     threshold = 60 * 20
     sleeping_threshold = 60 * 30
     inroom_threshold = 60
-    disruption_threshold = 60 * 3
+    disruption_threshold = 60 * 2.5
     disruption_restore_threshold = 60 * 10
 
     analysis = {"timeslot":[]}
@@ -237,6 +237,12 @@ def analyseLaymanData(data):
     wake_up_time = []
     inroom_seconds = []
 
+    disruptions.append(current_disruption)
+    disruptions = disruptions[1:]
+
+    real_disruptions = []
+
+    index = 0
     for timeslot in analysis["timeslot"]:
         if (len(timeslot)>1):
             diff = timeslot[-1]["TIMESTAMP"] - timeslot[0]["TIMESTAMP"]
@@ -280,7 +286,9 @@ def analyseLaymanData(data):
                 if (len(timeslot) > 1):
                     start_sleep_time.append(timeslot[0]["TIMESTAMP"])
                     wake_up_time.append(timeslot[-1]["TIMESTAMP"])
+                    print("From:",timeslot[0]["TIMESTAMP"],", to:",timeslot[-1]["TIMESTAMP"])
                     sleeping_hours.append(diff.total_seconds())
+                    real_disruptions.append(disruptions[index])
 
                     if (start_date_str == end_date_str):
                         sleeping_analysis[start_date_str].append(diff.total_seconds())
@@ -310,6 +318,8 @@ def analyseLaymanData(data):
                         "start":timeslot[0],
                         "end":timeslot[-1]
                     })
+
+        index += 1
 
     inroom_arr = []
 
@@ -357,6 +367,7 @@ def analyseLaymanData(data):
             "min":seconds_to_text(sleeping_shortest),
         }
     except Exception as e:
+        print("Sleeping hour",e)
         sleeping_hour_result = None
 
     onbed_seconds = list(filter(filter_non_zero, onbed_seconds))
@@ -372,6 +383,7 @@ def analyseLaymanData(data):
             "min":seconds_to_text(bed_shortest),
         }
     except Exception as e:
+        print("Time in bed",e)
         time_in_bed_result = None
 
     inroom_seconds = list(filter(filter_non_zero, inroom_seconds))
@@ -387,44 +399,70 @@ def analyseLaymanData(data):
             "min":seconds_to_text(inroom_shortest),
         }
     except Exception as e:
+        print("In room",e)
         in_room_result = None
 
     try:
-        average_bedtime,earliest_bedtime,latest_bedtime = bedtime_processing(start_sleep_time)
+        pattern = r'^(00:00:|00:01:|00:02:|00:03:|00:04:|00:05:)'
+        if re.match(pattern, str(start_sleep_time[0]).split(" ")[1]):
+            temp = []
+            for i in range(1,len(start_sleep_time)):
+                temp.append(start_sleep_time[i])
+            
+            start_sleep_time = temp
+        if (len(start_sleep_time) > 0):
+            average_bedtime,earliest_bedtime,latest_bedtime = bedtime_processing(start_sleep_time)
+        else:
+            average_waketime,earliest_waketime,latest_waketime = '-','-','-'
         bed_time_result = {
             "average":average_bedtime,
             "max":latest_bedtime,
             "min":earliest_bedtime,
         }
     except Exception as e:
+        print("Bed time",e)
         bed_time_result = None
 
     try:
-        average_waketime,earliest_waketime,latest_waketime = waketime_processing(wake_up_time)
+        pattern = r'^(23:55:|23:56:|23:57:|23:58:|23:59:|00:00:)'
+        print(str(wake_up_time[-1]).split(" ")[1])
+        if re.match(pattern, str(wake_up_time[-1]).split(" ")[1]):
+            print("removed")
+            temp = []
+            for i in range(0,len(wake_up_time)-1):
+                temp.append(wake_up_time[i])
+            
+            wake_up_time = temp
+            print(wake_up_time)
+
+        if (len(wake_up_time) > 0):
+            average_waketime,earliest_waketime,latest_waketime = waketime_processing(wake_up_time)
+        else:
+            average_waketime,earliest_waketime,latest_waketime = '-','-','-'
         wake_up_time_result = {
             "average":average_waketime,
             "max":latest_waketime,
             "min":earliest_waketime,
         }
     except Exception as e:
+        print("Wake up",e)
         wake_up_time_result = None
 
-    disruptions.append(current_disruption)
-    disruptions = disruptions[1:]
-
     try:
-        print(disruptions)
-        disruption_most = int(max(disruptions))
-        disruption_least = int(min(disruptions))
-        disruption_average = sum(disruptions) / len(disruptions)
+        if (len(real_disruptions)==7):
+            real_disruptions[-1] += real_disruptions[0]
+            real_disruptions = real_disruptions[1:]
+        print(real_disruptions)
+        disruption_most = int(max(real_disruptions))
+        disruption_least = int(min(real_disruptions))
+        disruption_average = sum(real_disruptions) / len(real_disruptions)
         sleep_disruption_result = {
             "average":round(disruption_average,3),
             "max":disruption_most,
             "min":disruption_least,
         }
     except Exception as e:
-        print("Error:",e)
-        print(len(sleeping_seconds))
+        print("Sleep disruption",e)
         if (len(sleeping_seconds)>0):
             sleep_disruption_result = {
                 "average":0,
@@ -445,6 +483,7 @@ def analyseLaymanData(data):
             "min":breath_lowest,
         }
     except Exception as e:
+        print("Breath",e)
         breath_rate_result = None
 
     try:
@@ -457,6 +496,7 @@ def analyseLaymanData(data):
             "min":heart_lowest,
         }
     except Exception as e:
+        print("Heart",e)
         heart_rate_result = None
 
     return sleeping_hour_result,time_in_bed_result,bed_time_result,wake_up_time_result,in_room_result,sleep_disruption_result,breath_rate_result,heart_rate_result

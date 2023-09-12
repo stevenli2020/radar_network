@@ -132,7 +132,7 @@ def previous_week():
 
 def analyseLaymanData(data):
     # in seconds
-    threshold = 60 * 20
+    threshold = 60 * 60
     sleeping_threshold = 60 * 30
     inroom_threshold = 60
     disruption_threshold = 60 * 2.5
@@ -292,27 +292,28 @@ def analyseLaymanData(data):
 
                     if (start_date_str == end_date_str):
                         sleeping_analysis[start_date_str].append(diff.total_seconds())
+                        print("Sleep From "+start_date_str+" to "+end_date_str)
                     else:
-                        start_date = None
-                        previous_date = None
-                        for i in range(len(timeslot)):
-                            if previous_date == None:
-                                previous_date = timeslot[i]
+                        if (len(timeslot)>0):
+                            start_pointer = timeslot[0]
+                            current_pointer = timeslot[0]
+                            previous_pointer = timeslot[0]
 
-                            if start_date == None:
-                                start_date = timeslot[i]
+                            for t in range(len(timeslot)):
+                                current_pointer = timeslot[t]
 
-                            date_str = str(timeslot[i]["TIMESTAMP"].date())
+                                start_date_str = str(start_pointer["TIMESTAMP"].date())
+                                current_date_str = str(current_pointer["TIMESTAMP"].date())
+                                if (start_date_str != current_date_str):
+                                    sleeping_analysis[start_date_str].append((previous_pointer["TIMESTAMP"] - start_pointer["TIMESTAMP"]).total_seconds())
+                                    print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
+                                    start_pointer = timeslot[t]
 
-                            if (str(previous_date["TIMESTAMP"].date()) != date_str):
-                                sleeping_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
-                                start_date = timeslot[i]
+                                previous_pointer = timeslot[t]
+                            
+                            sleeping_analysis[start_date_str].append((previous_pointer["TIMESTAMP"] - start_pointer["TIMESTAMP"]).total_seconds())
+                            print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
 
-                            previous_date = timeslot[i]
-
-                        if (previous_date and start_date):
-                            sleeping_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
-                    
                     result.append({
                         "data_length":len(timeslot),
                         "start":timeslot[0],

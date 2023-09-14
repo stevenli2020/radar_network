@@ -43,7 +43,7 @@ def getLaymanData(date,room_uuid):
     breath_rate = None
     heart_rate = None
 
-    sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
+    sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE`, pd.`OBJECT_LOCATION` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' AND pd.`TYPE`=3 ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
     cursor.execute(sql)
     processed_data = cursor.fetchall()
     if (processed_data):
@@ -132,22 +132,25 @@ def previous_week():
 
 def analyseLaymanData(data):
     # in seconds
-    threshold = 60 * 60
-    sleeping_threshold = 60 * 30
-    inroom_threshold = 60
+    threshold = 60 * 45
+    sleeping_threshold = 60 * 45
+    inroom_threshold = 60 * 45
     disruption_threshold = 60 * 2.5
     disruption_restore_threshold = 60 * 10
 
     analysis = {"timeslot":[]}
+    ianalysis = {"timeslot":[]}
     inroom_analysis = {}
     onbed_analysis = {}
     sleeping_analysis = {}
 
     curr_timeslot = 0
+    icurr_timeslot = 0
     curr_day_timeslot = 0
     last_row = None
-    inroom_last_row = None
+    ilast_row = None
     sleeping = False
+    inroom = False
     cache = []
     inroom_cache = []
     disruptions = []
@@ -165,6 +168,9 @@ def analyseLaymanData(data):
             current_disruption = 0
             analysis["timeslot"].append([])
 
+        if (len(ianalysis["timeslot"]) <= icurr_timeslot):
+            ianalysis["timeslot"].append([])
+
         if (row["BREATH_RATE"] is not None):
             breath_rate.append(row["BREATH_RATE"])
 
@@ -177,8 +183,8 @@ def analyseLaymanData(data):
             curr_day_timeslot = 0
             inroom_analysis[date_str] = []
 
-        if (len(inroom_analysis[date_str]) <= curr_day_timeslot):
-            inroom_analysis[date_str].append([])
+        # if (len(inroom_analysis[date_str]) <= curr_day_timeslot):
+        #     inroom_analysis[date_str].append([])
 
         if (date_str not in onbed_analysis):
             onbed_analysis[date_str] = []
@@ -186,7 +192,7 @@ def analyseLaymanData(data):
         if (date_str not in sleeping_analysis):
             sleeping_analysis[date_str] = []
 
-        if (row["STATE"] == 2 and row["IN_BED"] == 1):
+        if (row["STATE"] == 2 and row["IN_BED"] == 1 and row["OBJECT_LOCATION"] == 1):
             sleeping = True
             if (len(cache)>0):
                 diff = cache[-1]["TIMESTAMP"] - cache[0]["TIMESTAMP"]
@@ -213,21 +219,41 @@ def analyseLaymanData(data):
                     curr_timeslot += 1
                     cache = []
 
-        if (row["STATE"] == 2 and row["IN_BED"] == 1):
+        if (row["STATE"] == 2 and row["IN_BED"] == 1 and row["OBJECT_LOCATION"] == 1):
             last_row = row
 
-        if (inroom_last_row):
-            diff = row["TIMESTAMP"] - inroom_last_row["TIMESTAMP"]
+        # if (inroom_last_row):
+        #     diff = row["TIMESTAMP"] - inroom_last_row["TIMESTAMP"]
 
-            if ((diff.total_seconds()) > inroom_threshold):
-                curr_day_timeslot += 1
-                inroom_analysis[date_str].append([])
+        #     if ((diff.total_seconds()) > inroom_threshold):
+        #         curr_day_timeslot += 1
+        #         inroom_analysis[date_str].append([])
 
-        if (len(inroom_analysis[date_str][curr_day_timeslot]) <= 1):
-            inroom_analysis[date_str][curr_day_timeslot].append(row)
+        # if (len(inroom_analysis[date_str][curr_day_timeslot]) <= 1):
+        #     inroom_analysis[date_str][curr_day_timeslot].append(row)
+        # else:
+        #     inroom_analysis[date_str][curr_day_timeslot][-1] = row
+        # inroom_last_row = row
+        if (row["OBJECT_LOCATION"] == 1):
+            inroom = True
+            if (len(inroom_cache)>0):
+                diff = inroom_cache[-1]["TIMESTAMP"] - inroom_cache[0]["TIMESTAMP"]
+                ianalysis["timeslot"][icurr_timeslot] += cache
+                inroom_cache = []
+            ianalysis["timeslot"][icurr_timeslot].append(row)
         else:
-            inroom_analysis[date_str][curr_day_timeslot][-1] = row
-        inroom_last_row = row
+            if (inroom):
+                inroom_cache.append(row)
+            if (ilast_row):
+                diff = row["TIMESTAMP"] - ilast_row["TIMESTAMP"]
+
+                if ((diff.total_seconds()) > inroom_threshold and inroom):
+                    inroom = False
+                    icurr_timeslot += 1
+                    inroom_cache = []
+        
+        if (row["OBJECT_LOCATION"] == 1):
+            ilast_row = row
         
 
     result = []
@@ -243,6 +269,7 @@ def analyseLaymanData(data):
     real_disruptions = []
 
     index = 0
+
     for timeslot in analysis["timeslot"]:
         if (len(timeslot)>1):
             diff = timeslot[-1]["TIMESTAMP"] - timeslot[0]["TIMESTAMP"]
@@ -322,19 +349,43 @@ def analyseLaymanData(data):
 
         index += 1
 
-    inroom_arr = []
+    for timeslot in ianalysis["timeslot"]:
+        if (len(timeslot)>1):
+            diff = timeslot[-1]["TIMESTAMP"] - timeslot[0]["TIMESTAMP"]
+            start_date_str = str(timeslot[0]["TIMESTAMP"].date())
+            end_date_str = str(timeslot[-1]["TIMESTAMP"].date())
+            print("From ",timeslot[0]["TIMESTAMP"]," to ",timeslot[-1]["TIMESTAMP"])
+            if (start_date_str == end_date_str):
+                inroom_analysis[start_date_str].append(diff.total_seconds())
+            else:
+                start_date = None
+                previous_date = None
+                for i in range(len(timeslot)):
+                    if previous_date == None:
+                        previous_date = timeslot[i]
 
+                    if start_date == None:
+                        start_date = timeslot[i]
+
+                    date_str = str(timeslot[i]["TIMESTAMP"].date())
+
+                    if (str(previous_date["TIMESTAMP"].date()) != date_str):
+                        inroom_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
+                        start_date = timeslot[i]
+
+                    previous_date = timeslot[i]
+
+                if (previous_date and start_date):
+                    inroom_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
+
+
+
+    inroom_arr = []
     for date in inroom_analysis:
         inroom_second = 0
-        for ts in inroom_analysis[date]:
-            if (len(ts) > 1):
-                inroom_arr.append({
-                    "from":ts[0]["TIMESTAMP"],
-                    "to":ts[-1]["TIMESTAMP"]
-                })
-                diff = ts[-1]["TIMESTAMP"] - ts[0]["TIMESTAMP"]
-                inroom_second += diff.total_seconds()
-
+        for s in inroom_analysis[date]:
+            inroom_second += s
+        print("In room:",date,seconds_to_text(inroom_second))
         inroom_seconds.append(inroom_second)
 
     onbed_seconds = []
@@ -352,7 +403,7 @@ def analyseLaymanData(data):
         sleeping_second = 0
         for s in sleeping_analysis[date]:
             sleeping_second += s
-
+        print("Sleep:",date,seconds_to_text(sleeping_second))
         sleeping_seconds.append(sleeping_second)
 
     sleeping_seconds = list(filter(filter_non_zero, sleeping_seconds))
@@ -367,6 +418,7 @@ def analyseLaymanData(data):
             "max":seconds_to_text(sleeping_longest),
             "min":seconds_to_text(sleeping_shortest),
         }
+        print("sleeping",sleeping_hour_result)
     except Exception as e:
         sleeping_hour_result = None
 
@@ -397,6 +449,7 @@ def analyseLaymanData(data):
             "max":seconds_to_text(inroom_longest),
             "min":seconds_to_text(inroom_shortest),
         }
+        print("inroom",in_room_result)
     except Exception as e:
         in_room_result = None
 

@@ -43,7 +43,7 @@ def getLaymanData(date,room_uuid):
     breath_rate = None
     heart_rate = None
 
-    sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE`, pd.`OBJECT_LOCATION` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' AND pd.`TYPE`=3 ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
+    sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE`, pd.`OBJECT_LOCATION`,pd.`TYPE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
     cursor.execute(sql)
     processed_data = cursor.fetchall()
     if (processed_data):
@@ -163,10 +163,11 @@ def analyseLaymanData(data):
 
     for row in data:
 
-        if (len(analysis["timeslot"]) <= curr_timeslot):
-            disruptions.append(current_disruption)
-            current_disruption = 0
-            analysis["timeslot"].append([])
+        if (row["TYPE"] == 3):
+            if (len(analysis["timeslot"]) <= curr_timeslot):
+                disruptions.append(current_disruption)
+                current_disruption = 0
+                analysis["timeslot"].append([])
 
         if (len(ianalysis["timeslot"]) <= icurr_timeslot):
             ianalysis["timeslot"].append([])
@@ -186,41 +187,42 @@ def analyseLaymanData(data):
         # if (len(inroom_analysis[date_str]) <= curr_day_timeslot):
         #     inroom_analysis[date_str].append([])
 
-        if (date_str not in onbed_analysis):
-            onbed_analysis[date_str] = []
-        
-        if (date_str not in sleeping_analysis):
-            sleeping_analysis[date_str] = []
+        if (row["TYPE"] == 3):
+            if (date_str not in onbed_analysis):
+                onbed_analysis[date_str] = []
+            
+            if (date_str not in sleeping_analysis):
+                sleeping_analysis[date_str] = []
 
-        if (row["STATE"] == 2 and row["IN_BED"] == 1 and row["OBJECT_LOCATION"] == 1):
-            sleeping = True
-            if (len(cache)>0):
-                diff = cache[-1]["TIMESTAMP"] - cache[0]["TIMESTAMP"]
-                if (diff.total_seconds() > disruption_threshold):
-                    # current_disruption += 1
-                    last_disruption_time = cache[-1]["TIMESTAMP"]
-                analysis["timeslot"][curr_timeslot] += cache
-                cache = []
-            else:
-                if last_disruption_time is not None:
-                    diff = row["TIMESTAMP"] - last_disruption_time
-                    if (diff.total_seconds() > disruption_restore_threshold):
-                        last_disruption_time = None
-                        current_disruption += 1
-            analysis["timeslot"][curr_timeslot].append(row)
-        else:
-            if (sleeping):
-                cache.append(row)
-            if (last_row):
-                diff = row["TIMESTAMP"] - last_row["TIMESTAMP"]
-
-                if ((diff.total_seconds()) > threshold and sleeping):
-                    sleeping = False
-                    curr_timeslot += 1
+            if (row["STATE"] == 2 and row["IN_BED"] == 1 and row["OBJECT_LOCATION"] == 1):
+                sleeping = True
+                if (len(cache)>0):
+                    diff = cache[-1]["TIMESTAMP"] - cache[0]["TIMESTAMP"]
+                    if (diff.total_seconds() > disruption_threshold):
+                        # current_disruption += 1
+                        last_disruption_time = cache[-1]["TIMESTAMP"]
+                    analysis["timeslot"][curr_timeslot] += cache
                     cache = []
+                else:
+                    if last_disruption_time is not None:
+                        diff = row["TIMESTAMP"] - last_disruption_time
+                        if (diff.total_seconds() > disruption_restore_threshold):
+                            last_disruption_time = None
+                            current_disruption += 1
+                analysis["timeslot"][curr_timeslot].append(row)
+            else:
+                if (sleeping):
+                    cache.append(row)
+                if (last_row):
+                    diff = row["TIMESTAMP"] - last_row["TIMESTAMP"]
 
-        if (row["STATE"] == 2 and row["IN_BED"] == 1 and row["OBJECT_LOCATION"] == 1):
-            last_row = row
+                    if ((diff.total_seconds()) > threshold and sleeping):
+                        sleeping = False
+                        curr_timeslot += 1
+                        cache = []
+
+            if (row["STATE"] == 2 and row["IN_BED"] == 1 and row["OBJECT_LOCATION"] == 1):
+                last_row = row
 
         # if (inroom_last_row):
         #     diff = row["TIMESTAMP"] - inroom_last_row["TIMESTAMP"]
@@ -434,6 +436,7 @@ def analyseLaymanData(data):
             "max":seconds_to_text(bed_longest),
             "min":seconds_to_text(bed_shortest),
         }
+        print("bed",time_in_bed_result)
     except Exception as e:
         time_in_bed_result = None
 

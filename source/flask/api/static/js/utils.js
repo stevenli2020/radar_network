@@ -27,9 +27,9 @@ if(checkLogin()){
   window.location = loginPage
 }
 
-if(!checkAdmin()){
-  usersManagementId.style.display = 'none'
-  saveDevicesId.style.display = 'none'
+if(checkAdmin()){
+  usersManagementId.style.display = 'block'
+  saveDevicesId.style.display = 'block'
 }
 
 setInterval(() => {

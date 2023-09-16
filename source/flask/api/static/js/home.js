@@ -34,8 +34,8 @@ const updateRoomSubmitBtn = document.getElementById("update-room-submit-btn");
 // delete room modal
 const deleteRoomP = document.getElementById("delete-room-name-p");
 
-if (!checkAdmin()) {
-  addRoomRow.style.display = "none";
+if (checkAdmin()) {
+  addRoomRow.style.display = "block";
 }
 
 getRoomData();

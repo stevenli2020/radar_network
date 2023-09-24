@@ -48,7 +48,7 @@ fetch(`${host}/api/getRoomDetails`, {
       data.DATA.forEach((element) => {
         var heatMapImage = new Image();
         heatMapImage.src =
-          "http://143.198.199.16:5000/static/images/" + element.IMAGE_NAME;
+          `${host}/static/images/` + element.IMAGE_NAME;
         heatMapImage.onload = function () {
           const rectheatmap = hisotryLocHeatmapChart._api
             .getCoordinateSystems()[0]
@@ -98,7 +98,7 @@ fetch(`${host}/api/getRoomDetails`, {
         getHistorOfPos("HOUR");
         var image = new Image();
         image.src =
-          "http://143.198.199.16:5000/static/images/" + element.IMAGE_NAME;
+          "${host}/static/images/" + element.IMAGE_NAME;
         image.onload = function () {
           const rect = scatterWeight._api.getCoordinateSystems()[0].getRect();
           image.width = rect.width;

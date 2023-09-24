@@ -4,7 +4,7 @@ var chartDom3d = document.getElementById('Scatter3D');
 var scatter3d = echarts.init(chartDom3d);
 var option3d;
 
-// fetch('http://143.198.199.16:5000/static/js/data.json')
+// fetch(`${host}/static/js/data.json`)
 // .then((response) => response.json())
 // .then((json) => {
 //     console.log(json)

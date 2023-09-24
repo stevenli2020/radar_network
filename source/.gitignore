@@ -4,5 +4,4 @@ events/
 saverawdata/
 server_status/
 traefik/
-vernemq/
 *.pyc

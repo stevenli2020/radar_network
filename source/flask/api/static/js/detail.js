@@ -153,7 +153,7 @@ fetch(`${host}/api/getRLMacRoom`, {
               // macVital = element.VITAL_MAC
               getAnalyticData()
               heatMapImage.src =
-                "http://143.198.199.16:5000/static/uploads/" + element.IMAGE_NAME;
+                `${host}/static/uploads/` + element.IMAGE_NAME;
               heatMapImage.onload = function () {
                 const rectheatmap = hisotryLocHeatmapChart._api
                   .getCoordinateSystems()[0]
@@ -216,7 +216,7 @@ fetch(`${host}/api/getRLMacRoom`, {
               // getHistOfVital("1 HOUR");
               var image = new Image();
               image.src =
-                "http://143.198.199.16:5000/static/uploads/" + element.IMAGE_NAME;
+                `${host}/static/uploads/` + element.IMAGE_NAME;
               image.onload = function () {
                 const rect = scatterWeight._api.getCoordinateSystems()[0].getRect();
                 image.width = rect.width;

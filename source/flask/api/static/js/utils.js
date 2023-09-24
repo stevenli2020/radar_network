@@ -1,5 +1,5 @@
 const host = "http://143.198.199.16:5000";
-const loginPage = "http://143.198.199.16:5000/api/login";
+const loginPage = `${host}/api/login`;
 const borderOri = "1px solid #ced4da";
 const borderRed = "1px solid red";
 const saveDevicesId = document.getElementById('save-devices-id')
@@ -159,7 +159,7 @@ async function API_Call(time, deviceId, location) {
     DEVICEID: deviceId,
     // LOCATION: location,
   };
-  await fetch(`http://localhost:5000/getData`, {
+  await fetch(`${host}/getData`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

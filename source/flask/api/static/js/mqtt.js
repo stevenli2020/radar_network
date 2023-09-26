@@ -17,8 +17,8 @@ function addLineChart(heartR, breathR){
   }
   const averageHeartRate = Math.round(vitalData.reduce((total, next) => total + next.value, 0) / vitalLenCounter, 2);
   const averageBreathRate = Math.round(vitalData2.reduce((total, next) => total + next.value, 0) / vitalLenCounter, 2);
-  avgHeartRateData.innerHTML = `Average: ${averageHeartRate} bps`
-  avgBreathRateData.innerHTML = `Average: ${averageBreathRate} bps`
+  avgHeartRateData.innerHTML = `Average: ${averageHeartRate} BPM`
+  avgBreathRateData.innerHTML = `Average: ${averageBreathRate} BPM`
   // console.log(averageBreathRate, averageBreathRate)
   // if(Math.round(heartR, 1)<101 && Math.round(heartR, 1)>59){
   if(Math.round(heartR, 1)<(averageHeartRate+(averageHeartRate*0.2)) && Math.round(heartR, 1)>(averageHeartRate-(averageHeartRate*0.2))){

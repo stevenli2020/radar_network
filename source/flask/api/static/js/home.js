@@ -191,70 +191,75 @@ function addCard(d) {
   firDiv.appendChild(secDiv);
 
   indiCard.appendChild(firDiv);
-  const popcornPopper = document.querySelector(`.icon-popper-${d.ROOM_UUID}`);
-  const tooltipPopper = document.querySelector(`.tooltip-popper-${d.ROOM_UUID}`);
+  try{
+    const popcornPopper = document.querySelector(`.icon-popper-${d.ROOM_UUID}`);
+    const tooltipPopper = document.querySelector(`.tooltip-popper-${d.ROOM_UUID}`);
 
-  const popperInstance = Popper.createPopper(popcornPopper, tooltipPopper, {
-    modifiers: [
-      {
-        name: 'offset',
-        options: {
-          offset: [0, 8],
+    const popperInstance = Popper.createPopper(popcornPopper, tooltipPopper, {
+      modifiers: [
+        {
+          name: 'offset',
+          options: {
+            offset: [0, 8],
+          },
         },
-      },
-    ],
-  });
-  function show() {
-    // Make the tooltip visible
-    tooltipPopper.setAttribute("data-show", "");
-
-    // Enable the event listeners
-    popperInstance.setOptions((options) => ({
-      ...options,
-      modifiers: [
-        ...options.modifiers,
-        { name: "eventListeners", enabled: true },
       ],
-    }));
+    });
+    function show() {
+      // Make the tooltip visible
+      tooltipPopper.setAttribute("data-show", "");
+  
+      // Enable the event listeners
+      popperInstance.setOptions((options) => ({
+        ...options,
+        modifiers: [
+          ...options.modifiers,
+          { name: "eventListeners", enabled: true },
+        ],
+      }));
+  
+      // Update its position
+      popperInstance.update();
+    }
+  
+    function hide() {
+      // Hide the tooltip
+      tooltipPopper.removeAttribute("data-show");
+  
+      // Disable the event listeners
+      popperInstance.setOptions((options) => ({
+        ...options,
+        modifiers: [
+          ...options.modifiers,
+          { name: "eventListeners", enabled: false },
+        ],
+      }));
+    }
+  
+    const showEvents = ["mouseenter", "focus"];
+    // const hideEvents = ["mouseleave", "blur"];
+    const hideEvents = ["click"];
+    // const toggleEvents = ["click"];
+  
+    showEvents.forEach((event) => {
+      popcornPopper.addEventListener(event, show);
+    });
+  
+    hideEvents.forEach((event) => {
+      popcornPopper.addEventListener(event, hide);
+    });
+  
+    // toggleEvents.forEach((event) => {
+    //   console.log(tooltipPopper.hasAttribute('data-show'))
+    //   if(tooltipPopper.hasAttribute('data-show'))
+    //     popcornPopper.addEventListener(event, hide);
+    //   else
+    //     popcornPopper.addEventListener(event, show);
+    // });
+  
+  }catch(ex){
 
-    // Update its position
-    popperInstance.update();
   }
-
-  function hide() {
-    // Hide the tooltip
-    tooltipPopper.removeAttribute("data-show");
-
-    // Disable the event listeners
-    popperInstance.setOptions((options) => ({
-      ...options,
-      modifiers: [
-        ...options.modifiers,
-        { name: "eventListeners", enabled: false },
-      ],
-    }));
-  }
-
-  const showEvents = ["mouseenter", "focus"];
-  // const hideEvents = ["mouseleave", "blur"];
-  const hideEvents = ["click"];
-  // const toggleEvents = ["click"];
-
-  showEvents.forEach((event) => {
-    popcornPopper.addEventListener(event, show);
-  });
-
-  hideEvents.forEach((event) => {
-    popcornPopper.addEventListener(event, hide);
-  });
-
-  // toggleEvents.forEach((event) => {
-  //   console.log(tooltipPopper.hasAttribute('data-show'))
-  //   if(tooltipPopper.hasAttribute('data-show'))
-  //     popcornPopper.addEventListener(event, hide);
-  //   else
-  //     popcornPopper.addEventListener(event, show);
-  // });
 }
 
 

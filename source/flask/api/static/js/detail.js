@@ -762,7 +762,7 @@ async function getHistOfVital(t, tStart=null, tEnd=null) {
               avgHeartRateData.innerHTML = `Average: invalid data`
               avgHeart = 60
             } else {
-              avgHeartRateData.innerHTML = `Average: ${avgHeart} bps`
+              avgHeartRateData.innerHTML = `Average: ${avgHeart} BPM`
             }            
           }
           if(avgBreath>25){
@@ -773,7 +773,7 @@ async function getHistOfVital(t, tStart=null, tEnd=null) {
               avgBreathRateData.innerHTML = `Average: invalid data`
               avgBreath = 12
             } else {
-              avgBreathRateData.innerHTML = `Average: ${avgBreath} bps`
+              avgBreathRateData.innerHTML = `Average: ${avgBreath} BPM`
             }            
           }
           heartLowerAvg = avgHeart - (avgHeart*0.2)
@@ -924,8 +924,8 @@ async function getHistOfVital(t, tStart=null, tEnd=null) {
     heartUpperAvg = 100
     breathLowerAvg = 12
     breathUpperAvg = 20
-    avgHeartRateData.innerHTML = `Average: - bps`
-    avgBreathRateData.innerHTML = `Average: - bps`
+    avgHeartRateData.innerHTML = `Average: - BPM`
+    avgBreathRateData.innerHTML = `Average: - BPM`
     // heartRateData.innerText = "-" 
     // breathRateData.innerText = "-" 
     vitalChart.setOption({

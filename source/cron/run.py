@@ -132,6 +132,9 @@ def previous_week():
         insert_data(curr,room["ID"],"heart_rate",heart_rate)
 
 def analyseLaymanData(data):
+
+    now_datetime = datetime.datetime.now()
+
     # in seconds
     threshold = 60 * 45
     sleeping_threshold = 60 * 45
@@ -315,7 +318,8 @@ def analyseLaymanData(data):
             if (diff.total_seconds() > sleeping_threshold and sleep_percentage >= 0.3):
                 if (len(timeslot) > 1):
                     start_sleep_time.append(timeslot[0]["TIMESTAMP"])
-                    wake_up_time.append(timeslot[-1]["TIMESTAMP"])
+                    if ((now_datetime - timeslot[-1]["TIMESTAMP"]).total_seconds() > (5*60)):
+                        wake_up_time.append(timeslot[-1]["TIMESTAMP"])
                     print("From:",timeslot[0]["TIMESTAMP"],", to:",timeslot[-1]["TIMESTAMP"])
                     sleeping_hours.append(diff.total_seconds())
                     real_disruptions.append(disruptions[index])

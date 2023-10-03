@@ -7,8 +7,8 @@ broker = '143.198.199.16'
 port = 1883
 sub_topic = "/GMT/DEV/+/ALERT"
 pub_topic = "/GMT/DEV/ROOM/ROOM_UUID/ALERT"
-client_id = f'1234'
-username = 'js-client'
+client_id = f'1237'
+username = 'py-client1'
 password = 'c764eb2b5fa2d259dc667e2b9e195218'
 
 config = {

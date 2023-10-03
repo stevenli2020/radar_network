@@ -52,6 +52,9 @@ async function getRoomData(t = 1) {
     .then((response) => response.json())
     .then((data) => {
       if (data.DATA) {
+        while (indiCard.firstChild) {
+          indiCard.removeChild(indiCard.firstChild);
+        }
         data.DATA.forEach((d) => {
           if (t == 1) addCard(d);
           else updateCard(d);
@@ -123,7 +126,11 @@ function updateCard(posMac) {
     0,
     posMac.LAST_DATA_TS.length - 3
   )}</span>`;
-  posOccuTime.innerHTML = `<span class='ag-courses-item_date'>${posMac.OCCUPANCY} people in room</span>`;
+  try{
+    posOccuTime.innerHTML = `<span class='ag-courses-item_date'>${posMac.OCCUPANCY} people in room</span>`;
+  } catch(ex){
+
+  }
 }
 
 function addCard(d) {

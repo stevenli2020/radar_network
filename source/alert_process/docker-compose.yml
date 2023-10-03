@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: aler_processing
+    container_name: alert_processing_container
     restart: always
     volumes:
       - ./run.py:/app/run.py

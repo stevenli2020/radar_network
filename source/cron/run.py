@@ -48,7 +48,9 @@ def getLaymanData(date,room_uuid):
     processed_data = cursor.fetchall()
     if (processed_data):
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate = analyseLaymanData(processed_data)
-        
+    
+    print("Line 52",sleep_disruption)
+
     cursor.close()
     connection.close()
     return sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate
@@ -66,6 +68,7 @@ def get_week_start_end(date):
     return start_of_week, end_of_week
 
 def insert_data(date,room_id,type,data):
+    print(f"Inserting {type}", data )
     if data:
         global config
         connection = mysql.connector.connect(**config)
@@ -87,7 +90,7 @@ def insert_data(date,room_id,type,data):
                 insert_query = f"INSERT INTO ANALYSIS (EOW,ROOM_ID,TYPE,MAX,MIN,AVERAGE) VALUES ('{date}', '{room_id}', '{type}', '{max}', '{min}', '{average}')"
                 cursor.execute(insert_query)
                 connection.commit()
-                
+                print("New data")
             else:
 
                 try:
@@ -96,6 +99,7 @@ def insert_data(date,room_id,type,data):
                     connection.commit()
                 except Exception as e:
                     print(e)
+                print("Update data")
         cursor.close()
         connection.close()  
 
@@ -527,6 +531,8 @@ def analyseLaymanData(data):
             }
         else:
             sleep_disruption_result = None
+    
+    print("disruption",sleep_disruption_result)
 
     try:
         breath_highest = max(breath_rate)

@@ -174,8 +174,6 @@ function getAlerts(unread=true){
                 alerts: alerts_id
             }
 
-            console.log(read_body)
-
             Object.assign(read_body, RequestData());
 
             if (alerts_id.length > 0){

@@ -69,7 +69,7 @@ def get_week_start_end(date):
 
 def insert_data(date,room_id,type,data):
     print(f"Inserting {type}", data )
-    if data:
+    if data is not None:
         global config
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor(dictionary=True)
@@ -82,7 +82,7 @@ def insert_data(date,room_id,type,data):
         min = data.get("min")
         average = data.get("average")
 
-        if (max and min and average):
+        if (max is not None and min is not None and average is not None):
             if existing_data is None:
 
                 

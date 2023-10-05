@@ -1,5 +1,5 @@
-const host = "http://143.198.199.16:5000";
-//const host = "https://test.openkom.my"
+//const host = "http://143.198.199.16:5000";
+const host = "http://aswelfarehome.gaitmetrics.org"
 const loginPage = `${host}/api/login`;
 const borderOri = "1px solid #ced4da";
 const borderRed = "1px solid red";

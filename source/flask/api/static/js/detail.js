@@ -45,10 +45,12 @@ var homeMacVal, homeTimeSelVal;
 var macPos, macVital
 var initLegendD = []
 var intiSeriesD = []
-let radarX_1 = 0
-let radarY_1 = 0
-let radarX_2 = 0
-let radarY_2 = 0
+// let radarX_1 = 0
+// let radarY_1 = 0
+// let radarX_2 = 0
+// let radarY_2 = 0
+let radars = []
+let persons = []
 var roomXD, roomYD
 var heartReal = []
 var breathReal = []
@@ -63,28 +65,35 @@ heartLowerAvg = 60
 heartUpperAvg = 100
 breathLowerAvg = 12     
 breathUpperAvg = 20
+
+if (!checkAdmin()){
+  document.querySelector('#real-time').style.display = 'none'
+}
+
 setInterval(function(){
   // console.log(Math.round((new Date() - checkRoomEmpty)/1000))
   if(Math.round((new Date() - checkRoomEmpty)/1000)>180){
     document.querySelector('#empty-lable').style.display = ''
     scatterWeight.setOption({
-      series: [
-        {
-          name: "Radar 1",
-          type: "scatter",
-          data: [[radarX_1, radarY_1]],
-        },
+      series: radars.concat(persons),
+      // [
         // {
-        //   name: "Radar 2",
+        //   name: "Radar 1",
         //   type: "scatter",
-        //   data: [[radarX_2, radarY_2]],
+        //   data: [[radarX_1, radarY_1]],
         // },
-        {
-          name: "Person 1",
-          type: "scatter",
-          data: [],
-        },
-      ],
+        // // {
+        // //   name: "Radar 2",
+        // //   type: "scatter",
+        // //   data: [[radarX_2, radarY_2]],
+        // // },
+        // {
+        //   name: "Person 1",
+        //   type: "scatter",
+        //   data: [],
+        // },
+        
+      // ],
     });
   }
   if(Math.round((new Date() - checkVitalDataEmpty)/1000)>180){
@@ -115,11 +124,25 @@ fetch(`${host}/api/getRLMacRoom`, {
   .then((data) => {
     console.log(data)
     if ("DATA" in data){
+      radars = []
       data.DATA.forEach(d => {
         if(d.TYPE == "1" || d.TYPE == "2"){
           macPos = d.MAC
-          radarX_1 = d.DEPLOY_X
-          radarY_1 = d.DEPLOY_Y
+          // radarX_1 = d.DEPLOY_X
+          // radarY_1 = d.DEPLOY_Y
+          if(d.TYPE == "1"){
+            radars.push({
+              name: "Wall Radar",
+              type: "scatter",
+              data: [[d.DEPLOY_X, d.DEPLOY_Y]],
+            })
+          }else if(d.TYPE == "2"){
+            radars.push({
+              name: "Ceil Radar",
+              type: "scatter",
+              data: [[d.DEPLOY_X, d.DEPLOY_Y]],
+            })
+          }
         }
         if(d.TYPE == "3"){
           // if(macPos == null){
@@ -129,8 +152,13 @@ fetch(`${host}/api/getRLMacRoom`, {
           // }
           // macVital.push(d.MAC)
           macVital= d.MAC
-          radarX_2 = d.DEPLOY_X
-          radarY_2 = d.DEPLOY_Y
+          // radarX_2 = d.DEPLOY_X
+          // radarY_2 = d.DEPLOY_Y
+          radars.push({
+            name: "Vital Radar",
+            type: "scatter",
+            data: [[d.DEPLOY_X, d.DEPLOY_Y]],
+          })
         }
       })
       fetch(`${host}/api/getRoomDetail`, {
@@ -263,23 +291,24 @@ fetch(`${host}/api/getRLMacRoom`, {
                       max: roomY,
                     },
                   ],
-                  series: [
-                    {
-                      name: "Radar 1",
-                      type: "scatter",
-                      data: [[radarX_1, radarY_1]],
-                    },
-                    // {
-                    //   name: "Radar 2",
-                    //   type: "scatter",
-                    //   data: [[radarX_2, radarY_2]],
-                    // },
-                    {
-                      name: "Person 1",
-                      type: "scatter",
-                      data: [],
-                    },
-                  ],
+                  series: radars.concat(persons),
+                  // [
+                  //   {
+                  //     name: "Radar 1",
+                  //     type: "scatter",
+                  //     data: [[radarX_1, radarY_1]],
+                  //   },
+                  //   // {
+                  //   //   name: "Radar 2",
+                  //   //   type: "scatter",
+                  //   //   data: [[radarX_2, radarY_2]],
+                  //   // },
+                  //   {
+                  //     name: "Person 1",
+                  //     type: "scatter",
+                  //     data: [],
+                  //   },
+                  // ],
                 });
                 // TODO listen to resize, update the width/height/x/y of image according to the grid rect
               };
@@ -1211,3 +1240,5 @@ monthHistVital.addEventListener("click", function () {
 //   multiBarHoriChart.showLoading()
 //   getAnalyticData("1 MONTH");
 // });
+vitalChart.showLoading()
+getHistOfVital("1 WEEK");

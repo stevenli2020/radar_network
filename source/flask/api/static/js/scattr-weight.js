@@ -144,8 +144,8 @@ option = {
         focus: "series",
       },
       data: [[radarX, radarY]],
-      symbol: "diamond",
-      symbolSize: 30,
+      // symbol: "diamond",
+      // symbolSize: 30,
       // markArea: {
       //   silent: true,
       //   data: [

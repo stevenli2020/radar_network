@@ -14,7 +14,7 @@
     <div class="d-flex justify-content-center align-items-center">
         <h2>Weekly Report&nbsp;&nbsp;</h2>
         <button type="button" class="btn btn-secondary" id="prev-week">&lt;</button>
-        <input type="date" id="dateInput" data-date-format="YYYY-MM-DD" name="date" class="form-control mx-2" required style="width: fit-content;"/>
+        <input type="date" id="dateInput" data-date-format="YYYY-MM-DD" name="date" class="form-control mx-2" onkeydown="return false" required style="width: fit-content;"/>
         <button type="button" class="btn btn-secondary" id="next-week">&gt;</button>
     </div>
     <div class="row" style="justify-content: center;">
@@ -28,7 +28,7 @@
                         <div class="col-sm-8 my-auto">
                             <p>Week's Average</p>
                             <h2 id="bed-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="sleepClock" style="width: 100%;"></div>
+                            <div id="sleepClock" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">
@@ -57,7 +57,7 @@
                         <div class="col-sm-8 my-auto">
                             <p>Week's Average</p>
                             <h2 id="wake-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="wakeClock" style="width: 100%;"></div>
+                            <div id="wakeClock" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">
@@ -88,7 +88,7 @@
                         <div class="col-sm-8 my-auto max-min-container">
                             <p>Week's Average</p>
                             <h2 id="sleeping-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="sleepPieChart" style="width: 100%;"></div>
+                            <div id="sleepPieChart" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">
@@ -119,7 +119,7 @@
                         <div class="col-sm-8 my-auto">
                             <p>Week's Average</p>
                             <h2 id="inbed-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="bedPieChart" style="width: 100%;"></div>
+                            <div id="bedPieChart" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">
@@ -148,7 +148,7 @@
                         <div class="col-sm-8 my-auto">
                             <p>Week's Average</p>
                             <h2 id="inroom-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="roomPieChart" style="width: 100%;"></div>
+                            <div id="roomPieChart" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">
@@ -177,7 +177,7 @@
                         <div class="col-sm-8 my-auto">
                             <p>Week's Average</p>
                             <h2 id="disruption-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="disruptionBarChart" style="width: 100%;"></div>
+                            <div id="disruptionBarChart" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">
@@ -207,7 +207,7 @@
                         <div class="col-sm-8 my-auto">
                             <p>Week's Average</p>
                             <h2 id="heart-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="heartBarChart" style="width: 100%;"></div>
+                            <div id="heartBarChart" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">
@@ -238,7 +238,7 @@
                         <div class="col-sm-8 my-auto">
                             <p>Week's Average</p>
                             <h2 id="breath-weekly-average" class="font-weight-bold">-</h2>
-                            <div id="breathBarChart" style="width: 100%;"></div>
+                            <div id="breathBarChart" style="width: 100%;overflow: hidden;"></div>
                         </div>
                         <div class="col-sm-4 my-auto">
                             <div class="max-min-container">

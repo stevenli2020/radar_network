@@ -684,7 +684,7 @@ def getRoomAlerts():
             login, admin = auth(data)
             if login:              
                 if "room_id" in data:              
-                    return getRoomAlertsData(data.get("room_id"),unread=data.get("unread",False))
+                    return getRoomAlertsData(data.get("room_id"),unread=data.get("unread",False),set=data.get("set",False))
                 else:
                     return {"ERROR": 'Please provide room id!'}
             else:

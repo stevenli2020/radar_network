@@ -128,12 +128,13 @@ var Mhost = "143.198.199.16";
 var port = 8888;
 var prevLe = 0;
 var msgInterval = 0;
-client = new Paho.MQTT.Client(Mhost, port, "1235");
+let userData = RequestData()
+client = new Paho.MQTT.Client(Mhost, port, userData.ID);
 var options = {
   timeout: 3,
   onSuccess: onConnect,
   onFailure: doFail,
-  userName: "js-client2",
+  userName: userData.Username,
   password: "c764eb2b5fa2d259dc667e2b9e195218",
   // useSSL: true
 };

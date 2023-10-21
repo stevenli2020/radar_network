@@ -63,6 +63,7 @@ var sleepClockDom = document.getElementById('sleepClock');
 var wakeClockDom = document.getElementById('wakeClock');
 
 const current= new Date();
+current.setDate(current.getDate() - 1);
 const current_year = current.getFullYear();
 const current_month = String(current.getMonth() + 1).padStart(2, '0');
 const current_day = String(current.getDate()).padStart(2, '0');
@@ -100,6 +101,18 @@ function changeWeek(weekChange) {
     dateInput.value = currformattedDate;
 
     setLaymanDetails()
+
+    checkWeekLimit(curr)
+}
+
+function checkWeekLimit(date){
+  let next = date
+  next.setDate(next.getDate() + 7);
+  if (next > new Date()){
+    nextWeekButton.disabled = true
+  }else{
+    nextWeekButton.disabled = false
+  }
 }
 
 roomI = window.location.href.split("=")[1];
@@ -126,6 +139,7 @@ function getAlerts(unread=true){
 
     let body = Object.assign({}, roomD);
     body["unread"] = unread
+    body["set"] = true
 
     fetch(`${host}/api/getRoomAlerts`, {
         method: "POST",
@@ -170,24 +184,6 @@ function getAlerts(unread=true){
                 tableBody.appendChild(newRow);
             });
 
-            let read_body = {
-                alerts: alerts_id
-            }
-
-            Object.assign(read_body, RequestData());
-
-            if (alerts_id.length > 0){
-                fetch(`${host}/api/readRoomAlerts`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(read_body),
-                  }).then((response) => response.json()).then((data) => {
-                    console.log(data)
-                  })
-            }
-
             table.style.display = 'table';
             noAlertText.style.display = 'none';
             modal.style.display = 'flex';
@@ -230,7 +226,6 @@ function timeStringToMinutes(timeString) {
 function extractHourAndMinute(timeString) {
   const timeStr = timeString.split(" ")[0]
   const timeArr = timeStr.split(":")
-  console.log(timeArr)
   const hour = parseFloat(timeArr[0]) + (parseInt(timeArr[1])/60)
   const minute = parseInt(timeArr[1])
   return [hour, minute]
@@ -318,7 +313,11 @@ function setLaymanDetails(){
                     };
 
                     sleepOption && sleepChart.setOption(sleepOption);
+                  }else{
+                    sleepPieDom.style.height = "0vh"
                   }
+              }else{
+                sleepPieDom.style.height = "0vh"
               }
       
               if ("bed_time" in data["data"]){
@@ -331,9 +330,7 @@ function setLaymanDetails(){
                     sleepClockDom.style.height = "30vh"
                     var sleepClockChart = echarts.init(sleepClockDom);
                     var sleepClockOption;
-                    console.log(data["data"]["bed_time"]["average"])
                     const extractedBedData = extractHourAndMinute(data["data"]["bed_time"]["average"])
-                    console.log(extractedBedData)
 
                     sleepClockOption = {
                       series: [
@@ -446,9 +443,13 @@ function setLaymanDetails(){
                     };
 
                     sleepClockOption && sleepClockChart.setOption(sleepClockOption);
+                  }else{
+                    sleepClockDom.style.height = "0vh"
                   }
 
                   
+              }else{
+                sleepClockDom.style.height = "0vh"
               }
       
               if ("wake_up_time" in data["data"]){
@@ -463,7 +464,6 @@ function setLaymanDetails(){
                     var wakeClockOption;
 
                     const extractedWakeData = extractHourAndMinute(data["data"]["wake_up_time"]["average"])
-                    console.log(extractedWakeData)
 
                     wakeClockOption = {
                       series: [
@@ -576,7 +576,11 @@ function setLaymanDetails(){
                     };
 
                     wakeClockOption && wakeClockChart.setOption(wakeClockOption);
+                  }else{
+                    wakeClockDom.style.height = "0vh"
                   }
+              }else{
+                wakeClockDom.style.height = "0vh"
               }
       
               if ("time_in_bed" in data["data"]){
@@ -645,8 +649,12 @@ function setLaymanDetails(){
                     };
 
                     bedOption && bedChart.setOption(bedOption);
+                  }else{
+                    bedPieDom.style.height = "0vh"
                   }
 
+              }else{
+                bedPieDom.style.height = "0vh"
               }
       
               if ("in_room" in data["data"]){
@@ -715,7 +723,11 @@ function setLaymanDetails(){
                     };
 
                     roomOption && roomChart.setOption(roomOption);
+                  }else{
+                    roomPieDom.style.height = "0vh"
                   }
+              }else{
+                roomPieDom.style.height = "0vh"
               }
       
               if ("sleep_disruption" in data["data"]){
@@ -769,7 +781,11 @@ function setLaymanDetails(){
                     };
                     
                     disruptionOption && disruptionChart.setOption(disruptionOption);
+                  }else{
+                    disruptionBarDom.style.height = "0vh"
                   }
+              }else{
+                disruptionBarDom.style.height = "0vh"
               }
       
               if ("breath_rate" in data["data"]){
@@ -823,7 +839,11 @@ function setLaymanDetails(){
                     };
                     
                     breathOption && breathChart.setOption(breathOption);
+                  }else{
+                    breathBarDom.style.height = "0vh"
                   }
+              }else{
+                breathBarDom.style.height = "0vh"
               }
       
               if ("heart_rate" in data["data"]){
@@ -877,7 +897,11 @@ function setLaymanDetails(){
                     };
                     
                     heartOption && heartChart.setOption(heartOption);
+                  }else{
+                    heartBarDom.style.height = "0vh"
                   }
+              }else{
+                heartBarDom.style.height = "0vh"
               }
           }
       })
@@ -885,7 +909,9 @@ function setLaymanDetails(){
 
 dateInput.addEventListener("change", function () {
     setLaymanDetails()
+    checkWeekLimit(new Date(dateInput.value))
 });
 
 
 setLaymanDetails()
+checkWeekLimit(new Date(dateInput.value))

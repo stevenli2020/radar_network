@@ -64,6 +64,7 @@ function addLineChart(heartR, breathR){
       },
     ],
   });
+  
   // return new Promise(function(resolve){
   //   setTimeout(function () {
   //     data.shift();
@@ -145,6 +146,7 @@ async function onMessageArrived(message) {
   var num = 0;
   //  document.querySelector("#home-time-select").value == "REAL TIME"
   // console.log(macPos, macVital)
+  console.log(data)
   if (
     data.length > 0 &&
     (macPos == mac[3] || macVital == mac[3])    
@@ -156,7 +158,7 @@ async function onMessageArrived(message) {
     timer = 1000;
     timer = parseInt(3000 / data.length);
     // timer = parseInt(1000 / data.length);
-    console.log(data, data.length, timer);
+    // console.log(data, data.length, timer);
     // timeOutMultiLoop(data)
     
     if(realtimeHistVital.classList.contains("active")){
@@ -181,7 +183,7 @@ async function onMessageArrived(message) {
       var interval = setInterval(function () {        
         // if ("DATA" in JSON.parse(message.payloadString)) {
           // console.log(message.payloadString)
-          console.log(data, data[index], index)
+          // console.log(data, data[index], index)
           // if (data[index].timeStamp.toString().includes(":")) ts.push(data[index].timeStamp);
           // if (data[index].timeStamp.toString().includes("."))
           //   ts.push(new Date(parseFloat(data[index].timeStamp) * 1000));
@@ -191,121 +193,130 @@ async function onMessageArrived(message) {
             checkRoomEmpty = new Date()
           }
           if (parseInt(data[index]["numSubjects"]) > 0) { 
-            seriesD = [
-              {
-                name: "Radar",
+            seriesD = radars
+            // [
+            //   {
+            //     name: "Radar",
+            //     type: "scatter",
+            //     data: [[radarX, radarY]],
+            //   },
+            // ];
+            // if((radarX_1>0 || radarY_1>0)&&(radarX_2>0 || radarY_2>0)){
+            // if(radars.length > 0){
+            //   let radarNames = []
+              
+            //   radarX = radarX_1
+            //   radarY = radarY_1
+            //   legendD = ["Radar 1", "Radar 2"]
+            //   seriesD = [
+            //     {
+            //       name: "Radar 1",
+            //       type: "scatter",
+            //       data: [[radarX_1, radarY_1]]
+            //     },
+            //     {
+            //       name: "Radar 2",
+            //       type: "scatter",
+            //       emphasis: {
+            //         focus: "series",
+            //       },
+            //       data: [[radarX_2, radarY_2]],
+            //       symbol: "diamond",
+            //       symbolSize: 30,
+            //     }
+            //   ]
+            // } 
+            // else if(radarX_1>0 || radarY_1>0){
+            //   radarX = radarX_1
+            //   radarY = radarY_1
+            //   legendD = ["Radar"]
+            //   seriesD = [
+            //     {
+            //       name: "Radar",
+            //       type: "scatter",
+            //       data: [[radarX_1, radarY_1]]
+            //     }
+            //   ]
+            // } else if(radarX_2>0 || radarY_2>0){
+            //   radarX = radarX_2
+            //   radarY = radarY_2
+            //   legendD = ["Radar"]
+            //   seriesD = [
+            //     {
+            //       name: "Radar",
+            //       type: "scatter",
+            //       data: [[radarX_2, radarY_2]]
+            //     }
+            //   ]
+            // }
+            
+            for (let i = 0 ; i < data.length ; i++){
+              if(data[i].velX == 0 && data[i].velY == 0)
+                defaultSymbol = dashCircleFill
+              else if(data[i].velX == 0 && data[i].velY > 0)
+                defaultSymbol = arrowUpCircleFill
+              else if(data[i].velX == 0 && data[i].velY < 0)
+                defaultSymbol = arrowDownCircleFill
+              else if(data[i].velX > 0 && data[i].velY == 0)
+                defaultSymbol = arrowRightCircleFill
+              else if(data[i].velX > 0 && data[i].velY > 0)
+                defaultSymbol = arrowUpRightCircleFill
+              else if(data[i].velX > 0 && data[i].velY < 0)
+                defaultSymbol = arrowDownRightCircleFill
+              else if(data[i].velX < 0 && data[i].velY == 0)
+                defaultSymbol = arrowLeftCircleFill
+              else if(data[i].velX < 0 && data[i].velY > 0)
+                defaultSymbol = arrowUpLeftCircleFill
+              else if(data[i].velX < 0 && data[i].velY < 0)
+                defaultSymbol = arrowDownLeftCircleFill
+
+              
+              seriesD.push({
+                tooltip: {
+                  // trigger: 'axis',
+                  showDelay: 0,
+                  formatter: function (params) {
+                    if (params.value.length > 1) {
+                      return (
+                        params.seriesName +
+                        " :<br/>" +
+                        params.value[0] +
+                        "m " +
+                        params.value[1] +
+                        "m "
+                      );
+                    } else {
+                      return (
+                        params.seriesName +
+                        " :<br/>" +
+                        params.name +
+                        " : " +
+                        params.value +
+                        "m "
+                      );
+                    }
+                  },
+                  axisPointer: {
+                    show: true,
+                    type: "cross",
+                    lineStyle: {
+                      type: "dashed",
+                      width: 1,
+                    },
+                  },
+                },
+                name: "Person " + String(i+1),
                 type: "scatter",
-                data: [[radarX, radarY]],
-              },
-            ];
-            if((radarX_1>0 || radarY_1>0)&&(radarX_2>0 || radarY_2>0)){
-              console.log('first if')
-              radarX = radarX_1
-              radarY = radarY_1
-              legendD = ["Radar 1", "Radar 2"]
-              seriesD = [
-                {
-                  name: "Radar 1",
-                  type: "scatter",
-                  data: [[radarX_1, radarY_1]]
-                },
-                {
-                  name: "Radar 2",
-                  type: "scatter",
-                  emphasis: {
-                    focus: "series",
-                  },
-                  data: [[radarX_2, radarY_2]],
-                  symbol: "diamond",
-                  symbolSize: 30,
-                }
-              ]
-            } else if(radarX_1>0 || radarY_1>0){
-              radarX = radarX_1
-              radarY = radarY_1
-              legendD = ["Radar"]
-              seriesD = [
-                {
-                  name: "Radar",
-                  type: "scatter",
-                  data: [[radarX_1, radarY_1]]
-                }
-              ]
-            } else if(radarX_2>0 || radarY_2>0){
-              radarX = radarX_2
-              radarY = radarY_2
-              legendD = ["Radar"]
-              seriesD = [
-                {
-                  name: "Radar",
-                  type: "scatter",
-                  data: [[radarX_2, radarY_2]]
-                }
-              ]
+                symbol: defaultSymbol,
+                symbolSize: 30,
+                data: [
+                  [
+                    Math.abs((data[i].posX??0).toFixed(2)),
+                    Math.abs((data[i].posY??0).toFixed(2)),
+                  ],
+                ],              
+              });
             }
-            if(data[index].velX == 0 && data[index].velY == 0)
-              defaultSymbol = dashCircleFill
-            else if(data[index].velX == 0 && data[index].velY > 0)
-              defaultSymbol = arrowUpCircleFill
-            else if(data[index].velX == 0 && data[index].velY < 0)
-              defaultSymbol = arrowDownCircleFill
-            else if(data[index].velX > 0 && data[index].velY == 0)
-              defaultSymbol = arrowRightCircleFill
-            else if(data[index].velX > 0 && data[index].velY > 0)
-              defaultSymbol = arrowUpRightCircleFill
-            else if(data[index].velX > 0 && data[index].velY < 0)
-              defaultSymbol = arrowDownRightCircleFill
-            else if(data[index].velX < 0 && data[index].velY == 0)
-              defaultSymbol = arrowLeftCircleFill
-            else if(data[index].velX < 0 && data[index].velY > 0)
-              defaultSymbol = arrowUpLeftCircleFill
-            else if(data[index].velX < 0 && data[index].velY < 0)
-              defaultSymbol = arrowDownLeftCircleFill
-            seriesD.push({
-              tooltip: {
-                // trigger: 'axis',
-                showDelay: 0,
-                formatter: function (params) {
-                  if (params.value.length > 1) {
-                    return (
-                      params.seriesName +
-                      " :<br/>" +
-                      params.value[0] +
-                      "m " +
-                      params.value[1] +
-                      "m "
-                    );
-                  } else {
-                    return (
-                      params.seriesName +
-                      " :<br/>" +
-                      params.name +
-                      " : " +
-                      params.value +
-                      "m "
-                    );
-                  }
-                },
-                axisPointer: {
-                  show: true,
-                  type: "cross",
-                  lineStyle: {
-                    type: "dashed",
-                    width: 1,
-                  },
-                },
-              },
-              name: "Person",
-              type: "scatter",
-              symbol: defaultSymbol,
-              symbolSize: 30,
-              data: [
-                [
-                  Math.abs((data[index].posX??0).toFixed(2)),
-                  Math.abs((data[index].posY??0).toFixed(2)),
-                ],
-              ],              
-            });
             scatterWeight.setOption({
               // legend: {
               //   data: legendD,
@@ -351,14 +362,15 @@ async function onMessageArrived(message) {
 function MQTTconnect() {
   // console.log("connecting to "+host+" "+port);
   // mqtt = new Paho.MQTT.Client(host, port, "steven-fssn1234");
-  mqtt = new Paho.MQTT.Client(Mhost, port, "1234");
+  let userData = RequestData()
+  mqtt = new Paho.MQTT.Client(Mhost, port, userData.ID);
   // client.onConnectionLost = onConnectionLost;
   mqtt.onMessageArrived = onMessageArrived;
   var options = {
     timeout: 3,
     onSuccess: onConnect,
     onFailure: doFail,
-    userName: "js-client",
+    userName: userData.Username,
     password: "c764eb2b5fa2d259dc667e2b9e195218",
     // useSSL: true
   };

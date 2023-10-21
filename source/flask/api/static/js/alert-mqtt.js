@@ -22,13 +22,14 @@ async function onMessageArrived(message) {
 }
 
 function MQTTconnect() {
-  mqtt = new Paho.MQTT.Client(Mhost, port, "1234");
+  let userData = RequestData()
+  mqtt = new Paho.MQTT.Client(Mhost, port, userData.ID);
   mqtt.onMessageArrived = onMessageArrived;
   var options = {
     timeout: 3,
     onSuccess: onConnect,
     onFailure: doFail,
-    userName: "js-client",
+    userName: userData.Username,
     password: "c764eb2b5fa2d259dc667e2b9e195218",
     // useSSL: true
   };

@@ -34,6 +34,36 @@ const updateRoomSubmitBtn = document.getElementById("update-room-submit-btn");
 // delete room modal
 const deleteRoomP = document.getElementById("delete-room-name-p");
 
+const moreDetailsDiv = document.getElementById("more-details-box");
+const loadingDiv = document.getElementById("loading");
+const detailsContentDiv = document.getElementById("details-content");
+
+// Sleeping Hour
+const sleepingWeeklyAverage = document.getElementById("sleeping-hour-average");
+
+// Bed Time
+const bedWeeklyAverage = document.getElementById("bed-time-average");
+
+// Morning Wake Up Time
+const wakeWeeklyAverage = document.getElementById("wake-time-average");
+
+// Time In Bed
+const inbedWeeklyAverage = document.getElementById("inbed-time-average");
+
+// In Room
+const inroomWeeklyAverage = document.getElementById("inroom-time-average");
+
+// Sleep disruption
+const disruptionWeeklyAverage = document.getElementById("disruption-average");
+
+// breath Rate
+const breathWeeklyAverage = document.getElementById("breath-rate-average");
+
+// Heart Rate
+const heartWeeklyAverage = document.getElementById("heart-rate-average");
+
+var currentDetailsID = null
+
 if (checkAdmin()) {
   addRoomRow.style.display = "block";
 }
@@ -133,6 +163,38 @@ function updateCard(posMac) {
   }
 }
 
+function fetchDetailsbyID(data){
+  loadingDiv.style.display = "none"
+  detailsContentDiv.style.display = "block"
+  const tableBody = document.getElementById('tableBody');
+
+  while (tableBody.firstChild) {
+      tableBody.removeChild(tableBody.firstChild);
+  }
+
+  // Iterate through the data and create table rows
+  data.forEach(item => {
+      const newRow = document.createElement('tr');
+      let urgency = ''
+      if (item.URGENCY == 0){
+          urgency = `<td style="color:green;">Information</td>`
+      }else if (item.URGENCY == 1){
+          urgency = `<td style="color:yellow;">Attention</td>`
+      }else if (item.URGENCY == 2){
+          urgency = `<td style="color:orange;">Escalated</td>`
+      }else{
+          urgency = `<td style="color:red;">Urgent</td>`
+      }
+
+      newRow.innerHTML = `
+          <td>${item.TIMESTAMP}</td>
+          ${urgency}
+          <td>${item.DETAILS}</td>
+      `;
+      tableBody.appendChild(newRow);
+  });
+}
+
 function addCard(d) {
   let firDiv = document.createElement("div");
   let aTag = document.createElement("div");
@@ -143,6 +205,47 @@ function addCard(d) {
   secDiv.style.position = "absolute";
   secDiv.style.bottom = "1%";
   secDiv.style.right = "5%";
+
+  firDiv.addEventListener("mouseover", function (event) {
+    if (true){
+      currentDetailsID = d.ROOM_UUID
+      if (d["ALERTS"].length > 0){
+        loadingDiv.style.display = "block"
+        detailsContentDiv.style.display = "none"
+        var rect = firDiv.getBoundingClientRect();
+
+        // Calculate the position relative to firDiv
+        var left, top;
+
+        // Calculate left position relative to firDiv
+        if (rect.right < window.innerWidth / 2) {
+            left = rect.right + 10;
+        } else {
+            left = rect.left - moreDetailsDiv.offsetWidth + 10;
+        }
+
+        // Calculate top position relative to firDiv
+        if (rect.top < window.innerHeight / 2) {
+            top = rect.bottom + 10; 
+        } else {
+            top = rect.top - moreDetailsDiv.offsetHeight + 10;
+        }
+
+        // Set the position of moreDetailsDiv relative to firDiv
+        moreDetailsDiv.style.left = left + 'px';
+        moreDetailsDiv.style.top = top + 'px';
+
+        moreDetailsDiv.style.display = 'flex'; // Show moreDetailsDiv
+        fetchDetailsbyID(d["ALERTS"])
+      }
+    }
+
+  });
+  firDiv.addEventListener("mouseout", function () {
+    moreDetailsDiv.style.display = 'none';
+    loadingDiv.style.display = "none"
+    detailsContentDiv.style.display = "none"
+  });
   // secDiv.style.padding = "5px";
   // secDiv.style.display = "flex";
   // secDiv.style.flexDirection = "row-reverse";

@@ -13,6 +13,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 from json import JSONEncoder
 from parseFrame1 import *
+import statistics
 import copy
 import pytz
 import _thread
@@ -21,14 +22,19 @@ import atexit
 
 ##while 1: #time.sleep(10)
 
+# brokerAddress="vernemq" 
+# clientID="0002"
+# userName="decode-publish"  
+# userPassword="/-K3tuBhod3-FIzv"
+# dataBuffer=[]
+# SpecialSensors={}
+
 brokerAddress="vernemq" 
-clientID="0002"
-userName="decode-publish"  
+clientID="1013"
+userName="decode-publish-dbg-ojb1"  
 userPassword="/-K3tuBhod3-FIzv"
 dataBuffer=[]
 SpecialSensors={}
-
-
 
 config = {
     'user': 'flask',
@@ -75,7 +81,7 @@ class NumpyArrayEncoder(JSONEncoder):
 # Decode, Process, and Publish MQTT Data Packets from Radar
 # def decode_process_publish(mac, data, radarType, xShift, yShift, zShift, rotXDegree, rotYDegree, rotZDegree, aggregate_period):
 def decode_process_publish(mac, data):
-    global mqttc, aggregate_period, devicesTbl, breathRate_MA, heartRate_MA
+    global mqttc, config, aggregate_period, devicesTbl, breathRate_MA, heartRate_MA
     my_list = []
     # for x in data:
     for ts_str, byteAD in data.items():
@@ -153,8 +159,6 @@ def decode_process_publish(mac, data):
                 # Radar Time Stamp
                 deltaT = ts - wallStateParam[mac]['timeNow']
                 wallStateParam[mac]['timeNow'] = ts
-                wall_Dict = {}
-                wall_Dict['timeStamp'] = ts
 
                 # Parameters Re-Initialization if Time Interval between Consecutive Data Frames Larger than Certain Threshold
                 # For Robust Analytics with Data Frames / Packets Drop
@@ -177,9 +181,9 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['trackIDs'] = np.zeros((0))  # trackers ID
                     wallStateParam[mac]['previous_pointClouds'] = np.zeros((0, 7))  # previous point clouds
                     wallStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'numSubjects', 'roomOccupancy',
-                                                                            'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ',
-                                                                            'accX', 'accY', 'accZ', 'state', 'kidOrAdult'])
+                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy',
+                                                                            'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ', 'accX', 'accY', 'accZ', 
+                                                                            'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult'])
 
                 # Read parsed data from radar output dictionary
                 # Radar Trackers' Data Extraction
@@ -190,13 +194,6 @@ def decode_process_publish(mac, data):
                     # trackIndices = outputDict['trackIndexes']
                     # trackUnique = np.unique(trackIndices)
                     # trackIndices = trackIndices - trackIndices.min()
-
-                    # Room Occupancy Detection
-                    wall_Dict['numSubjects'] = numTracks
-                    if numTracks > 0:
-                      wall_Dict['roomOccupancy'] = True
-                    elif numTracks == 0:
-                      wall_Dict['roomOccupancy'] = False
 
                     # Decode 3D People Counting Target List TLV
                     # MMWDEMO_OUTPUT_MSG_TRACKERPROC_3D_TARGET_LIST
@@ -216,45 +213,45 @@ def decode_process_publish(mac, data):
                     # float        confidenceLevel;    /*! @brief   Tracker confidence metric*/
                     trackData = outputDict['trackData']
 
-                    if numTracks == 1:
+                    # if numTracks == 1:
 
-                        # Tracker position and velocity obtained from Extended Kalman Filter (EKF) algorithm
-                        trackId = trackData[0, 0]
-                        x_pos = trackData[0, 1]
-                        y_pos = trackData[0, 2]
-                        z_pos = trackData[0, 3]
-                        x_vel = trackData[0, 4]
-                        y_vel = trackData[0, 5]
-                        z_vel = trackData[0, 6]
-                        x_acc = trackData[0, 7]
-                        y_acc = trackData[0, 8]
-                        z_acc = trackData[0, 9]
+                    #     # Tracker position and velocity obtained from Extended Kalman Filter (EKF) algorithm
+                    #     trackId = trackData[0, 0]
+                    #     x_pos = trackData[0, 1]
+                    #     y_pos = trackData[0, 2]
+                    #     z_pos = trackData[0, 3]
+                    #     x_vel = trackData[0, 4]
+                    #     y_vel = trackData[0, 5]
+                    #     z_vel = trackData[0, 6]
+                    #     x_acc = trackData[0, 7]
+                    #     y_acc = trackData[0, 8]
+                    #     z_acc = trackData[0, 9]
 
-                        # Tracker polar coordinates
-                        trackerRangeXY = np.linalg.norm([x_pos, y_pos], ord=2)  # tracker range projected onto the x-y plane
-                        trackerRange = np.linalg.norm([x_pos, y_pos, z_pos], ord=2)
-                        trackerAzimuth = np.arctan(x_pos / y_pos) * 180 / np.pi  # Azimuth angle in radian
-                        trackerElevation = np.arctan(z_pos / trackerRangeXY) * 180 / np.pi  # Elevation angle in radian
+                    #     # Tracker polar coordinates
+                    #     trackerRangeXY = np.linalg.norm([x_pos, y_pos], ord=2)  # tracker range projected onto the x-y plane
+                    #     trackerRange = np.linalg.norm([x_pos, y_pos, z_pos], ord=2)
+                    #     trackerAzimuth = np.arctan(x_pos / y_pos) * 180 / np.pi  # Azimuth angle in radian
+                    #     trackerElevation = np.arctan(z_pos / trackerRangeXY) * 180 / np.pi  # Elevation angle in radian
                         # trackerRadialVelocityXY = (x_pos * x_vel + y_pos * y_vel) / trackerRangeXY # tracker radial velocity projected onto the x-y plane
                         # trackerRadialVelocity = (x_pos * x_vel + y_pos * y_vel + z_pos * z_vel) / trackerRange
                         # trackerAzimuthVelocity = (x_vel * y_pos - x_pos * y_vel) / (trackerRangeXY**2)
                         # trackerElevationVelocity
                         # print(trackerRange, trackerAzimuth)
 
-                        # Rotation of tracker's position and velocity coordinates
-                        [x_pos, y_pos, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_pos, y_pos, 1])
-                        [x_vel, y_vel, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_vel, y_vel, 1])
-                        [x_acc, y_acc, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_acc, y_acc, 1])
-                        [dum, y_pos, z_pos] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_pos, z_pos])
-                        [dum, y_vel, z_vel] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_vel, z_vel])
-                        [dum, y_acc, z_acc] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_acc, z_acc])
-                        [x_pos, dum, z_pos] = np.matmul(wallStateParam[mac]['rotYMat'], [x_pos, 1, z_pos])
-                        [x_vel, dum, z_vel] = np.matmul(wallStateParam[mac]['rotYMat'], [x_vel, 1, z_vel])
-                        [x_acc, dum, z_acc] = np.matmul(wallStateParam[mac]['rotYMat'], [x_acc, 1, z_acc])
+                    #     # Rotation of tracker's position and velocity coordinates
+                    #     [x_pos, y_pos, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_pos, y_pos, 1])
+                    #     [x_vel, y_vel, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_vel, y_vel, 1])
+                    #     [x_acc, y_acc, dum] = np.matmul(wallStateParam[mac]['rotZMat'], [x_acc, y_acc, 1])
+                    #     [dum, y_pos, z_pos] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_pos, z_pos])
+                    #     [dum, y_vel, z_vel] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_vel, z_vel])
+                    #     [dum, y_acc, z_acc] = np.matmul(wallStateParam[mac]['rotXMat'], [1, y_acc, z_acc])
+                    #     [x_pos, dum, z_pos] = np.matmul(wallStateParam[mac]['rotYMat'], [x_pos, 1, z_pos])
+                    #     [x_vel, dum, z_vel] = np.matmul(wallStateParam[mac]['rotYMat'], [x_vel, 1, z_vel])
+                    #     [x_acc, dum, z_acc] = np.matmul(wallStateParam[mac]['rotYMat'], [x_acc, 1, z_acc])
 
-                        # Horizontal shifting of tracker's position coordinates
-                        x_pos = x_pos + wallStateParam[mac]['radar_coord'][0]
-                        y_pos = y_pos + wallStateParam[mac]['radar_coord'][1]
+                    #     # Horizontal shifting of tracker's position coordinates
+                    #     x_pos = x_pos + wallStateParam[mac]['radar_coord'][0]
+                    #     y_pos = y_pos + wallStateParam[mac]['radar_coord'][1]
                         # z_pos = z_pos + wallStateParam[mac]['radar_coord'][2]
 
                         # Tracker velocity (normalized) direction
@@ -262,15 +259,15 @@ def decode_process_publish(mac, data):
                         # y_vel_direction = y_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
                         # z_vel_direction = z_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
 
-                        wall_Dict['posX'] = x_pos
-                        wall_Dict['posY'] = y_pos
-                        wall_Dict['posZ'] = z_pos
-                        wall_Dict['velX'] = x_vel
-                        wall_Dict['velY'] = y_vel
-                        wall_Dict['velZ'] = z_vel
-                        wall_Dict['accX'] = x_acc
-                        wall_Dict['accY'] = y_acc
-                        wall_Dict['accZ'] = z_acc
+                    #     wall_Dict['posX'] = x_pos
+                    #     wall_Dict['posY'] = y_pos
+                    #     wall_Dict['posZ'] = z_pos
+                    #     wall_Dict['velX'] = x_vel
+                    #     wall_Dict['velY'] = y_vel
+                    #     wall_Dict['velZ'] = z_vel
+                    #     wall_Dict['accX'] = x_acc
+                    #     wall_Dict['accY'] = y_acc
+                    #     wall_Dict['accZ'] = z_acc
 
                     # Read parsed data from radar output dictionary
                     # Radar Point Clouds + Trackers' Data Extraction and Processing
@@ -322,6 +319,16 @@ def decode_process_publish(mac, data):
 
                         # Process individual tracker's data for Posture Analytics
                         for trackIdx in range(numTracks):
+
+                            # Time Stamp
+                            wall_Dict = {}
+                            wall_Dict['timeStamp'] = ts
+
+                            # Track Index
+                            trackId = trackData[trackIdx, 0]
+                            wall_Dict['trackIndex'] = trackId
+                            # if np.isnan(trackId):
+                            #     continue
 
                             # Tracker position and velocity obtained from Extended Kalman Filter (EKF) algorithm
                             trackId = trackData[trackIdx, 0]
@@ -446,64 +453,181 @@ def decode_process_publish(mac, data):
 
                                     # Disable posture estimation if number of subjects > 1 or subject's range > 5m, or subject's
                                     # azimuth or elevation angle > 50 degrees.
-                                    if numTracks > 1:
-                                        wallStateParam[mac]['labelCount'][minDistIdx] = 5
-                                        wallStateParam[mac]['labelGuess'][minDistIdx] = 5
-                                        wall_Dict['state'] = 5
+                                    # if numTracks > 1:
+                                    #     wallStateParam[mac]['labelCount'][minDistIdx] = 5
+                                    #     wallStateParam[mac]['labelGuess'][minDistIdx] = 5
+                                    #     wall_Dict['state'] = 5
 
-                                    elif trackerRange > 5 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 50:
+                                    if trackerRange > 5 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 40:
                                         wallStateParam[mac]['labelCount'][minDistIdx] = 4
                                         wallStateParam[mac]['labelGuess'][minDistIdx] = 4
 
                                     # elif len(x_coord[trackIndices == trackId]) > 10:
-                                    elif numTracks == 1:
+                                    # elif numTracks == 1:
 
-                                        if deltaDisp > 0.05 and len(x_coord[trackIndices == trackId]) > 10:
-                                            x_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['x_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
-                                            y_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
-                                            z_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
-                                            z_height = np.percentile(np.concatenate(wallStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [99])
-                                            z_height = z_height + wallStateParam[mac]['radar_coord'][2]
-                                            body_width = np.sqrt(x_dim ** 2 + y_dim ** 2)
-                                            # print(z_height, z_dim, body_width)
+                                    # elif deltaDisp > 0.05 and len(x_coord[trackIndices == trackId]) > 5:
+                                    elif len(x_coord[trackIndices == trackId]) > 5:
+                                        x_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['x_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
+                                        y_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
+                                        z_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
+                                        z_height = np.percentile(np.concatenate(wallStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [99])
+                                        z_height = z_height + wallStateParam[mac]['radar_coord'][2]
+                                        body_width = np.sqrt(x_dim ** 2 + y_dim ** 2)
+                                        # print(z_height, z_dim, body_width)
+                                        wall_Dict['bodyHeight'] = z_dim[0]
+                                        wall_Dict['bodyWidth'] = body_width[0]
 
-                                            if deltaZ < -0.5 and body_width > 0.5 and z_height < 1.0 and \
-                                                ((body_width) / (z_dim + 0.2)) > 1.5:
-                                                # print('Fall')
-                                                wallStateParam[mac]['labelCount'][minDistIdx] = 3
-                                                wallStateParam[mac]['labelGuess'][minDistIdx] = 2
-                                                wall_Dict['state'] = 3
+                                        if deltaZ < -0.35 and body_width > 0.5 and z_height < 1.0 and \
+                                            ((body_width) / (z_dim + 0.2)) > 1.0:
+                                            # print('Fall')
+                                            wallStateParam[mac]['labelCount'][minDistIdx] = 3
+                                            wallStateParam[mac]['labelGuess'][minDistIdx] = 2
+                                            wall_Dict['state'] = 3
 
-                                            elif deltaDist > 0.3:
-                                                # print('Moving')
-                                                wallStateParam[mac]['labelCount'][minDistIdx] = 0
-                                                wall_Dict['state'] = 0
+                                            # Publish alert via MQTT communication channel
+                                            pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"FALL"}
+                                            jsonData = json.dumps(pubPayload)
+                                            mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
 
-                                                # Adult and Kid Differentiation
-                                                if z_height > 1.5 and z_height < 2.0 and body_width < 1.0:
-                                                    wall_Dict['kidOrAdult'] = 1
-                                                elif z_height > 0.4 and z_height < 1.0 and body_width < 0.5:
-                                                    wall_Dict['kidOrAdult'] = 0
+                                        elif deltaDist > 0.3:
+                                            # print('Moving')
+                                            wallStateParam[mac]['labelCount'][minDistIdx] = 0
+                                            wall_Dict['state'] = 0
 
-                                            elif body_width > 0.5 and z_height < 1.5 and ((body_width) / (z_dim + 0.2)) > 1.8:
-                                                # print('Laying')
-                                                wallStateParam[mac]['labelCount'][minDistIdx] = 2
-                                                wallStateParam[mac]['labelGuess'][minDistIdx] = 2
-                                                wall_Dict['state'] = 2
+                                            # Adult and Kid Differentiation
+                                            if z_height > 1.5 and z_height < 2.0 and body_width < 1.0:
+                                                wall_Dict['kidOrAdult'] = 1
+                                            elif z_height > 0.4 and z_height < 1.0 and body_width < 0.5:
+                                                wall_Dict['kidOrAdult'] = 0
 
-                                            elif z_dim > 0.5 and z_height > 0.5 and ((z_dim + 0.2) / (body_width + 0.0001)) > 1.0:
-                                                # print('Upright')
-                                                wallStateParam[mac]['labelCount'][minDistIdx] = 1
-                                                wallStateParam[mac]['labelGuess'][minDistIdx] = 1
-                                                wall_Dict['state'] = 1
+                                        elif body_width > 0.5 and z_height < 1.5 and ((body_width) / (z_dim + 0.2)) > 1.3:
+                                            # print('Laying')
+                                            wallStateParam[mac]['labelCount'][minDistIdx] = 2
+                                            wallStateParam[mac]['labelGuess'][minDistIdx] = 2
+                                            wall_Dict['state'] = 2
 
-                                            else:
-                                                wallStateParam[mac]['labelCount'][minDistIdx] = wallStateParam[mac]['labelGuess'][minDistIdx]
-                                                # wall_Dict['state'] = wallStateParam[mac]['label_state'][wallStateParam[mac]['labelCount'][minDistIdx]]
-                                                wall_Dict['state'] = wallStateParam[mac]['labelCount'][minDistIdx]
+                                        elif z_dim > 0.5 and body_width > 0.2 and z_height > 0.5 and ((z_dim) / (body_width + 0.0001)) > 1.0:
+                                            # print('Upright')
+                                            wallStateParam[mac]['labelCount'][minDistIdx] = 1
+                                            wallStateParam[mac]['labelGuess'][minDistIdx] = 1
+                                            wall_Dict['state'] = 1
+
+                                        else:
+                                            wallStateParam[mac]['labelCount'][minDistIdx] = wallStateParam[mac]['labelGuess'][minDistIdx]
+                                            # wall_Dict['state'] = wallStateParam[mac]['label_state'][wallStateParam[mac]['labelCount'][minDistIdx]]
+                                            wall_Dict['state'] = wallStateParam[mac]['labelCount'][minDistIdx]
 
                                 # ----------------------------------------------------
                                 # ----------------------------------------------------
+
+                            # Tracker position, velocity, and acceleration
+                            wall_Dict['posX'] = x_pos
+                            wall_Dict['posY'] = y_pos
+                            wall_Dict['posZ'] = z_pos
+                            wall_Dict['velX'] = x_vel
+                            wall_Dict['velY'] = y_vel
+                            wall_Dict['velZ'] = z_vel
+                            wall_Dict['accX'] = x_acc
+                            wall_Dict['accY'] = y_acc
+                            wall_Dict['accZ'] = z_acc
+
+                            # Room Occupancy Detection
+                            wall_Dict['numSubjects'] = numTracks
+                            if numTracks > 0:
+                                wall_Dict['roomOccupancy'] = True
+                            elif numTracks == 0:
+                                wall_Dict['roomOccupancy'] = False
+
+                            # Time Series Data Aggregation                
+                            if wallStateParam[mac]['pandasDF'].empty:
+                                
+                                # Append data frame
+                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+
+                            elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+
+                                # print(wallStateParam[mac]['pandasDF']['trackIndex'].unique())
+                                if len(wallStateParam[mac]['pandasDF']['trackIndex'].unique()) > 0:
+                                  
+                                  for trackInd in wallStateParam[mac]['pandasDF']['trackIndex'].unique():
+                                    
+                                    if np.isnan(trackInd):
+                                        continue
+
+                                    pandasDF_dum = wallStateParam[mac]['pandasDF'].loc[wallStateParam[mac]['pandasDF']['trackIndex'] == trackInd]
+
+                                    aggregate_dict = {}
+                                    aggregate_dict['timeStamp'] = round(pandasDF_dum['timeStamp'].mean(skipna=True),2)
+                                    aggregate_dict['numSubjects'] = pandasDF_dum['numSubjects'].mean(skipna=True)
+                                    aggregate_dict['roomOccupancy'] = pandasDF_dum['roomOccupancy'].mean(skipna=True)
+                                    aggregate_dict['trackIndex'] = int(trackInd)
+                                    aggregate_dict['posX'] = pandasDF_dum['posX'].mean(skipna=True)
+                                    aggregate_dict['posY'] = pandasDF_dum['posY'].mean(skipna=True)
+                                    aggregate_dict['posZ'] = pandasDF_dum['posZ'].mean(skipna=True)
+                                    aggregate_dict['velX'] = pandasDF_dum['velX'].mean(skipna=True)
+                                    aggregate_dict['velY'] = pandasDF_dum['velY'].mean(skipna=True)
+                                    aggregate_dict['velZ'] = pandasDF_dum['velZ'].mean(skipna=True)
+                                    aggregate_dict['accX'] = pandasDF_dum['accX'].max(skipna=True)
+                                    aggregate_dict['accY'] = pandasDF_dum['accY'].max(skipna=True)
+                                    aggregate_dict['accZ'] = pandasDF_dum['accZ'].max(skipna=True)
+                                    aggregate_dict['bodyHeight'] = pandasDF_dum['bodyHeight'].mean(skipna=True)
+                                    aggregate_dict['bodyWidth'] = pandasDF_dum['bodyWidth'].mean(skipna=True)
+
+                                    if not pandasDF_dum['state'].mode(dropna=True).empty:
+                                        aggregate_dict['state'] = pandasDF_dum['state'].mode(dropna=True).iloc[0]
+                                    else:
+                                        aggregate_dict['state'] = np.nan
+                                    aggregate_dict['kidOrAdult'] = pandasDF_dum['kidOrAdult'].mean(skipna=True)
+
+                                    # if aggregate_dict['state'].dropna().empty:
+                                    # print(aggregate_dict)
+                                    if math.isnan(aggregate_dict['state']):
+                                        aggregate_dict['state'] = None
+                                    elif pandasDF_dum['state'].isin([3]).sum() > 0:
+                                        aggregate_dict['state'] = 'Fall'
+                                    # elif aggregate_dict['state'].isin([4]).sum() == 0:
+                                    elif aggregate_dict['state'] != 4:
+                                        aggregate_dict['state'] = wallStateParam[mac]['label_state'][int(aggregate_dict['state'])]
+                                    else:
+                                        aggregate_dict['state'] = None
+
+                                    # if aggregate_dict['kidOrAdult'].dropna().empty:
+                                    if math.isnan(aggregate_dict['kidOrAdult']):
+                                        aggregate_dict['kidOrAdult'] = None
+                                    # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 0:
+                                    elif int(round(aggregate_dict['kidOrAdult'])) == 0:
+                                        aggregate_dict['kidOrAdult'] = 'Kid'
+                                    # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 1:
+                                    elif int(round(aggregate_dict['kidOrAdult'])) == 1:
+                                        aggregate_dict['kidOrAdult'] = 'Adult'
+
+                                    # aggregate_dict = aggregate_dict.to_dict('r')
+                                    # if aggregate_dict:
+                                    # print("YYYYYYYYY")
+                                    # aggregate_dict = aggregate_dict[0]
+                                    if not math.isnan(aggregate_dict['numSubjects']):
+                                        aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
+                                    if not math.isnan(aggregate_dict['roomOccupancy']):
+                                        aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
+                                    for key, value in aggregate_dict.items():
+                                        if str(value)[0:3] == 'nan':
+                                            aggregate_dict[key] = None
+
+                                    # print(aggregate_dict['state'])
+                                    dict_copy = copy.deepcopy(aggregate_dict)
+                                    my_list.append(dict_copy)
+                                    # print(json_string)
+
+                                # Update the new data frame
+                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
+
+                            else:
+            
+                                # Append data frame
+                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+
+                                # print(wallStateParam)
 
                         # Remove unused trackers' information and parameters
                         trackerInvalidIdx = np.arange(len(wallStateParam[mac]['trackerInvalid']))
@@ -527,6 +651,51 @@ def decode_process_publish(mac, data):
                         wallStateParam[mac]['trackerInvalid'] = wallStateParam[mac]['trackerInvalid'][wallStateParam[mac]['trackerInvalid'] == 0]
                         wallStateParam[mac]['trackerInvalid'] = wallStateParam[mac]['trackerInvalid'] + 1
 
+                  else:
+                    
+                    wall_Dict = {}
+                    wall_Dict['timeStamp'] = ts
+                    
+                    # Time Series Data Aggregation 
+                    if "pandasDF" in wallStateParam[mac]:
+                        if wallStateParam[mac]['pandasDF'].empty:
+                            # Append data frame
+                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+
+                        elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+
+                            aggregate_dict = {}
+                            aggregate_dict['timeStamp'] = round(wallStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
+                            aggregate_dict['numSubjects'] = 0
+                            aggregate_dict['roomOccupancy'] = False
+                            aggregate_dict['trackIndex'] = None
+                            aggregate_dict['posX'] = None
+                            aggregate_dict['posY'] = None
+                            aggregate_dict['posZ'] = None
+                            aggregate_dict['velX'] = None
+                            aggregate_dict['velY'] = None
+                            aggregate_dict['velZ'] = None
+                            aggregate_dict['accX'] = None
+                            aggregate_dict['accY'] = None
+                            aggregate_dict['accZ'] = None
+                            aggregate_dict['bodyHeight'] = None
+                            aggregate_dict['bodyWidth'] = None
+                            aggregate_dict['state'] = None
+                            aggregate_dict['kidOrAdult'] = None
+
+                            # print(aggregate_dict['state'])
+                            dict_copy = copy.deepcopy(aggregate_dict)
+                            my_list.append(dict_copy)
+                            # print(json_string)
+
+                            # Update the new data frame
+                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
+
+                        else:
+                            # Append data frame
+                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 # Since track indexes are delayed a frame, delay showing the current points by 1 frame
                 if outputDict is not None:
@@ -534,81 +703,81 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['previous_pointClouds'] = outputDict['pointCloud']
 
                 # Time Series Data Aggregation 
-                if "pandasDF" in wallStateParam[mac]:
-                    if wallStateParam[mac]['pandasDF'].empty:
-                        # Append data frame
-                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                # if "pandasDF" in wallStateParam[mac]:
+                #     if wallStateParam[mac]['pandasDF'].empty:
+                #         # Append data frame
+                #         wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
-                    elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+                #     elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
-                        aggregate_dict = {}
-                        aggregate_dict['timeStamp'] = round(wallStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
-                        aggregate_dict['numSubjects'] = wallStateParam[mac]['pandasDF']['numSubjects'].mean(skipna=True)
-                        aggregate_dict['roomOccupancy'] = wallStateParam[mac]['pandasDF']['roomOccupancy'].mean(skipna=True)
-                        aggregate_dict['posX'] = wallStateParam[mac]['pandasDF']['posX'].mean(skipna=True)
-                        aggregate_dict['posY'] = wallStateParam[mac]['pandasDF']['posY'].mean(skipna=True)
-                        aggregate_dict['posZ'] = wallStateParam[mac]['pandasDF']['posZ'].mean(skipna=True)
-                        aggregate_dict['velX'] = wallStateParam[mac]['pandasDF']['velX'].mean(skipna=True)
-                        aggregate_dict['velY'] = wallStateParam[mac]['pandasDF']['velY'].mean(skipna=True)
-                        aggregate_dict['velZ'] = wallStateParam[mac]['pandasDF']['velZ'].mean(skipna=True)
-                        aggregate_dict['accX'] = wallStateParam[mac]['pandasDF']['accX'].max(skipna=True)
-                        aggregate_dict['accY'] = wallStateParam[mac]['pandasDF']['accY'].max(skipna=True)
-                        aggregate_dict['accZ'] = wallStateParam[mac]['pandasDF']['accZ'].max(skipna=True)
-                        if not wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).empty:
-                            aggregate_dict['state'] = wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).iloc[0]
-                        else:
-                            aggregate_dict['state'] = np.nan
-                        aggregate_dict['kidOrAdult'] = wallStateParam[mac]['pandasDF']['kidOrAdult'].mean(skipna=True)
+                #         aggregate_dict = {}
+                #         aggregate_dict['timeStamp'] = round(wallStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
+                #         aggregate_dict['numSubjects'] = wallStateParam[mac]['pandasDF']['numSubjects'].mean(skipna=True)
+                #         aggregate_dict['roomOccupancy'] = wallStateParam[mac]['pandasDF']['roomOccupancy'].mean(skipna=True)
+                #         aggregate_dict['posX'] = wallStateParam[mac]['pandasDF']['posX'].mean(skipna=True)
+                #         aggregate_dict['posY'] = wallStateParam[mac]['pandasDF']['posY'].mean(skipna=True)
+                #         aggregate_dict['posZ'] = wallStateParam[mac]['pandasDF']['posZ'].mean(skipna=True)
+                #         aggregate_dict['velX'] = wallStateParam[mac]['pandasDF']['velX'].mean(skipna=True)
+                #         aggregate_dict['velY'] = wallStateParam[mac]['pandasDF']['velY'].mean(skipna=True)
+                #         aggregate_dict['velZ'] = wallStateParam[mac]['pandasDF']['velZ'].mean(skipna=True)
+                #         aggregate_dict['accX'] = wallStateParam[mac]['pandasDF']['accX'].max(skipna=True)
+                #         aggregate_dict['accY'] = wallStateParam[mac]['pandasDF']['accY'].max(skipna=True)
+                #         aggregate_dict['accZ'] = wallStateParam[mac]['pandasDF']['accZ'].max(skipna=True)
+                #         if not wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).empty:
+                #             aggregate_dict['state'] = wallStateParam[mac]['pandasDF']['state'].mode(dropna=True).iloc[0]
+                #         else:
+                #             aggregate_dict['state'] = np.nan
+                #         aggregate_dict['kidOrAdult'] = wallStateParam[mac]['pandasDF']['kidOrAdult'].mean(skipna=True)
  
-                        # if aggregate_dict['state'].dropna().empty:
-                        # print(aggregate_dict)
-                        if math.isnan(aggregate_dict['state']):
-                            aggregate_dict['state'] = None
-                        elif wallStateParam[mac]['pandasDF']['state'].isin([3]).sum() > 0:
-                            aggregate_dict['state'] = 'Fall'
-                        # elif aggregate_dict['state'].isin([4]).sum() == 0:
-                        elif aggregate_dict['state'] != 4:
-                            aggregate_dict['state'] = wallStateParam[mac]['label_state'][
-                                int(aggregate_dict['state'])]
-                        else:
-                            aggregate_dict['state'] = None
+                #         # if aggregate_dict['state'].dropna().empty:
+                #         # print(aggregate_dict)
+                #         if math.isnan(aggregate_dict['state']):
+                #             aggregate_dict['state'] = None
+                #         elif wallStateParam[mac]['pandasDF']['state'].isin([3]).sum() > 0:
+                #             aggregate_dict['state'] = 'Fall'
+                #         # elif aggregate_dict['state'].isin([4]).sum() == 0:
+                #         elif aggregate_dict['state'] != 4:
+                #             aggregate_dict['state'] = wallStateParam[mac]['label_state'][
+                #                 int(aggregate_dict['state'])]
+                #         else:
+                #             aggregate_dict['state'] = None
 
-                        # if aggregate_dict['kidOrAdult'].dropna().empty:
-                        if math.isnan(aggregate_dict['kidOrAdult']):
-                            aggregate_dict['kidOrAdult'] = None
-                        # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 0:
-                        elif int(round(aggregate_dict['kidOrAdult'])) == 0:
-                            aggregate_dict['kidOrAdult'] = 'Kid'
-                        # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 1:
-                        elif int(round(aggregate_dict['kidOrAdult'])) == 1:
-                            aggregate_dict['kidOrAdult'] = 'Adult'
+                #         # if aggregate_dict['kidOrAdult'].dropna().empty:
+                #         if math.isnan(aggregate_dict['kidOrAdult']):
+                #             aggregate_dict['kidOrAdult'] = None
+                #         # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 0:
+                #         elif int(round(aggregate_dict['kidOrAdult'])) == 0:
+                #             aggregate_dict['kidOrAdult'] = 'Kid'
+                #         # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 1:
+                #         elif int(round(aggregate_dict['kidOrAdult'])) == 1:
+                #             aggregate_dict['kidOrAdult'] = 'Adult'
 
-                        # aggregate_dict = aggregate_dict.to_dict('r')
-                        # if aggregate_dict:
-                            # print("YYYYYYYYY")
-                            # aggregate_dict = aggregate_dict[0]
-                        if not math.isnan(aggregate_dict['numSubjects']):
-                            aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
-                        if not math.isnan(aggregate_dict['roomOccupancy']):
-                            aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
-                        for key, value in aggregate_dict.items():
-                            if str(value)[0:3] == 'nan':
-                                aggregate_dict[key] = None
+                #         # aggregate_dict = aggregate_dict.to_dict('r')
+                #         # if aggregate_dict:
+                #             # print("YYYYYYYYY")
+                #             # aggregate_dict = aggregate_dict[0]
+                #         if not math.isnan(aggregate_dict['numSubjects']):
+                #             aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
+                #         if not math.isnan(aggregate_dict['roomOccupancy']):
+                #             aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
+                #         for key, value in aggregate_dict.items():
+                #             if str(value)[0:3] == 'nan':
+                #                 aggregate_dict[key] = None
 
-                        # print(aggregate_dict['state'])
-                        dict_copy = copy.deepcopy(aggregate_dict)
-                        my_list.append(dict_copy)
-                        # print(json_string)
+                #         # print(aggregate_dict['state'])
+                #         dict_copy = copy.deepcopy(aggregate_dict)
+                #         my_list.append(dict_copy)
+                #         # print(json_string)
 
-                        # Update the new data frame
-                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
-                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
+                #         # Update the new data frame
+                #         wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                #         wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
 
-                    else:
-                        # Append data frame
-                        wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                #     else:
+                #         # Append data frame
+                #         wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
-                    # print(wallStateParam)
+                # print(wallStateParam)
     
             # --------------------------------- Ceil-Mounted Radar Tracking and Posture Analysis -------------------------------
             # ------------------------------------------------------------------------------------------------------------------
@@ -635,8 +804,6 @@ def decode_process_publish(mac, data):
 
                 deltaT = ts - ceilStateParam[mac]['timeNow']
                 ceilStateParam[mac]['timeNow'] = ts
-                ceil_Dict = {}
-                ceil_Dict['timeStamp'] = ts
 
                 # Time-Interval Thresholding for Robust Analytics with Data Packets Drop
                 if deltaT > 5:
@@ -657,10 +824,11 @@ def decode_process_publish(mac, data):
                     ceilStateParam[mac]['trackIDs'] = np.zeros((0))  # trackers ID
                     ceilStateParam[mac]['previous_pointClouds'] = np.zeros((0, 7))  # previous point clouds
                     ceilStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    ceilStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'numSubjects', 'roomOccupancy',
-                                                                            'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ',
-                                                                            'accX', 'accY', 'accZ', 'state', 'kidOrAdult'])
+                    ceilStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy',
+                                                                            'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ', 'accX', 'accY', 'accZ', 
+                                                                            'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult'])
 
+                # print(outputDict)
                 if outputDict is not None:
                   if "numDetectedTracks" in outputDict:
                     numTracks = outputDict['numDetectedTracks']
@@ -668,13 +836,6 @@ def decode_process_publish(mac, data):
                     # trackIndices = outputDict['trackIndexes']
                     # trackUnique = np.unique(trackIndices)
                     # trackIndices = trackIndices - trackIndices.min()
-
-                    # Room Occupancy Detection
-                    ceil_Dict['numSubjects'] = numTracks
-                    if numTracks > 0:
-                        ceil_Dict['roomOccupancy'] = True
-                    elif numTracks == 0:
-                        ceil_Dict['roomOccupancy'] = False
 
                     # Decode 3D People Counting Target List TLV
                     # MMWDEMO_OUTPUT_MSG_TRACKERPROC_3D_TARGET_LIST
@@ -695,25 +856,25 @@ def decode_process_publish(mac, data):
                     trackData = outputDict['trackData']
                     # trackHeight = outputDict['trackHeight']
 
-                    if numTracks == 1:
+                    # if numTracks == 1:
 
                         # Tracker position and velocity obtained from Extended Kalman Filter (EKF) algorithm
-                        trackId = trackData[0, 0]
-                        x_pos = trackData[0, 1]
-                        y_pos = trackData[0, 2]
-                        z_pos = trackData[0, 3]
-                        x_vel = trackData[0, 4]
-                        y_vel = trackData[0, 5]
-                        z_vel = trackData[0, 6]
-                        x_acc = trackData[0, 7]
-                        y_acc = trackData[0, 8]
-                        z_acc = trackData[0, 9]
+                    #     trackId = trackData[0, 0]
+                    #     x_pos = trackData[0, 1]
+                    #     y_pos = trackData[0, 2]
+                    #     z_pos = trackData[0, 3]
+                    #     x_vel = trackData[0, 4]
+                    #     y_vel = trackData[0, 5]
+                    #     z_vel = trackData[0, 6]
+                    #     x_acc = trackData[0, 7]
+                    #     y_acc = trackData[0, 8]
+                    #     z_acc = trackData[0, 9]
 
                         # Tracker polar coordinates
-                        trackerRangeXY = np.linalg.norm([x_pos, y_pos], ord=2)  # tracker range projected onto the x-y plane
-                        trackerRange = np.linalg.norm([x_pos, y_pos, z_pos], ord=2)
-                        trackerAzimuth = np.arctan(x_pos / y_pos) * 180 / np.pi  # Azimuth angle in radian
-                        trackerElevation = np.arctan(z_pos / trackerRangeXY) * 180 / np.pi  # Elevation angle in radian
+                    #     trackerRangeXY = np.linalg.norm([x_pos, y_pos], ord=2)  # tracker range projected onto the x-y plane
+                    #     trackerRange = np.linalg.norm([x_pos, y_pos, z_pos], ord=2)
+                    #     trackerAzimuth = np.arctan(x_pos / y_pos) * 180 / np.pi  # Azimuth angle in radian
+                    #     trackerElevation = np.arctan(z_pos / trackerRangeXY) * 180 / np.pi  # Elevation angle in radian
                         # trackerRadialVelocityXY = (x_pos * x_vel + y_pos * y_vel) / trackerRangeXY # tracker radial velocity projected onto the x-y plane
                         # trackerRadialVelocity = (x_pos * x_vel + y_pos * y_vel + z_pos * z_vel) / trackerRange
                         # trackerAzimuthVelocity = (x_vel * y_pos - x_pos * y_vel) / (trackerRangeXY**2)
@@ -721,26 +882,26 @@ def decode_process_publish(mac, data):
                         # print(trackerRange, trackerAzimuth)
 
                         # Tracker coordinates and velocity vector transformation
-                        [x_pos, dum, z_pos] = np.matmul(rotYMat, [x_pos, 1, z_pos])
-                        [x_vel, dum, z_vel] = np.matmul(rotYMat, [x_vel, 1, z_vel])
-                        [x_acc, dum, z_acc] = np.matmul(rotYMat, [x_acc, 1, z_acc])
-                        x_pos = x_pos + ceilStateParam[mac]['radar_coord'][0]
-                        z_pos = z_pos + ceilStateParam[mac]['radar_coord'][1]
+                    #     [x_pos, dum, z_pos] = np.matmul(rotYMat, [x_pos, 1, z_pos])
+                    #     [x_vel, dum, z_vel] = np.matmul(rotYMat, [x_vel, 1, z_vel])
+                    #     [x_acc, dum, z_acc] = np.matmul(rotYMat, [x_acc, 1, z_acc])
+                    #     x_pos = x_pos + ceilStateParam[mac]['radar_coord'][0]
+                    #     z_pos = z_pos + ceilStateParam[mac]['radar_coord'][1]
 
                         # Tracker velocity (normalized) direction
                         # x_vel_direction = x_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])  # Add epsilon to denominator to prevent run-time warning
                         # y_vel_direction = y_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
                         # z_vel_direction = z_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])
 
-                        ceil_Dict['posX'] = x_pos
-                        ceil_Dict['posY'] = z_pos
-                        ceil_Dict['posZ'] = -y_pos
-                        ceil_Dict['velX'] = x_vel
-                        ceil_Dict['velY'] = z_vel
-                        ceil_Dict['velZ'] = -y_vel
-                        ceil_Dict['accX'] = x_acc
-                        ceil_Dict['accY'] = z_acc
-                        ceil_Dict['accZ'] = -y_acc
+                    #     ceil_Dict['posX'] = x_pos
+                    #     ceil_Dict['posY'] = z_pos
+                    #     ceil_Dict['posZ'] = -y_pos
+                    #     ceil_Dict['velX'] = x_vel
+                    #     ceil_Dict['velY'] = z_vel
+                    #     ceil_Dict['velZ'] = -y_vel
+                    #     ceil_Dict['accX'] = x_acc
+                    #     ceil_Dict['accY'] = z_acc
+                    #     ceil_Dict['accZ'] = -y_acc
 
                     # if dataOk and len(detObj["x"]) > 1:
                     if len(ceilStateParam[mac]['previous_pointClouds']) > 0 and "trackIndexes" in outputDict:
@@ -774,6 +935,14 @@ def decode_process_publish(mac, data):
 
                         # Read and draw trackers' information
                         for trackIdx in range(numTracks):
+
+                            # Time Stamp
+                            ceil_Dict = {}
+                            ceil_Dict['timeStamp'] = ts
+
+                            # Track Index
+                            trackId = trackData[trackIdx, 0]
+                            ceil_Dict['trackIndex'] = trackId
 
                             # Tracker position and velocity obtained from Extended Kalman Filter (EKF) algorithm
                             trackId = trackData[trackIdx, 0]
@@ -889,65 +1058,180 @@ def decode_process_publish(mac, data):
 
                                     # Disable posture estimation if number of subjects > 1 or subject's range > 5m, or subject's
                                     # azimuth or elevation angle > 50 degrees.
-                                    if numTracks > 1:
-                                        ceilStateParam[mac]['labelCount'][minDistIdx] = 5
-                                        ceilStateParam[mac]['labelGuess'][minDistIdx] = 5
-                                        ceil_Dict['state'] = 5
+                                    # if numTracks > 1:
+                                    #     ceilStateParam[mac]['labelCount'][minDistIdx] = 5
+                                    #     ceilStateParam[mac]['labelGuess'][minDistIdx] = 5
+                                    #     ceil_Dict['state'] = 5
 
-                                    elif trackerRange > 5 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 40:
+                                    if trackerRange > 5 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 40:
                                         ceilStateParam[mac]['labelCount'][minDistIdx] = 4
                                         ceilStateParam[mac]['labelGuess'][minDistIdx] = 4
 
                                     # elif len(x_coord[trackIndices == trackId]) > 10:
-                                    elif numTracks == 1:
+                                    # elif numTracks == 1:
 
-                                        if deltaDisp > 0.1 and len(x_coord[trackIndices == trackId]) > 10:
-                                            x_dim = np.diff(np.percentile(np.concatenate(ceilStateParam[mac]['x_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
-                                            y_dim = np.diff(np.percentile(np.concatenate(ceilStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
-                                            z_dim = np.diff(np.percentile(np.concatenate(ceilStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
-                                            y_height = np.percentile(np.concatenate(ceilStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1])
-                                            y_height = ceilStateParam[mac]['radar_coord'][2] - y_height
-                                            body_width = np.sqrt(x_dim ** 2 + z_dim ** 2)
-                                            # print(y_height, y_dim, body_width)
+                                    # elif deltaDisp > 0.1 and len(x_coord[trackIndices == trackId]) > 10:
+                                    elif len(x_coord[trackIndices == trackId]) > 10:
 
-                                            if deltaY > 0.5 and body_width > 0.5 and y_height < 1.0 and \
-                                                    ((body_width) / (y_height + 0.2)) > 1.5:
-                                                # print("Fall")
-                                                ceilStateParam[mac]['labelCount'][minDistIdx] = 3
-                                                ceilStateParam[mac]['labelGuess'][minDistIdx] = 2
-                                                ceil_Dict['state'] = 3
+                                        x_dim = np.diff(np.percentile(np.concatenate(ceilStateParam[mac]['x_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
+                                        y_dim = np.diff(np.percentile(np.concatenate(ceilStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
+                                        z_dim = np.diff(np.percentile(np.concatenate(ceilStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
+                                        y_height = np.percentile(np.concatenate(ceilStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1])
+                                        y_height = ceilStateParam[mac]['radar_coord'][2] - y_height
+                                        body_width = np.sqrt(x_dim ** 2 + z_dim ** 2)
+                                        # print(y_height, y_dim, body_width)
+                                        ceil_Dict['bodyHeight'] = y_height[0]
+                                        ceil_Dict['bodyWidth'] = body_width[0]
 
-                                            elif deltaDist > 0.3:
-                                                # print("Moving")
-                                                ceilStateParam[mac]['labelCount'][minDistIdx] = 0
-                                                ceil_Dict['state'] = 0
+                                        if deltaY > 0.35 and body_width > 0.5 and y_height < 1.0 and ((body_width) / (y_height + 0.2)) > 1.0:
+                                            # print("Fall")
+                                            ceilStateParam[mac]['labelCount'][minDistIdx] = 3
+                                            ceilStateParam[mac]['labelGuess'][minDistIdx] = 2
+                                            ceil_Dict['state'] = 3
 
-                                                # Adult and Kid Differentiation
-                                                if y_height > 1.5 and y_height < 2.0 and body_width < 1.0:
-                                                    ceil_Dict['kidOrAdult'] = 1
+                                            # Publish alert via MQTT communication channel
+                                            pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":2, "DETAILS":"FALL"}
+                                            jsonData = json.dumps(pubPayload)
+                                            mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
 
-                                                elif y_height > 0.4 and y_height < 1.0 and body_width < 0.5:
-                                                    ceil_Dict['kidOrAdult'] = 0
+                                        elif deltaDist > 0.3:
+                                            # print("Moving")
+                                            ceilStateParam[mac]['labelCount'][minDistIdx] = 0
+                                            ceil_Dict['state'] = 0
 
-                                            elif body_width > 0.5 and y_height < 1.5 and ((body_width) / (y_height + 0.2)) > 1.8:
-                                                # print("Laying")
-                                                ceilStateParam[mac]['labelCount'][minDistIdx] = 2
-                                                ceilStateParam[mac]['labelGuess'][minDistIdx] = 2
-                                                ceil_Dict['state'] = 2
+                                            # Adult and Kid Differentiation
+                                            if y_height > 1.5 and y_height < 2.0 and body_width < 1.0:
+                                                ceil_Dict['kidOrAdult'] = 1
 
-                                            elif y_dim > 0.5 and y_height > 0.5 and ((y_height + 0.2) / (body_width + 0.0001)) > 1.0:
-                                                # print("Upright")
-                                                ceilStateParam[mac]['labelCount'][minDistIdx] = 1
-                                                ceilStateParam[mac]['labelGuess'][minDistIdx] = 1
-                                                ceil_Dict['state'] = 1
+                                            elif y_height > 0.4 and y_height < 1.0 and body_width < 0.5:
+                                                ceil_Dict['kidOrAdult'] = 0
 
-                                            else:
-                                                ceilStateParam[mac]['labelCount'][minDistIdx] = ceilStateParam[mac]['labelGuess'][minDistIdx]
-                                                # ceil_Dict['state'] = ceilStateParam[mac]['label_state'][ceilStateParam[mac]['labelCount'][minDistIdx]]
-                                                ceil_Dict['state'] = ceilStateParam[mac]['labelCount'][minDistIdx]
+                                        elif body_width > 0.5 and y_height < 1.1 and ((body_width) / (y_height + 0.2)) > 1.8:
+                                            # print("Laying")
+                                            ceilStateParam[mac]['labelCount'][minDistIdx] = 2
+                                            ceilStateParam[mac]['labelGuess'][minDistIdx] = 2
+                                            ceil_Dict['state'] = 2
+
+                                        elif body_width > 0.2 and y_height > 0.5 and ((y_height) / (body_width + 0.0001)) > 1.2:
+                                            # print("Upright")
+                                            ceilStateParam[mac]['labelCount'][minDistIdx] = 1
+                                            ceilStateParam[mac]['labelGuess'][minDistIdx] = 1
+                                            ceil_Dict['state'] = 1
+
+                                        else:
+                                            ceilStateParam[mac]['labelCount'][minDistIdx] = ceilStateParam[mac]['labelGuess'][minDistIdx]
+                                            # ceil_Dict['state'] = ceilStateParam[mac]['label_state'][ceilStateParam[mac]['labelCount'][minDistIdx]]
+                                            ceil_Dict['state'] = ceilStateParam[mac]['labelCount'][minDistIdx]
 
                                 # ----------------------------------------------------------------------------------------------
                                 # ----------------------------------------------------------------------------------------------
+
+                            # Tracker position, velocity, and acceleration
+                            ceil_Dict['posX'] = x_pos
+                            ceil_Dict['posY'] = z_pos
+                            ceil_Dict['posZ'] = -y_pos
+                            ceil_Dict['velX'] = x_vel
+                            ceil_Dict['velY'] = z_vel
+                            ceil_Dict['velZ'] = -y_vel
+                            ceil_Dict['accX'] = x_acc
+                            ceil_Dict['accY'] = z_acc
+                            ceil_Dict['accZ'] = -y_acc
+
+                            # Room Occupancy Detection
+                            ceil_Dict['numSubjects'] = numTracks
+                            if numTracks > 0:
+                                ceil_Dict['roomOccupancy'] = True
+                            elif numTracks == 0:
+                                ceil_Dict['roomOccupancy'] = False
+
+                            # Time Series Data Aggregation
+                            if ceilStateParam[mac]['pandasDF'].empty:
+                                
+                                # Append data frame
+                                ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+
+                            elif (ceil_Dict['timeStamp'] - ceilStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+
+                                if len(ceilStateParam[mac]['pandasDF']['trackIndex'].unique()) > 0:
+                                  
+                                  for trackInd in ceilStateParam[mac]['pandasDF']['trackIndex'].unique():
+                                    
+                                    if np.isnan(trackInd):
+                                        continue
+
+                                    pandasDF_dum = ceilStateParam[mac]['pandasDF'].loc[ceilStateParam[mac]['pandasDF']['trackIndex'] == trackInd]
+
+                                    aggregate_dict = {}
+                                    aggregate_dict['timeStamp'] = round(pandasDF_dum['timeStamp'].mean(skipna=True),2)
+                                    aggregate_dict['numSubjects'] = pandasDF_dum['numSubjects'].mean(skipna=True)
+                                    aggregate_dict['roomOccupancy'] = pandasDF_dum['roomOccupancy'].mean(skipna=True)
+                                    aggregate_dict['trackIndex'] = int(trackInd)
+                                    aggregate_dict['posX'] = pandasDF_dum['posX'].mean(skipna=True)
+                                    aggregate_dict['posY'] = pandasDF_dum['posY'].mean(skipna=True)
+                                    aggregate_dict['posZ'] = pandasDF_dum['posZ'].mean(skipna=True)
+                                    aggregate_dict['velX'] = pandasDF_dum['velX'].mean(skipna=True)
+                                    aggregate_dict['velY'] = pandasDF_dum['velY'].mean(skipna=True)
+                                    aggregate_dict['velZ'] = pandasDF_dum['velZ'].mean(skipna=True)
+                                    aggregate_dict['accX'] = pandasDF_dum['accX'].max(skipna=True)
+                                    aggregate_dict['accY'] = pandasDF_dum['accY'].max(skipna=True)
+                                    aggregate_dict['accZ'] = pandasDF_dum['accZ'].max(skipna=True)
+                                    aggregate_dict['bodyHeight'] = pandasDF_dum['bodyHeight'].mean(skipna=True)
+                                    aggregate_dict['bodyWidth'] = pandasDF_dum['bodyWidth'].mean(skipna=True)
+
+                                    if not pandasDF_dum['state'].mode(dropna=True).empty:
+                                        aggregate_dict['state'] = pandasDF_dum['state'].mode(dropna=True).iloc[0]
+                                    else:
+                                        aggregate_dict['state'] = np.nan
+                                    aggregate_dict['kidOrAdult'] = pandasDF_dum['kidOrAdult'].mean(skipna=True)
+
+                                    # if aggregate_dict['state'].dropna().empty:
+                                    # print(aggregate_dict)
+                                    if math.isnan(aggregate_dict['state']):
+                                        aggregate_dict['state'] = None
+                                    elif pandasDF_dum['state'].isin([3]).sum() > 0:
+                                        aggregate_dict['state'] = 'Fall'
+                                    # elif aggregate_dict['state'].isin([4]).sum() == 0:
+                                    elif aggregate_dict['state'] != 4:
+                                        aggregate_dict['state'] = ceilStateParam[mac]['label_state'][int(aggregate_dict['state'])]
+                                    else:
+                                        aggregate_dict['state'] = None
+
+                                    # if aggregate_dict['kidOrAdult'].dropna().empty:
+                                    if math.isnan(aggregate_dict['kidOrAdult']):
+                                        aggregate_dict['kidOrAdult'] = None
+                                    # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 0:
+                                    elif int(round(aggregate_dict['kidOrAdult'])) == 0:
+                                        aggregate_dict['kidOrAdult'] = 'Kid'
+                                    # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 1:
+                                    elif int(round(aggregate_dict['kidOrAdult'])) == 1:
+                                        aggregate_dict['kidOrAdult'] = 'Adult'
+
+                                    # aggregate_dict = aggregate_dict.to_dict('r')
+                                    # if aggregate_dict:
+                                    # print("YYYYYYYYY")
+                                    # aggregate_dict = aggregate_dict[0]
+                                    if not math.isnan(aggregate_dict['numSubjects']):
+                                        aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
+                                    if not math.isnan(aggregate_dict['roomOccupancy']):
+                                        aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
+                                    for key, value in aggregate_dict.items():
+                                        if str(value)[0:3] == 'nan':
+                                            aggregate_dict[key] = None
+
+                                    print(aggregate_dict['state'])
+                                    dict_copy = copy.deepcopy(aggregate_dict)
+                                    my_list.append(dict_copy)
+                                    # print(json_string)
+
+                                # Update the new data frame
+                                ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                                ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].iloc[-1:,:]
+
+                            else:
+                    
+                                # Append data frame
+                                ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+
 
                         # Remove unused tracker information and parameters
                         trackerInvalidIdx = np.arange(len(ceilStateParam[mac]['trackerInvalid']))
@@ -971,6 +1255,52 @@ def decode_process_publish(mac, data):
                         ceilStateParam[mac]['trackerInvalid'] = ceilStateParam[mac]['trackerInvalid'][ceilStateParam[mac]['trackerInvalid'] == 0]
                         ceilStateParam[mac]['trackerInvalid'] = ceilStateParam[mac]['trackerInvalid'] + 1
 
+                  else:
+                    
+                    ceil_Dict = {}
+                    ceil_Dict['timeStamp'] = ts
+                    
+                    # Time Series Data Aggregation 
+                    if "pandasDF" in ceilStateParam[mac]:
+                        if ceilStateParam[mac]['pandasDF'].empty:
+                            # Append data frame
+                            ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+
+                        elif (ceil_Dict['timeStamp'] - ceilStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+
+                            aggregate_dict = {}
+                            aggregate_dict['timeStamp'] = round(ceilStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
+                            aggregate_dict['numSubjects'] = 0
+                            aggregate_dict['roomOccupancy'] = False
+                            aggregate_dict['trackIndex'] = None
+                            aggregate_dict['posX'] = None
+                            aggregate_dict['posY'] = None
+                            aggregate_dict['posZ'] = None
+                            aggregate_dict['velX'] = None
+                            aggregate_dict['velY'] = None
+                            aggregate_dict['velZ'] = None
+                            aggregate_dict['accX'] = None
+                            aggregate_dict['accY'] = None
+                            aggregate_dict['accZ'] = None
+                            aggregate_dict['bodyHeight'] = None
+                            aggregate_dict['bodyWidth'] = None
+                            aggregate_dict['state'] = None
+                            aggregate_dict['kidOrAdult'] = None
+
+                            # print(aggregate_dict['state'])
+                            dict_copy = copy.deepcopy(aggregate_dict)
+                            my_list.append(dict_copy)
+                            # print(json_string)
+
+                            # Update the new data frame
+                            ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                            ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].iloc[-1:,:]
+
+                        else:
+                            # Append data frame
+                            ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+
+
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 # Since track indexes are delayed a frame, delay showing the current points by 1 frame
                 if outputDict is not None:
@@ -978,11 +1308,11 @@ def decode_process_publish(mac, data):
                     ceilStateParam[mac]['previous_pointClouds'] = outputDict['pointCloud']
 
                 # Time Series Data Aggregation
-                if ceilStateParam[mac]['pandasDF'].empty:
+                # if ceilStateParam[mac]['pandasDF'].empty:
                     # Append data frame
-                    ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                #     ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
 
-                elif (ceil_Dict['timeStamp'] - ceilStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+                # elif (ceil_Dict['timeStamp'] - ceilStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
                     # aggregate_dict = ceilStateParam[mac]['pandasDF'].agg({'timeStamp':'mean',
                     #                                                'numSubjects': 'mean',
                     #                                                'roomOccupancy': 'mean',
@@ -1025,71 +1355,71 @@ def decode_process_publish(mac, data):
                     #     aggregate_dict['numSubjects'] = 0
                     #     aggregate_dict['roomOccupancy'] = False
 
-                    aggregate_dict = {}
-                    aggregate_dict['timeStamp'] = round(ceilStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
-                    aggregate_dict['numSubjects'] = ceilStateParam[mac]['pandasDF']['numSubjects'].mean(skipna=True)
-                    aggregate_dict['roomOccupancy'] = ceilStateParam[mac]['pandasDF']['roomOccupancy'].mean(skipna=True)
-                    aggregate_dict['posX'] = ceilStateParam[mac]['pandasDF']['posX'].mean(skipna=True)
-                    aggregate_dict['posY'] = ceilStateParam[mac]['pandasDF']['posY'].mean(skipna=True)
-                    aggregate_dict['posZ'] = ceilStateParam[mac]['pandasDF']['posZ'].mean(skipna=True)
-                    aggregate_dict['velX'] = ceilStateParam[mac]['pandasDF']['velX'].mean(skipna=True)
-                    aggregate_dict['velY'] = ceilStateParam[mac]['pandasDF']['velY'].mean(skipna=True)
-                    aggregate_dict['velZ'] = ceilStateParam[mac]['pandasDF']['velZ'].mean(skipna=True)
-                    aggregate_dict['accX'] = ceilStateParam[mac]['pandasDF']['accX'].max(skipna=True)
-                    aggregate_dict['accY'] = ceilStateParam[mac]['pandasDF']['accY'].max(skipna=True)
-                    aggregate_dict['accZ'] = ceilStateParam[mac]['pandasDF']['accZ'].max(skipna=True)
-                    if not ceilStateParam[mac]['pandasDF']['state'].mode(dropna=True).empty:
-                        aggregate_dict['state'] = ceilStateParam[mac]['pandasDF']['state'].mode(dropna=True).iloc[0]
-                    else:
-                        aggregate_dict['state'] = np.nan
-                    aggregate_dict['kidOrAdult'] = ceilStateParam[mac]['pandasDF']['kidOrAdult'].mean(skipna=True)
+                    # aggregate_dict = {}
+                    # aggregate_dict['timeStamp'] = round(ceilStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
+                    # aggregate_dict['numSubjects'] = ceilStateParam[mac]['pandasDF']['numSubjects'].mean(skipna=True)
+                    # aggregate_dict['roomOccupancy'] = ceilStateParam[mac]['pandasDF']['roomOccupancy'].mean(skipna=True)
+                    # aggregate_dict['posX'] = ceilStateParam[mac]['pandasDF']['posX'].mean(skipna=True)
+                    # aggregate_dict['posY'] = ceilStateParam[mac]['pandasDF']['posY'].mean(skipna=True)
+                    # aggregate_dict['posZ'] = ceilStateParam[mac]['pandasDF']['posZ'].mean(skipna=True)
+                    # aggregate_dict['velX'] = ceilStateParam[mac]['pandasDF']['velX'].mean(skipna=True)
+                    # aggregate_dict['velY'] = ceilStateParam[mac]['pandasDF']['velY'].mean(skipna=True)
+                    # aggregate_dict['velZ'] = ceilStateParam[mac]['pandasDF']['velZ'].mean(skipna=True)
+                    # aggregate_dict['accX'] = ceilStateParam[mac]['pandasDF']['accX'].max(skipna=True)
+                    # aggregate_dict['accY'] = ceilStateParam[mac]['pandasDF']['accY'].max(skipna=True)
+                    # aggregate_dict['accZ'] = ceilStateParam[mac]['pandasDF']['accZ'].max(skipna=True)
+                    # if not ceilStateParam[mac]['pandasDF']['state'].mode(dropna=True).empty:
+                    #     aggregate_dict['state'] = ceilStateParam[mac]['pandasDF']['state'].mode(dropna=True).iloc[0]
+                    # else:
+                    #     aggregate_dict['state'] = np.nan
+                    # aggregate_dict['kidOrAdult'] = ceilStateParam[mac]['pandasDF']['kidOrAdult'].mean(skipna=True)
 
                     # if aggregate_dict['state'].dropna().empty:
                     # print(aggregate_dict)
-                    if math.isnan(aggregate_dict['state']):
-                        aggregate_dict['state'] = None
-                    elif ceilStateParam[mac]['pandasDF']['state'].isin([3]).sum() > 0:
-                        aggregate_dict['state'] = 'Fall'
+                    # if math.isnan(aggregate_dict['state']):
+                    #     aggregate_dict['state'] = None
+                    # elif ceilStateParam[mac]['pandasDF']['state'].isin([3]).sum() > 0:
+                    #     aggregate_dict['state'] = 'Fall'
                     # elif aggregate_dict['state'].isin([4]).sum() == 0:
-                    elif aggregate_dict['state'] != 4:
-                        aggregate_dict['state'] = ceilStateParam[mac]['label_state'][int(aggregate_dict['state'])]
-                    else:
-                        aggregate_dict['state'] = None
+                    # elif aggregate_dict['state'] != 4:
+                    #     aggregate_dict['state'] = ceilStateParam[mac]['label_state'][int(aggregate_dict['state'])]
+                    # else:
+                    #     aggregate_dict['state'] = None
 
                     # if aggregate_dict['kidOrAdult'].dropna().empty:
-                    if math.isnan(aggregate_dict['kidOrAdult']):
-                        aggregate_dict['kidOrAdult'] = None
+                    # if math.isnan(aggregate_dict['kidOrAdult']):
+                    #     aggregate_dict['kidOrAdult'] = None
                     # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 0:
-                    elif int(round(aggregate_dict['kidOrAdult'])) == 0:
-                        aggregate_dict['kidOrAdult'] = 'Kid'
+                    # elif int(round(aggregate_dict['kidOrAdult'])) == 0:
+                    #     aggregate_dict['kidOrAdult'] = 'Kid'
                     # elif int(round(aggregate_dict['kidOrAdult'].iloc[0])) == 1:
-                    elif int(round(aggregate_dict['kidOrAdult'])) == 1:
-                        aggregate_dict['kidOrAdult'] = 'Adult'
+                    # elif int(round(aggregate_dict['kidOrAdult'])) == 1:
+                    #     aggregate_dict['kidOrAdult'] = 'Adult'
 
                     # aggregate_dict = aggregate_dict.to_dict('r')
                     # if aggregate_dict:
                         # print("YYYYYYYYY")
                         # aggregate_dict = aggregate_dict[0]
-                    if not math.isnan(aggregate_dict['numSubjects']):
-                        aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
-                    if not math.isnan(aggregate_dict['roomOccupancy']):
-                        aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
-                    for key, value in aggregate_dict.items():
-                        if str(value)[0:3] == 'nan':
-                            aggregate_dict[key] = None
+                    # if not math.isnan(aggregate_dict['numSubjects']):
+                    #     aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
+                    # if not math.isnan(aggregate_dict['roomOccupancy']):
+                    #     aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
+                    # for key, value in aggregate_dict.items():
+                    #     if str(value)[0:3] == 'nan':
+                    #         aggregate_dict[key] = None
 
-                    print(aggregate_dict['state'])
-                    dict_copy = copy.deepcopy(aggregate_dict)
-                    my_list.append(dict_copy)
+                    # print(aggregate_dict['state'])
+                    # dict_copy = copy.deepcopy(aggregate_dict)
+                    # my_list.append(dict_copy)
                     # print(json_string)
 
                     # Update the new data frame
-                    ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
-                    ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].iloc[-1:,:]
+                    # ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                    # ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].iloc[-1:,:]
 
-                else:
+                # else:
                     # Append data frame
-                    ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                    # ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
 
             # --------------------------------- Radar Tracking and Vital Sign Detection ----------------------------------------
             # ------------------------------------------------------------------------------------------------------------------
@@ -1101,7 +1431,11 @@ def decode_process_publish(mac, data):
                 if mac not in vitalStateParam:
                     vitalStateParam[mac] = {}
                     vitalStateParam[mac]['timeNow'] = 0
-                    # vitalStateParam[mac]['label_state'] = ['Out of Bed', 'In Bed']
+                    vitalStateParam[mac]['label_state'] = ['Out of Bed', 'In Bed', 'Imminent Bed Exit']
+
+                # Radar Placement Coordinates
+                radar_coord = np.asarray([xShift, yShift, zShift])
+                vitalStateParam[mac]['radar_coord'] = radar_coord
 
                 # Radar Time Stamp
                 # deltaT = outputDict['timeStamp'] - vitalStateParam[mac]['timeNow']
@@ -1121,6 +1455,9 @@ def decode_process_publish(mac, data):
                     vitalStateParam[mac]['prevBreathRate'] = 0
                     vitalStateParam[mac]['trackIDs'] = np.zeros((0))  # trackers ID
                     vitalStateParam[mac]['trackPos'] = np.zeros((0, 3))
+                    vitalStateParam[mac]['label_list'] = []
+                    vitalStateParam[mac]['rollingVelY'] = []
+                    vitalStateParam[mac]['rollingHeight'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
                     vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate'])
@@ -1140,7 +1477,10 @@ def decode_process_publish(mac, data):
                     # print(vitalStateParam[mac]['periodStationary'])
                     
                     if len(vitalStateParam[mac]['previous_pointClouds']) > 0 and "trackIndexes" in outputDict:
-                      trackIndices = outputDict['trackIndexes']
+                     trackIndices = outputDict['trackIndexes']
+
+                     if numTracks > 0 and len(vitalStateParam[mac]['previous_pointClouds']) > 0 and \
+                            len(vitalStateParam[mac]['previous_pointClouds']) == len(trackIndices):
 
                       if ('vitals' in outputDict) and vitalStateParam[mac]['periodStationary'] > 15:  # and count_subjectStationary > 100:
                         vitalsDict = outputDict['vitals']
@@ -1177,23 +1517,21 @@ def decode_process_publish(mac, data):
                         # elif curHeartRate < 30:
                             # curHeartRate = None
 
-                        if breathRate_MA!=0 and curBreathRate != None:
-                            if curBreathRate > 3*breathRate_MA or curBreathRate < 0.3*breathRate_MA:
-                                curBreathRate = None
-                            else:
-                                breathRate_MA = (breathRate_MA + curBreathRate)/2
-                        else:
-                            breathRate_MA = curBreathRate
+                        # if breathRate_MA!=0 and curBreathRate != None:
+                        #     if curBreathRate > 3*breathRate_MA or curBreathRate < 0.3*breathRate_MA:
+                        #         curBreathRate = None
+                        #     else:
+                        #         breathRate_MA = (breathRate_MA + curBreathRate)/2
+                        # else:
+                        #     breathRate_MA = curBreathRate
                             
-                        if heartRate_MA!=0 and curHeartRate != None:
-                            if curHeartRate > 3*heartRate_MA or curHeartRate < 0.3*heartRate_MA:
-                                curHeartRate = None
-                            else:
-                                heartRate_MA = (heartRate_MA + curHeartRate)/2     
-                        else:
-                            heartRate_MA = curHeartRate
-                                
-
+                        # if heartRate_MA!=0 and curHeartRate != None:
+                        #     if curHeartRate > 3*heartRate_MA or curHeartRate < 0.3*heartRate_MA:
+                        #         curHeartRate = None
+                        #     else:
+                        #         heartRate_MA = (heartRate_MA + curHeartRate)/2     
+                        # else:
+                        #     heartRate_MA = curHeartRate                          
 
                         vital_dict['breathRate'] = curBreathRate
                         vital_dict['heartRate'] = curHeartRate
@@ -1214,11 +1552,11 @@ def decode_process_publish(mac, data):
                         # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                         # Since track indexes are delayed a frame, delay showing the current points by 1 frame
                         vitalStateParam[mac]['previous_pointClouds'][:, 6] = trackIndices
-                        snr = vitalStateParam[mac]['previous_pointClouds'][:, 4]
-                        vitalStateParam[mac]['previous_pointClouds'] = vitalStateParam[mac]['previous_pointClouds'][snr > 7, :]
-                        trackIndices = trackIndices[snr > 7]
+                        # snr = vitalStateParam[mac]['previous_pointClouds'][:, 4]
+                        # vitalStateParam[mac]['previous_pointClouds'] = vitalStateParam[mac]['previous_pointClouds'][snr > 7, :]
+                        # trackIndices = trackIndices[snr > 7]
                         # x_coord = vitalStateParam[mac]['previous_pointClouds'][:, 0]
-                        # y_coord = vitalStateParam[mac]['previous_pointClouds'][:, 1]
+                        y_coord = vitalStateParam[mac]['previous_pointClouds'][:, 1]
                         # z_coord = vitalStateParam[mac]['previous_pointClouds'][:, 2]
                         # v_coord = vitalStateParam[mac]['previous_pointClouds'][:, 3]
                         # points = np.stack((x_coord, y_coord, z_coord), axis=-1)
@@ -1283,6 +1621,8 @@ def decode_process_publish(mac, data):
                                 # trackPos = np.concatenate((trackPos, [[x_pos, y_pos, z_pos]]), axis=0)
                                 # trackVelocity = np.concatenate((trackVelocity, [[x_vel, y_vel, z_vel]]), axis=0)
                                 vitalStateParam[mac]['trackerInvalid'] = np.concatenate((vitalStateParam[mac]['trackerInvalid'], [0]), axis=0)
+                                vitalStateParam[mac]['rollingVelY'].append([])
+                                vitalStateParam[mac]['rollingHeight'].append([])
 
                             # elif trackerInvalid[minDistIdx] == 1:
                             else:
@@ -1298,9 +1638,24 @@ def decode_process_publish(mac, data):
                                 vitalStateParam[mac]['trackPos'][minDistIdx] = [x_pos, y_pos, z_pos]
                                 # trackVelocity[minDistIdx] = [x_vel, y_vel, z_vel]
 
+                                # Rolling tracker velocity and height
+                                y_height = np.percentile(y_coord, [1])
+                                y_height = vitalStateParam[mac]['radar_coord'][1] - y_height
+                                vitalStateParam[mac]['rollingVelY'][minDistIdx].append(y_vel)
+                                vitalStateParam[mac]['rollingHeight'][minDistIdx].append(y_height)
+
                                 # State of the subject
                                 # print(np.linalg.norm([x_vel, y_vel, z_vel]))
-                                if np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
+                                if np.average(vitalStateParam[mac]['rollingVelY'][minDistIdx]) < -0.3 and np.average(vitalStateParam[mac]['rollingHeight'][minDistIdx]) > 1.1 and \
+                                    len(vitalStateParam[mac]['rollingHeight'][minDistIdx]) == 5 and np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5:
+                                    # label_list.append(3)
+                                    # count_subjectStationary = 0
+                                    # periodStationary = 0
+                                    vital_dict['bedOccupancy'] = 1
+                                    vitalStateParam[mac]['periodStationary'] = 0
+                                    vitalStateParam[mac]['label_list'].append(2)
+
+                                elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
                                     # if np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) <= 0.3:
                                     # print("In Bed, Subject Stationary")
                                     vital_dict['bedOccupancy'] = 1
@@ -1312,30 +1667,52 @@ def decode_process_publish(mac, data):
                                     vitalStateParam[mac]['periodStationary'] = vitalStateParam[mac]['periodStationary'] + deltaTime
                                     vitalStateParam[mac]['prevTimeStationary'] = ts
                                     # print(vitalStateParam[mac]['periodStationary'])
+                                    vitalStateParam[mac]['label_list'].append(1)
 
-                                elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
+                                elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
                                     # elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) > 0.3:
                                     # print("In Bed, Subject Moving")
                                     vital_dict['bedOccupancy'] = 1
                                     # label_list.append(1)
                                     # count_subjectStationary = 0
                                     vitalStateParam[mac]['periodStationary'] = 0
+                                    vitalStateParam[mac]['label_list'].append(1)
 
-                                else:
+                                elif np.abs(x_pos) > 1.0 or np.abs(z_pos) > 1.0:
                                     # print("Out of Bed")
                                     vital_dict['bedOccupancy'] = 0
                                     # label_list.append(2)
                                     # count_subjectStationary = 0
                                     vitalStateParam[mac]['periodStationary'] = 0
+                                    vitalStateParam[mac]['label_list'].append(0)
+
+                                if len(vitalStateParam[mac]['rollingHeight'][minDistIdx]) > 4:
+                                    del vitalStateParam[mac]['rollingHeight'][minDistIdx][0]
+                                    del vitalStateParam[mac]['rollingVelY'][minDistIdx][0]
  
                             # --------------------------------------------------------------------------------------------------
                             # --------------------------------------------------------------------------------------------------
 
                         # Remove unused tracker information and parameters
+                        trackerInvalidIdx = np.arange(len(vitalStateParam[mac]['trackerInvalid']))
+                        trackerInvalidIdx = trackerInvalidIdx[vitalStateParam[mac]['trackerInvalid'] == 1]
+                        for Idx in range(len(trackerInvalidIdx)):
+                            rollingVelY.pop(trackerInvalidIdx[Idx])
+                            rollingHeight.pop(trackerInvalidIdx[Idx])
                         vitalStateParam[mac]['trackPos']  = vitalStateParam[mac]['trackPos'][vitalStateParam[mac]['trackerInvalid'] == 0]
                         vitalStateParam[mac]['trackIDs'] = vitalStateParam[mac]['trackIDs'][vitalStateParam[mac]['trackerInvalid'] == 0]
                         vitalStateParam[mac]['trackerInvalid'] = vitalStateParam[mac]['trackerInvalid'][vitalStateParam[mac]['trackerInvalid'] == 0]
                         vitalStateParam[mac]['trackerInvalid'] = vitalStateParam[mac]['trackerInvalid'] + 1
+
+                if len(vitalStateParam[mac]['label_list']) >= 10:
+                    if statistics.mode(vitalStateParam[mac]['label_list']) == 2:
+                        
+                        # Publish alert via MQTT communication channel
+                        pubPayload = {"TIMESTAMP":ts, "URGENCY":2, "TYPE":3, "DETAILS":"IMMINENT BED EXIT"}
+                        jsonData = json.dumps(pubPayload)
+                        mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
+
+                    vitalStateParam[mac]['label_list'] = []
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 if outputDict is not None:
@@ -1478,6 +1855,9 @@ def on_message(mosq, obj, msg):
         cursor.close()
         connection.close()        
     # print(devicesTbl)
+    # if not devName == 'F412FAE261A4':
+    #     return
+
     in_data = str(msg.payload).replace("b'", "").split(',')
     # print(topicList[-1])
     # print(in_data)
@@ -1537,9 +1917,7 @@ def WatchDog():
             os._exit(1)
         else:
             dataBuffer.clear()
-            
-        
-
+                   
 atexit.register(cleanup)
 mqttc = mqtt.Client(clientID)
 mqttc.username_pw_set(userName, password=userPassword)

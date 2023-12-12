@@ -147,6 +147,11 @@ def analyseLaymanData(data):
     onbed_analysis = {}
     sleeping_analysis = {}
 
+    sleep_disruption_sec = 0 
+    onbed_disruption_sec = 0
+
+    onbed_disruption_arr = []
+
     curr_timeslot = 0
     icurr_timeslot = 0
     curr_day_timeslot = 0
@@ -171,14 +176,16 @@ def analyseLaymanData(data):
                 disruptions.append(current_disruption)
                 current_disruption = 0
                 analysis["timeslot"].append([])
+                onbed_disruption_arr.append(0)
+
 
         if (len(ianalysis["timeslot"]) <= icurr_timeslot):
             ianalysis["timeslot"].append([])
 
-        if (row["BREATH_RATE"] is not None):
+        if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] != 0):
             breath_rate.append(row["BREATH_RATE"])
 
-        if (row["HEART_RATE"] is not None):
+        if (row["HEART_RATE"] is not None and row["HEART_RATE"] != 0):
             heart_rate.append(row["HEART_RATE"])
 
         date_str = str(row["TIMESTAMP"].date())
@@ -212,6 +219,7 @@ def analyseLaymanData(data):
                         if (diff.total_seconds() > disruption_restore_threshold):
                             last_disruption_time = None
                             current_disruption += 1
+                        onbed_disruption_arr[-1] =  onbed_disruption_arr[-1] + diff.total_seconds()
                 analysis["timeslot"][curr_timeslot].append(row)
             else:
                 if (sleeping):
@@ -288,6 +296,8 @@ def analyseLaymanData(data):
             else:
                 start_date = None
                 previous_date = None
+                onbed_deduct_sec = onbed_disruption_arr[index]
+
                 for i in range(len(timeslot)):
                     if previous_date == None:
                         previous_date = timeslot[i]
@@ -299,12 +309,14 @@ def analyseLaymanData(data):
 
                     if (str(previous_date["TIMESTAMP"].date()) != date_str):
                         onbed_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
+                        onbed_deduct_sec = 0
                         start_date = timeslot[i]
 
                     previous_date = timeslot[i]
 
                 if (previous_date and start_date):
                     onbed_analysis[str(previous_date["TIMESTAMP"].date())].append((previous_date["TIMESTAMP"] - start_date["TIMESTAMP"]).total_seconds())
+                    onbed_deduct_sec = 0
 
 
             sleep_percentage = 0
@@ -332,6 +344,7 @@ def analyseLaymanData(data):
                             current_pointer = timeslot[0]
                             previous_pointer = timeslot[0]
 
+                            onbed_deduct_sec = onbed_disruption_arr[index]
                             for t in range(len(timeslot)):
                                 current_pointer = timeslot[t]
 
@@ -339,12 +352,14 @@ def analyseLaymanData(data):
                                 current_date_str = str(current_pointer["TIMESTAMP"].date())
                                 if (start_date_str != current_date_str):
                                     sleeping_analysis[start_date_str].append((previous_pointer["TIMESTAMP"] - start_pointer["TIMESTAMP"]).total_seconds())
+                                    onbed_deduct_sec = 0
                                     print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
                                     start_pointer = timeslot[t]
 
                                 previous_pointer = timeslot[t]
                             
                             sleeping_analysis[start_date_str].append((previous_pointer["TIMESTAMP"] - start_pointer["TIMESTAMP"]).total_seconds())
+                            onbed_deduct_sec = 0
                             print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
 
                     result.append({
@@ -526,6 +541,8 @@ def analyseLaymanData(data):
             }
         else:
             sleep_disruption_result = None
+    
+    print("disruption",sleep_disruption_result)
 
     try:
         breath_highest = max(breath_rate)
@@ -671,7 +688,7 @@ def waketime_processing(arr):
     return average_waketime,earliest_waketime,latest_waketime
 
 start_date = "2023-06-01"
-end_date = "2023-09-30"
+end_date = "2023-12-30"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")

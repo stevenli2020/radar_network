@@ -182,10 +182,10 @@ def analyseLaymanData(data):
         if (len(ianalysis["timeslot"]) <= icurr_timeslot):
             ianalysis["timeslot"].append([])
 
-        if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] != 0):
+        if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] >= 8):
             breath_rate.append(row["BREATH_RATE"])
 
-        if (row["HEART_RATE"] is not None and row["HEART_RATE"] != 0):
+        if (row["HEART_RATE"] is not None and row["HEART_RATE"] >= 40):
             heart_rate.append(row["HEART_RATE"])
 
         date_str = str(row["TIMESTAMP"].date())

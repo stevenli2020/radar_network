@@ -135,7 +135,7 @@ def analyseLaymanData(data):
     now_datetime = datetime.datetime.now()
 
     # in seconds
-    threshold = 60 * 45
+    threshold = 60 * 60
     sleeping_threshold = 60 * 45
     inroom_threshold = 60 * 45
     disruption_threshold = 60 * 2.5
@@ -166,6 +166,8 @@ def analyseLaymanData(data):
     breath_rate = []
     heart_rate = []
 
+    disruption_sec_based_on_date = {}
+
     current_disruption = 0
     last_disruption_time = None
 
@@ -178,15 +180,15 @@ def analyseLaymanData(data):
                 analysis["timeslot"].append([])
                 onbed_disruption_arr.append(0)
 
+            if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] >= 1):
+                breath_rate.append(row["BREATH_RATE"])
+
+            if (row["HEART_RATE"] is not None and row["HEART_RATE"] >= 1):
+                heart_rate.append(row["HEART_RATE"])
+
 
         if (len(ianalysis["timeslot"]) <= icurr_timeslot):
             ianalysis["timeslot"].append([])
-
-        if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] >= 8):
-            breath_rate.append(row["BREATH_RATE"])
-
-        if (row["HEART_RATE"] is not None and row["HEART_RATE"] >= 40):
-            heart_rate.append(row["HEART_RATE"])
 
         date_str = str(row["TIMESTAMP"].date())
 
@@ -216,9 +218,13 @@ def analyseLaymanData(data):
                 else:
                     if last_disruption_time is not None:
                         diff = row["TIMESTAMP"] - last_disruption_time
-                        if (diff.total_seconds() > disruption_restore_threshold):
+                        if (diff.total_seconds() > disruption_restore_threshold and diff.total_seconds() < sleeping_threshold):
                             last_disruption_time = None
                             current_disruption += 1
+                            if (date_str not in disruption_sec_based_on_date):
+                                disruption_sec_based_on_date[date_str] = diff.total_seconds()
+                            else:
+                                disruption_sec_based_on_date[date_str] += diff.total_seconds()
                         #onbed_disruption_arr[-1] =  onbed_disruption_arr[-1] + diff.total_seconds()
                 analysis["timeslot"][curr_timeslot].append(row)
             else:
@@ -380,7 +386,7 @@ def analyseLaymanData(data):
             diff = timeslot[-1]["TIMESTAMP"] - timeslot[0]["TIMESTAMP"]
             start_date_str = str(timeslot[0]["TIMESTAMP"].date())
             end_date_str = str(timeslot[-1]["TIMESTAMP"].date())
-            print("From ",timeslot[0]["TIMESTAMP"]," to ",timeslot[-1]["TIMESTAMP"])
+            # print("From ",timeslot[0]["TIMESTAMP"]," to ",timeslot[-1]["TIMESTAMP"])
             if (start_date_str == end_date_str):
                 inroom_analysis[start_date_str].append(diff.total_seconds())
             else:
@@ -428,8 +434,12 @@ def analyseLaymanData(data):
     for date in sleeping_analysis:
         sleeping_second = 0
         for s in sleeping_analysis[date]:
+            
             sleeping_second += s
-        print("Sleep:",date,seconds_to_text(sleeping_second))
+
+        if date in disruption_sec_based_on_date:
+            sleeping_second -= disruption_sec_based_on_date[date]
+
         sleeping_seconds.append(sleeping_second - (random.randint(5, 15) * 60))
 
     sleeping_seconds = list(filter(filter_non_zero, sleeping_seconds))
@@ -550,6 +560,7 @@ def analyseLaymanData(data):
     print("disruption",sleep_disruption_result)
 
     try:
+        breath_rate = remove_outliers_iqr(breath_rate)
         breath_highest = max(breath_rate)
         breath_lowest = min(breath_rate)
         breath_average = sum(breath_rate) / len(breath_rate)
@@ -563,6 +574,7 @@ def analyseLaymanData(data):
         breath_rate_result = None
 
     try:
+        heart_rate = remove_outliers_iqr(heart_rate)
         heart_highest = max(heart_rate)
         heart_lowest = min(heart_rate)
         heart_average = sum(heart_rate) / len(heart_rate)
@@ -575,6 +587,17 @@ def analyseLaymanData(data):
         heart_rate_result = None
 
     return sleeping_hour_result,time_in_bed_result,bed_time_result,wake_up_time_result,in_room_result,sleep_disruption_result,breath_rate_result,heart_rate_result
+
+import numpy as np
+
+def remove_outliers_iqr(data):
+    q1 = np.percentile(data, 25)
+    q3 = np.percentile(data, 75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    return [value for value in data if lower_bound <= value <= upper_bound]
+
 
 def filter_non_zero(number):
     return number > 0
@@ -692,7 +715,7 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-start_date = "2023-06-01"
+start_date = "2023-12-01"
 end_date = "2023-12-12"
 
 def get_dates_between(start_date_str, end_date_str):

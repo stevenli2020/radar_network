@@ -186,10 +186,10 @@ def analyseLaymanData(data):
                 analysis["timeslot"].append([])
                 onbed_disruption_arr.append(0)
 
-            if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] >= 1):
+            if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] >= 8):
                 breath_rate.append(row["BREATH_RATE"])
 
-            if (row["HEART_RATE"] is not None and row["HEART_RATE"] >= 1):
+            if (row["HEART_RATE"] is not None and row["HEART_RATE"] >= 40):
                 heart_rate.append(row["HEART_RATE"])
 
 
@@ -572,9 +572,9 @@ def analyseLaymanData(data):
         breath_average = sum(breath_rate) / len(breath_rate)
 
         breath_rate_result = {
-            "average":round(breath_average,3),
-            "max":breath_highest,
-            "min":breath_lowest,
+            "average":round(breath_average,1),
+            "max":int(breath_highest),
+            "min":int(breath_lowest),
         }
     except Exception as e:
         breath_rate_result = None
@@ -585,9 +585,9 @@ def analyseLaymanData(data):
         heart_lowest = min(heart_rate)
         heart_average = sum(heart_rate) / len(heart_rate)
         heart_rate_result = {
-            "average":round(heart_average,3),
-            "max":heart_highest,
-            "min":heart_lowest,
+            "average":round(heart_average,1),
+            "max":int(heart_highest),
+            "min":int(heart_lowest),
         }
     except Exception as e:
         heart_rate_result = None

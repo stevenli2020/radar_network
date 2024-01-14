@@ -22,19 +22,19 @@ import atexit
 
 ##while 1: #time.sleep(10)
 
-# brokerAddress="vernemq" 
-# clientID="0002"
-# userName="decode-publish"  
-# userPassword="/-K3tuBhod3-FIzv"
-# dataBuffer=[]
-# SpecialSensors={}
-
 brokerAddress="vernemq" 
-clientID="1013"
-userName="decode-publish-dbg-ojb1"  
+clientID="0002"
+userName="decode-publish"  
 userPassword="/-K3tuBhod3-FIzv"
 dataBuffer=[]
 SpecialSensors={}
+
+# brokerAddress="vernemq" 
+# clientID="1013"
+# userName="decode-publish-dbg-ojb1"  
+# userPassword="/-K3tuBhod3-FIzv"
+# dataBuffer=[]
+# SpecialSensors={}
 
 config = {
     'user': 'flask',
@@ -89,6 +89,8 @@ def decode_process_publish(mac, data):
             ts = float(ts_str)
         except Exception as e:
             print(e)
+            continue
+        if ts == 0:
             continue
         # if len(byteAD) > 52:
         if len(byteAD) > 0:
@@ -1855,7 +1857,7 @@ def on_message(mosq, obj, msg):
         cursor.execute(sql)
         connection.commit()        
         cursor.close()
-        connection.close()        
+        connection.close()
     # print(devicesTbl)
     # if not devName == 'F412FAE261A4':
     #     return

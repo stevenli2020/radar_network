@@ -79,6 +79,8 @@ def decode_process_publish(mac, data):
         except Exception as e:
             print(e)
             continue
+        if ts == 0:
+            continue
         if len(byteAD) > 52:
             try:
                 outputDict = parseStandardFrame(byteAD)

@@ -29,6 +29,10 @@ import atexit
 # dataBuffer=[]
 # SpecialSensors={}
 
+#clientID = "1235"
+#userName = "js-client2"
+#userPassword = "c764eb2b5fa2d259dc667e2b9e195218"
+
 brokerAddress="vernemq" 
 clientID="1013"
 userName="decode-publish-dbg-ojb1"  

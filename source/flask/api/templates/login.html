@@ -16,16 +16,24 @@
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css"href="{{ url_for('static', filename='css/util.css')}}" >
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css')}}" >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
     <title>Gaitmetrics - Login</title>
 </head>
 <body>
     <div class="limiter">
-        <div class="container-login100" style="background-image: url('http://143.198.199.16:5000/static/images/bg-01.jpg');">
+        <div class="container-login100" >
             <div class="wrap-login100 p-l-55 p-r-55 p-t-65 p-b-54">
                 <form id="loginForm" class="login100-form validate-form">
-                    <span class="login100-form-title p-b-49" >
+                    <div class="center-logo-div p-b-49">
+                        <img class="login100-form-title animate__animated animate__bounceInDown" src="https://i0.wp.com/gaitmetrics.com/wp-content/uploads/2021/06/header_logo.png?fit=255%2C36&ssl=1"/>
+                    </div>
+                    <!-- <span class="login100-form-title p-b-49" >
                         Login
-                    </span>
+                    </span> -->
     
                     <div class="wrap-input100 validate-input m-b-23" data-validate = "Username is required">
                         <span class="label-input100">Username</span>
@@ -56,6 +64,11 @@
                 </form>
             </div>
         </div>
+    </div>
+    <div class="overlay" id="loading-overlay">
+        <div class="overlay__inner">
+          <div class="overlay__content"><span class="spinner"></span></div>
+          </div>
     </div>
     <script src="{{ url_for('static', filename='js/utils.js')}}"></script>
     <script src="{{ url_for('static', filename='js/login.js')}}"></script>

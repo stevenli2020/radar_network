@@ -8,7 +8,7 @@ window.addEventListener('resize', function(){
 
 option = {
   textStyle: {
-    color: "#fff",
+    color: "#000",
   },
   // title: {
   //   text: "History",
@@ -50,7 +50,7 @@ option = {
   legend: {
     bottom: 5,
     textStyle: {
-      color: "#fff",
+      color: "#000",
     }
   },
   // grid: {
@@ -64,7 +64,7 @@ option = {
     boundaryGap: [0, 0.01],
     axisLine: {
       lineStyle: {
-        color: "#fff",
+        color: "#000",
       }
     },
     splitLine: {
@@ -82,7 +82,7 @@ option = {
     data: ["Month", "Week", "Day", "Hour"],
     axisLine: {
       lineStyle: {
-        color: "#fff",
+        color: "#000",
       }
     },
   },

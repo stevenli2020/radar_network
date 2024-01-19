@@ -66,6 +66,11 @@ heartUpperAvg = 100
 breathLowerAvg = 12     
 breathUpperAvg = 20
 
+const editLocationButton = document.getElementById("edit-location");
+editLocationButton.addEventListener("click", function () {
+  window.location.href=`${host}/LocationHistory?room=${roomI}`
+});
+
 if (!checkAdmin()){
   document.querySelector('#real-time').style.display = 'none'
 }
@@ -113,6 +118,7 @@ roomD = {
   // DETAIL_PAGE: "detail"
 };
 Object.assign(roomD, RequestData());
+showLoading()
 fetch(`${host}/api/getRLMacRoom`, {
   method: "POST",
   headers: {
@@ -122,7 +128,6 @@ fetch(`${host}/api/getRLMacRoom`, {
 })
   .then((response) => response.json())
   .then((data) => {
-    console.log(data)
     if ("DATA" in data){
       radars = []
       data.DATA.forEach(d => {
@@ -319,11 +324,15 @@ fetch(`${host}/api/getRLMacRoom`, {
         })
         .catch((error) => {
           console.error("Error:", error);
+          showToast("Error"+String(error), false);
         });
     }
+
+    hideLoading()
   })
   .catch((error) => {
     console.error("Error:", error);
+    showToast("Error"+String(error), false);
   });
 
 mac = window.location.href.split("=")[1];
@@ -486,6 +495,7 @@ function getHistorOfPos(t, startT=null, endT=null) {
     })
     .catch((error) => {
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
     });
 }
 
@@ -725,6 +735,7 @@ async function getAnalyticData(){
     })
     .catch((error) => {
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
     });
 }
 
@@ -946,6 +957,7 @@ async function getHistOfVital(t, tStart=null, tEnd=null) {
       })
       .catch((error) => {
         console.error("Error:", error);
+        showToast("Error"+String(error), false);
       });
   } else {
     vitalChart.hideLoading()
@@ -1135,6 +1147,7 @@ async function getSelectedData() {
     })
     .catch((error) => {
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
       progressBar.style.width = 100 + "%";
       progressBar.innerHTML = "100 %";
       homeTimeSelectSubmitBtn.disabled = false;

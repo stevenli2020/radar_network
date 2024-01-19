@@ -1,0 +1,237 @@
+import React, { useEffect } from 'react'
+import WithHOC from './actions'
+import { Typography, Row, Col } from 'antd'
+import LoadingOverlay from 'components/LoadingOverlay'
+import ReactECharts from 'echarts-for-react';
+import { Container } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
+import LocationHistory from './LocationHistory';
+import RealtimeLocation from './RealtimeLocation';
+import VitalSign from './VitalSign';
+import OccupancyHistory from './OccupancyHistory';
+
+import { getItem } from 'utils/tokenStore'
+
+import Paho from 'paho-mqtt'
+
+
+const dashCircleFill = 'path://M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z'
+const arrowUpCircleFill = 'path://M16 8A8 8 0 1 0 0 8a8 8 0 0 0 16 0zm-7.5 3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z'
+const arrowRightCircleFill = 'path://M16 8A8 8 0 1 0 0 8a8 8 0 0 0 16 0zm-7.5 3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z'
+const arrowLeftCircleFill = 'path://M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z'
+const arrowDownCircleFill = 'path://M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V4.5z'
+const arrowDownLeftCircleFill = "path://M16 8A8 8 0 1 0 0 8a8 8 0 0 0 16 0zm-5.904-2.803a.5.5 0 1 1 .707.707L6.707 10h2.768a.5.5 0 0 1 0 1H5.5a.5.5 0 0 1-.5-.5V6.525a.5.5 0 0 1 1 0v2.768l4.096-4.096z"
+const arrowDownRightCircleFill = 'path://M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm5.904-2.803a.5.5 0 1 0-.707.707L9.293 10H6.525a.5.5 0 0 0 0 1H10.5a.5.5 0 0 0 .5-.5V6.525a.5.5 0 0 0-1 0v2.768L5.904 5.197z'
+const arrowUpLeftCircleFill = 'path://M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-5.904 2.803a.5.5 0 1 0 .707-.707L6.707 6h2.768a.5.5 0 1 0 0-1H5.5a.5.5 0 0 0-.5.5v3.975a.5.5 0 0 0 1 0V6.707l4.096 4.096z'
+const arrowUpRightCircleFill = 'path://M0 8a8 8 0 1 0 16 0A8 8 0 0 0 0 8zm5.904 2.803a.5.5 0 1 1-.707-.707L9.293 6H6.525a.5.5 0 1 1 0-1H10.5a.5.5 0 0 1 .5.5v3.975a.5.5 0 0 1-1 0V6.707l-4.096 4.096z'
+
+
+let client = null
+
+const History = props => {
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const doFail = (e) => {
+    console.error("Connection failed:", e);
+  };
+
+  const onMessageArrived = async (message) => {
+    try {
+      let mac = message.destinationName.split("/");
+      let data
+      if ("DATA" in JSON.parse(message.payloadString)) {
+        data = JSON.parse(message.payloadString).DATA;
+      } else {
+        data = JSON.parse(message.payloadString);
+      }
+
+      var num = 0;
+      
+      if (data.length > 0 && (props.macPos == mac[3] || props.macVital == mac[3])) {
+        let timer = 1000;
+        timer = parseInt(3000 / data.length);
+        
+        if("heartRate" in data[num]){
+          data.forEach(d => {
+            if("heartRate" in d)
+              if(d.heartRate != "-" && d.heartRate != null){
+                console.log("heart",d)
+                props.addVitalData(d.heartRate, d.breathRate)   
+              }
+          })
+        }
+        
+        if("numSubjects" in data[num]){
+          let index = 0;
+          let interval = setInterval(
+            function () {        
+              if (parseInt(data[index]["numSubjects"]) > 0) { 
+                let persons = []
+                let object_list = []
+
+                for (let i = 0 ; i < data.length ; i++){
+                  if (object_list.includes(data[i].trackIndex) || (data[i].trackIndex == null )){
+                    continue
+                  }
+
+                  let defaultSymbol = dashCircleFill
+
+                  object_list.push(data[i].trackIndex)
+
+                  if(data[i].velX == 0 && data[i].velY == 0)
+                    defaultSymbol = dashCircleFill
+                  else if(data[i].velX == 0 && data[i].velY > 0)
+                    defaultSymbol = arrowUpCircleFill
+                  else if(data[i].velX == 0 && data[i].velY < 0)
+                    defaultSymbol = arrowDownCircleFill
+                  else if(data[i].velX > 0 && data[i].velY == 0)
+                    defaultSymbol = arrowRightCircleFill
+                  else if(data[i].velX > 0 && data[i].velY > 0)
+                    defaultSymbol = arrowUpRightCircleFill
+                  else if(data[i].velX > 0 && data[i].velY < 0)
+                    defaultSymbol = arrowDownRightCircleFill
+                  else if(data[i].velX < 0 && data[i].velY == 0)
+                    defaultSymbol = arrowLeftCircleFill
+                  else if(data[i].velX < 0 && data[i].velY > 0)
+                    defaultSymbol = arrowUpLeftCircleFill
+                  else if(data[i].velX < 0 && data[i].velY < 0)
+                    defaultSymbol = arrowDownLeftCircleFill
+                  
+                  persons.push({
+                    tooltip: {
+                      showDelay: 0,
+                      formatter: function (params) {
+                        if (params.value.length > 1) {
+                          return (
+                            params.seriesName +" :<br/>" +params.value[0] +"m " +params.value[1] +"m "
+                          );
+                        } else {
+                          return (
+                            params.seriesName +" :<br/>" +params.name +" : " +params.value +"m "
+                          );
+                        }
+                      },
+                      axisPointer: {
+                        show: true,
+                        type: "cross",
+                        lineStyle: {
+                          type: "dashed",
+                          width: 1,
+                        },
+                      },
+                    },
+                    name: "Person ID:" + String(data[i].trackIndex),
+                    type: "scatter",
+                    symbol: defaultSymbol,
+                    symbolSize: 30,
+                    data: [
+                      [
+                        Math.abs((data[i].posX??0).toFixed(2)),
+                        Math.abs((data[i].posY??0).toFixed(2)),
+                      ],
+                    ],
+                    itemStyle: {
+                      color: function () {
+                        if (!("state" in data[i]) || data[i].state == null || data[i].state == "None") {
+                          return '#080808';
+                        } else if (data[i].state == "Moving") {
+                          return '#f8fc03'; 
+                        } else if (data[i].state == "Upright") {
+                          return '#0918e3'; 
+                        } else if (data[i].state == "Laying") {
+                          return '#8d61be'; 
+                        } else if (data[i].state == "Fall") {
+                          return '#fc0303'; 
+                        } else if (data[i].state == "Social") {
+                          return '#20fc03'; 
+                        } 
+                      },
+                    },        
+                  });
+                }
+                
+                props.updatePersonsLocation(persons)
+              }
+            index++;
+            if (index == data.length) {
+              clearInterval(interval);
+            }
+          }, timer);
+        }
+      }
+    } catch (error) {
+      console.error("Error processing MQTT message:", error);
+    }
+  };
+
+  useEffect(() => {
+    const connectToBroker = async () => {
+      try {
+        const clientId = JSON.parse(getItem("LOGIN_TOKEN")).ID;
+        const brokerUrl = "wss://aswelfarehome.gaitmetrics.org/mqtt";  // Include the path if required
+        client = new Paho.Client(brokerUrl, clientId);
+        
+        await client.connect({
+          timeout: 3,
+          onSuccess: () => {
+            console.log("Connected");
+            client.subscribe("/GMT/DEV/+/DATA/+/JSON");
+            client.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF");
+
+            client.onMessageArrived = onMessageArrived;
+          },
+          onFailure: doFail,
+          userName: JSON.parse(getItem("LOGIN_TOKEN")).Username,
+          password: "c764eb2b5fa2d259dc667e2b9e195218",
+        });
+      } catch (error) {
+        console.error("Error connecting to MQTT broker:", error);
+      }
+    };
+
+    if (getItem("LOGIN_TOKEN")){
+      connectToBroker();
+    }
+  }, [props.sensors]); // Include dependencies if needed
+
+	useEffect(() => {
+    if (getItem("LOGIN_TOKEN")){
+      if (JSON.parse(getItem("LOGIN_TOKEN")).TYPE == "1"){
+        props.onChangeHOC("is_admin",true)
+      }
+      props.initView(searchParams.get("roomId"))
+    }
+	}, [])
+
+	const { Title } = Typography
+
+	return (
+		<Container>
+			<Title>History ({props.room_name})</Title>
+      <Row gutter={[16, 16]} style={{justifyContent:'center'}}>
+        {
+          props.is_admin?(<Col span={24} lg={12}>
+            <RealtimeLocation is_admin={props.is_admin} room={props.room} room_empty={props.room_empty} sensors={props.sensors} persons={props.persons} data={props.realtimeLocationData}/>
+          </Col>):null
+        }
+				<Col span={24} lg={12}>
+          <LocationHistory is_admin={props.is_admin} action={props.getLocationHistory} macPos={props.macPos} macVital={props.macVital} room={props.room} data={props.locationHistoryData}/>
+				</Col>
+      </Row>
+      <Row gutter={[16, 16]} className='mt-2'>
+        <Col span={24} lg={12}>
+					<VitalSign action={props.getVitalHistory} macPos={props.macPos} macVital={props.macVital} vital_data={props.vital_data} room_uuid={props.room_uuid} data={props.vitalHistoryData}/>
+				</Col>
+				<Col span={24} lg={12}>
+          <OccupancyHistory data={props.occupancyHistoryData}/>
+				</Col>
+			</Row>
+			{
+				props.onLoading && <LoadingOverlay/>
+			}
+		</Container>
+	)
+}
+
+export default WithHOC(History)

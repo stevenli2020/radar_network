@@ -8,7 +8,7 @@ window.addEventListener('resize', function(){
 
 option = {
   textStyle: {
-    color: "#fff",
+    color: "#000",
   },
   legend: {
     top: "bottom",

@@ -27,7 +27,7 @@ window.addEventListener("resize", function () {
 
 option = {
   textStyle: {
-    color: "#fff",
+    color: "#000",
   },
   // title: {
   //   text: "History of Person's Location",
@@ -116,7 +116,7 @@ option = {
     // bottom: '15%'
     textStyle: {
       show: false,
-      color: 'white'
+      color: 'black'
     }
   },
   series: [

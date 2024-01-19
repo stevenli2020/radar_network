@@ -3,6 +3,10 @@ const registerDevAddMac = document.getElementById("register-device-add-mac");
 const registerDevAddMacErr = document.getElementById(
   "register-mac-address-error"
 );
+const registerDevAddPassword = document.getElementById("register-device-password");
+const registerDevAddPasswordErr = document.getElementById(
+  "register-device-password-error"
+);
 const registerDevAddName = document.getElementById("register-device-add-name");
 const registerDevAddNameErr = document.getElementById(
   "register-device-add-name-error"
@@ -192,169 +196,237 @@ if (!checkLogin()) {
 // table
 var table;
 
-fetch(`${host}/getRegDevices`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(RequestData()),
-})
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data);
-    if (data.DATA) {
-      // console.log(screenWidth)
-      let tHead = document.createElement('thead')
-      let tBody = document.createElement('tbody')
-      if(screenWidth <= 415){
-        // deviceCardWidth.style.width = '98%';
-        removeChildEl("register-device-table")        
-        tHead.innerHTML = `<tr><th>Id</th><th>Name</th><th>Type</th><th>Status</th><th>Option</th></tr>`
-        devicesTalbeId.appendChild(tHead)
-        devicesTalbeId.appendChild(tBody)
-        devicesTalbeId.style.fontSize = "small";
-      } else if(screenWidth <= 821){
-        removeChildEl("register-device-table")        
-        tHead.innerHTML = `<tr><th>Id</th><th>Name</th><th>Location</th><th>Type</th><th>Status</th><th>Position(X,Y,Z)</th><th>Rotation(X,Y,Z)</th><th>Option</th></tr>`
-        devicesTalbeId.appendChild(tHead)
-        devicesTalbeId.appendChild(tBody)
-        devicesTalbeId.style.fontSize = "small";
-      }
-      data.DATA.forEach((d) => {
-        time = String(d["LAST DATA"]);
-        let st = ""
-        let typ = ""
-        if(d.STATUS == "DISCONNECTED"){
-          st = "<i style='color: red;' class='tooltipcss bi bi-cloud-slash-fill'><span class='tooltiptextcss'>Disconnected</span></i>"
-        } else {
-          st = "<i style='color: green;' class='tooltipcss bi bi-cloud-fill'><span class='tooltiptextcss'>Connected</span></i>"
-        }
-        if(d.TYPE == wallType){
-          typ = "Wall"
-        } else if (d.TYPE == ceilType){
-          typ = "Ceil"
-        } else if(d.TYPE == vitalType) {
-          typ = "Vital"
-        } else {
-          typ = null
-        }
-        let da = ''
-        let localSg = ''
-        if(d["LAST DATA"] != null){
-          da = new Date(d["LAST DATA"])
-          localSg = getTimezoneOffset(d["LAST DATA"])
-          localSg = moment(localSg).fromNow()
-        } else {
-          localSg = '-'
-        }
-        
-        let newRow
-        
-        // console.log(da)
-        // daf = da.getFullYear()+da.getMonth()+da.getDay()+da.getHours()+da.getMinutes()+da.getSeconds()
-        // console.log(d["LAST MODIFIED TIME"],localSg, moment(localSg).fromNow())
-        if(screenWidth <= 415){
-          newRow = $(
-            "<tr><td id='wrap-text-table-phone'>" +
-              d.Id +
-              "</td><td id='wrap-text-table-10'>" +
-              d.NAME +
-              "</td><td id='wrap-text-table-phone'>" +
-              typ +
-              "</td><td id='wrap-text-table-phone'>" +
-              st +
-              "</td><td id='wrap-text-table-10'><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='update' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Update</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='delete' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;<i style='color: blue;' class='bi bi-send tooltipcss' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='configuration' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Configuration</span></i></td></tr>"
-          );
-        } else if(screenWidth <= 821){
-          newRow = $(
-            "<tr><td>" +
-              d.Id +
-              "</td><td style='word-break: break-word;'>" +
-              d.NAME +
-              "</td><td style='word-break: break-word;'>" +
-              d.ROOM_NAME +
-              "</td><td style='word-break: break-word;'>" +
-              typ +
-              "</td><td style='word-break: break-word;'>" +
-              st +
-              "</td style='word-break: break-word;'>><td>" +
-              d.DEPLOY_X +
-              ", " +
-              d.DEPLOY_Y +
-              ", " +
-              d.DEPLOY_Z +
-              "</td style='word-break: break-word;'>><td>" +
-              d.ROT_X +
-              ", " +
-              d.ROT_Y +
-              ", " +
-              d.ROT_Z +
-              "</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='update' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Update</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='delete' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;<i style='color: blue;' class='bi bi-send tooltipcss' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='configuration' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Configuration</span></i></td></tr>"
-          );
-        } else
-          newRow = $(
-            "<tr><td>" +
-              d.Id +
-              "</td><td>" +
-              d.MAC +
-              "</td><td>" +
-              d.NAME +
-              "</td><td>" +
-              d.ROOM_NAME +
-              "</td><td>" +
-              typ +
-              "</td><td>" +
-              st +
-              "</td><td>" +
-              d.DEPLOY_X +
-              ", " +
-              d.DEPLOY_Y +
-              ", " +
-              d.DEPLOY_Z +
-              "</td><td>" +
-              d.ROT_X +
-              ", " +
-              d.ROT_Y +
-              ", " +
-              d.ROT_Z +
-              "</td><td>" +
-              localSg +
-              "</td><td>" +
-              d.DESCRIPTION +
-              "</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='update' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Update</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='delete' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;<i style='color: blue;' class='bi bi-send tooltipcss' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='configuration' data-bs-whatever=" +
-              d.Id +
-              "><span class='tooltiptextcss'>Configuration</span></i></td></tr>"
-          );
-        $("#register-device-table tbody").append(newRow);
-      });
-      table = $("#register-device-table").dataTable({
-        order: [[0, "desc"]],
-      });
-    } else {
-      $("#register-device-table").dataTable({
-        order: [[0, "desc"]],
-      });
-    }
+function fetchRegDevices() {
+  showLoading();
+
+  fetch(`${host}/getRegDevices`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(RequestData()),
   })
-  .catch((error) => {
-    console.error("Error:", error);
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      if (data.DATA) {
+        if ($.fn.DataTable.isDataTable('#register-device-table')) {
+          $('#register-device-table').DataTable().destroy();
+        }
+
+        $('#register-device-table thead').remove();
+        $('#register-device-table tbody').remove();
+
+        let tHead = document.createElement('thead');
+        let tBody = document.createElement('tbody');
+
+        // Determine the table headers based on screen width
+        let tableHeaders = getTableHeaders(); // Define this function
+
+        // Add the table headers to the thead element
+        tHead.innerHTML = `<tr>${tableHeaders.join('')}</tr>`;
+        devicesTalbeId.appendChild(tHead);
+        devicesTalbeId.appendChild(tBody);
+        devicesTalbeId.style.fontSize = "small";
+
+        // Clear the existing data in the table body
+        $("#register-device-table tbody").empty();
+
+        data.DATA.forEach((d) => {
+          // Populate table rows based on screen width
+          let tableRow = getTableRow(d); // Define this function
+          $("#register-device-table tbody").append(tableRow);
+        });
+
+        // Reinitialize the DataTable
+        table = $("#register-device-table").dataTable({
+          order: [[0, "desc"]],
+        });
+      } else {
+        if ($.fn.DataTable.isDataTable('#register-device-table')) {
+          $('#register-device-table').DataTable().destroy();
+        }
+        // Reinitialize the DataTable without data
+        $("#register-device-table").dataTable({
+          order: [[0, "desc"]],
+        });
+      }
+      hideLoading();
+    })
+    .catch((error) => {
+      hideLoading();
+      showToast("Error: " + String(error), false);
+      console.error("Error:", error);
+    });
+}
+
+// Function to determine table headers based on screen width
+function getTableHeaders() {
+  if (screenWidth <= 415) {
+    return [
+      "<th>Id</th>",
+      "<th>Name</th>",
+      "<th>Type</th>",
+      "<th>Status</th>",
+      "<th>Option</th>",
+    ];
+  } else if (screenWidth <= 821) {
+    return [
+      "<th>Id</th>",
+      "<th>Name</th>",
+      "<th>Location</th>",
+      "<th>Type</th>",
+      "<th>Status</th>",
+      "<th>Position(X,Y,Z)</th>",
+      "<th>Rotation(X,Y,Z)</th>",
+      "<th>Option</th>",
+    ];
+  } else {
+    return [
+      "<th>Id</th>",
+      "<th>MAC</th>",
+      "<th>Name</th>",
+      "<th>Location</th>",
+      "<th>Type</th>",
+      "<th>Status</th>",
+      "<th>Position(X,Y,Z)</th>",
+      "<th>Rotation(X,Y,Z)</th>",
+      "<th>Last Modified</th>",
+      "<th>Description</th>",
+      "<th>Option</th>",
+    ];
+  }
+}
+
+// Function to create a table row based on screen width
+function getTableRow(data) {
+  // Customize table row content based on screen width
+  if (screenWidth <= 415) {
+    return $(
+      "<tr><td id='wrap-text-table-phone'>" +
+      data.Id +
+      "</td><td id='wrap-text-table-10'>" +
+      data.NAME +
+      "</td><td id='wrap-text-table-phone'>" +
+      getDeviceType(data.TYPE) +
+      "</td><td id='wrap-text-table-phone'>" +
+      getStatusIcon(data.STATUS) +
+      "</td><td id='wrap-text-table-10'><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='update' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Update</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='delete' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;<i style='color: blue;' class='bi bi-send tooltipcss' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='configuration' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Configuration</span></i></td></tr>"
+    );
+  } else if (screenWidth <= 821) {
+    return $(
+      "<tr><td>" +
+      data.Id +
+      "</td><td style='word-break: break-word;'>" +
+      data.NAME +
+      "</td><td style='word-break: break-word;'>" +
+      data.ROOM_NAME +
+      "</td><td style='word-break: break-word;'>" +
+      getDeviceType(data.TYPE) +
+      "</td><td style='word-break: break-word;'>" +
+      getStatusIcon(data.STATUS) +
+      "</td style='word-break: break-word;'>><td>" +
+      data.DEPLOY_X +
+      ", " +
+      data.DEPLOY_Y +
+      ", " +
+      data.DEPLOY_Z +
+      "</td style='word-break: break-word;'>><td>" +
+      data.ROT_X +
+      ", " +
+      data.ROT_Y +
+      ", " +
+      data.ROT_Z +
+      "</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='update' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Update</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='delete' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;<i style='color: blue;' class='bi bi-send tooltipcss' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='configuration' data-bs-whatever=" +
+      data.Id +
+      "><span class'tooltiptextcss'>Configuration</span></i></td></tr>"
+    );
+  } else {
+    return $(
+      "<tr><td>" +
+      data.Id +
+      "</td><td>" +
+      data.MAC +
+      "</td><td>" +
+      data.NAME +
+      "</td><td>" +
+      data.ROOM_NAME +
+      "</td><td>" +
+      getDeviceType(data.TYPE) +
+      "</td><td>" +
+      getStatusIcon(data.STATUS) +
+      "</td><td>" +
+      data.DEPLOY_X +
+      ", " +
+      data.DEPLOY_Y +
+      ", " +
+      data.DEPLOY_Z +
+      "</td><td>" +
+      data.ROT_X +
+      ", " +
+      data.ROT_Y +
+      ", " +
+      data.ROT_Z +
+      "</td><td>" +
+      getLocalTime(data["LAST DATA"]) +
+      "</td><td>" +
+      data.DESCRIPTION +
+      "</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='update' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Update</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='delete' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;<i style='color: blue;' class='bi bi-send tooltipcss' data-bs-toggle='modal' data-bs-target='#register-device-update-modal' attr='configuration' data-bs-whatever=" +
+      data.Id +
+      "><span class='tooltiptextcss'>Configuration</span></i></td></tr>"
+    );
+  }
+}
+
+// Function to get device type based on a provided code
+function getDeviceType(code) {
+  if (code === wallType) {
+    return "Wall";
+  } else if (code === ceilType) {
+    return "Ceil";
+  } else if (code === vitalType) {
+    return "Vital";
+  } else {
+    return null;
+  }
+}
+
+// Function to get status icon based on status
+function getStatusIcon(status) {
+  if (status === "DISCONNECTED") {
+    return "<i style='color: red;' class='tooltipcss bi bi-cloud-slash-fill'><span class='tooltiptextcss'>Disconnected</span></i>";
+  } else {
+    return "<i style='color: green;' class='tooltipcss bi bi-cloud-fill'><span class='tooltiptextcss'>Connected</span></i>";
+  }
+}
+
+// Function to get local time from a UTC time string
+function getLocalTime(utcTime) {
+  if (utcTime !== null) {
+    let localTime = new Date(utcTime);
+    let localTimeString = getTimezoneOffset(utcTime);
+    localTimeString = moment(localTimeString).fromNow();
+    return localTimeString;
+  } else {
+    return '-';
+  }
+}
+
+fetchRegDevices()
 
 registerDeviceUpdateButton.addEventListener("show.bs.modal", async (event) => {
   // Button that triggered the modal
@@ -378,6 +450,7 @@ registerDeviceUpdateButton.addEventListener("show.bs.modal", async (event) => {
     Id: deviceId,
   };
   Object.assign(Rdata, RequestData());
+  showLoading()
   await fetch(`${host}/getRegDevice`, {
     method: "POST",
     headers: {
@@ -469,8 +542,11 @@ registerDeviceUpdateButton.addEventListener("show.bs.modal", async (event) => {
           }
         });
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
 });
@@ -482,6 +558,7 @@ registerDevAddLoc.addEventListener("input", e => {
       VALUE: e.target.value,
     };
     Object.assign(RData, RequestData());
+    showLoading()
     fetch(`${host}/api/getRoomSuggestion`, {
       method: "POST",
       headers: {
@@ -513,8 +590,11 @@ registerDevAddLoc.addEventListener("input", e => {
             registerDevAddLocSugg.appendChild(b);
           });
         }
+        hideLoading()
       })
       .catch((error) => {
+        hideLoading()
+        showToast("Error"+String(error), false);
         console.error("Error:", error);
       });
   } else {
@@ -531,6 +611,7 @@ regDevUpdateLoc.addEventListener("input", e => {
       VALUE: e.target.value,
     };
     Object.assign(RData, RequestData());
+    showLoading()
     fetch(`${host}/api/getRoomSuggestion`, {
       method: "POST",
       headers: {
@@ -562,8 +643,11 @@ regDevUpdateLoc.addEventListener("input", e => {
             regDevUpdateLocSugg.appendChild(b);
           });
         }
+
+        hideLoading()
       })
       .catch((error) => {
+        showToast("Error"+String(error), false);
         console.error("Error:", error);
       });
   } else {
@@ -676,6 +760,7 @@ async function updateDeviceDetail() {
   };
   Object.assign(RData, RequestData());
   console.log(RData);
+  showLoading()
   await fetch(`${host}/updateDevice`, {
     method: "POST",
     headers: {
@@ -690,14 +775,16 @@ async function updateDeviceDetail() {
       
       if (data.DATA) {
         document.querySelector('#registed-modal-close').click();
-        popupMessageTitle.innerHTML = "Update Device"
-        popupMessageBody.innerHTML = `<p>Device name <strong>${regDevUpdateName.value}</strong> has been updated successfully</p>`
-        document.querySelector("#popupMessageOpenBtn").click()
+        showToast(`<p>Device name <strong>${regDevUpdateName.value}</strong> has been updated successfully</p>`, true);
+        fetchRegDevices()
+        // popupMessageTitle.innerHTML = "Update Device"
+        // popupMessageBody.innerHTML = `<p>Device name <strong>${regDevUpdateName.value}</strong> has been updated successfully</p>`
+        // document.querySelector("#popupMessageOpenBtn").click()
         setTimeout(() => {
           publishToMQTT(regDevUpdateMac.value, '/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF');
           updateRegDevSubmitBtn.disabled = false;
-          document.querySelector(".btn-close").click();
-          location.reload();
+          // document.querySelector(".btn-close").click();
+          // location.reload();
         }, 5000);        
       } else if (data.ERROR) {
         updateRegDevSubmitBtn.disabled = false;
@@ -743,9 +830,12 @@ async function updateDeviceDetail() {
           regDevUpdateLocErr.innerText = data.ERROR[0].DEPLOY_LOC;
         }
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
       updateRegDevSubmitBtn.disabled = false;
     });
 }
@@ -758,6 +848,7 @@ async function deleteDeviceDetail() {
   };
   console.log(RData);
   Object.assign(RData, RequestData());
+  showLoading()
   await fetch(`${host}/deleteDevice`, {
     method: "POST",
     headers: {
@@ -771,16 +862,21 @@ async function deleteDeviceDetail() {
       if (data["CODE"] == 0) {
         updateRegDevSubmitBtn.disabled = false;
         document.querySelector('#registed-modal-close').click();
-        popupMessageTitle.innerHTML = "Delete Device"
-        popupMessageBody.innerHTML = `<p>Device name <strong>${updateRegDevSubmitBtn.getAttribute('dev-name')}</strong> has been deleted successfully</p>`
-        document.querySelector("#popupMessageOpenBtn").click()
-        setTimeout(()=>{
-          location.reload()
-        }, 3000)
+        showToast(`<p>Device name <strong>${updateRegDevSubmitBtn.getAttribute('dev-name')}</strong> has been deleted successfully</p>`, true);
+        fetchRegDevices()
+        // popupMessageTitle.innerHTML = "Delete Device"
+        // popupMessageBody.innerHTML = `<p>Device name <strong>${updateRegDevSubmitBtn.getAttribute('dev-name')}</strong> has been deleted successfully</p>`
+        // document.querySelector("#popupMessageOpenBtn").click()
+        // setTimeout(()=>{
+        //   location.reload()
+        // }, 3000)
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
       updateRegDevSubmitBtn.disabled = false;
     });
 }
@@ -788,6 +884,7 @@ async function deleteDeviceDetail() {
 async function addNewDevice() {
   registerDevAddSubmitBtn.disabled = true;
   registerDevAddMac.style.border = borderOri;
+  registerDevAddPassword.style.border = borderOri;
   registerDevAddName.style.border = borderOri;
   registerDevAddPosX.style.border = borderOri;
   registerDevAddPosY.style.border = borderOri;
@@ -798,6 +895,7 @@ async function addNewDevice() {
   registerDevAddType.style.border = borderOri;
   registerDevAddLoc.style.border = borderOri;
   registerDevAddMacErr.innerText = "";
+  registerDevAddPasswordErr.innerText = "";
   registerDevAddNameErr.innerText = "";
   registerDevAddPosXErr.innerText = "";
   registerDevAddPosYErr.innerText = "";
@@ -811,6 +909,10 @@ async function addNewDevice() {
   if (registerDevAddMac.value == "") {
     registerDevAddMac.style.border = borderRed;
     registerDevAddMacErr.innerText = "Please add mac address";
+  }
+  if (registerDevAddPassword.value == "") {
+    registerDevAddPassword.style.border = borderRed;
+    registerDevAddPasswordErr.innerText = "Please add device password";
   }
   if (registerDevAddName.value == "") {
     registerDevAddName.style.border = borderRed;
@@ -850,6 +952,7 @@ async function addNewDevice() {
   }
   if (
     registerDevAddMacErr.innerText != "" ||
+    registerDevAddPasswordErr.innerText != "" ||
     registerDevAddNameErr.innerText != "" ||
     registerDevAddPosXErr.innerText != "" ||
     registerDevAddPosYErr.innerText != "" ||
@@ -878,6 +981,7 @@ async function addNewDevice() {
     DESCRIPTION: registerDevAddDesc.value,
   };
   Object.assign(Rdata, RequestData());
+  showLoading()
   await fetch(`${host}/addNewDevice`, {
     method: "POST",
     headers: {
@@ -886,18 +990,39 @@ async function addNewDevice() {
     body: JSON.stringify(Rdata),
   })
     .then((response) => response.json())
-    .then((data) => {
+    .then(async (data) => {
       // console.log(data);
       response = data;
       if ("DATA" in data) {
         registerDevAddSubmitBtn.disabled = false;
         document.querySelector('#register-device-add-close-btn').click();
-        popupMessageTitle.innerHTML = "Add Device"
-        popupMessageBody.innerHTML = `<p>New device <strong>${registerDevAddName.value}</strong> has been added successfully</p>`
-        document.querySelector("#popupMessageOpenBtn").click()
-        setTimeout(()=>{
-          location.reload()
-        }, 3000)
+        showToast(`<p>New device <strong>${registerDevAddName.value}</strong> has been added successfully</p>`, true);
+        let Cdata = {};
+        Cdata = {
+          username: registerDevAddMac.value,
+          password: registerDevAddPassword.value
+        };
+        Object.assign(Cdata, RequestData());
+        showLoading()
+        await fetch(`${host}/addDeviceCredential`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(Cdata),
+        })
+          .then((response2) => response2.json())
+          .then((data2) => {
+            console.log(data2);
+          })
+        fetchRegDevices()
+        // getRoomData()
+        // popupMessageTitle.innerHTML = "Add Device"
+        // popupMessageBody.innerHTML = `<p>New device <strong>${registerDevAddName.value}</strong> has been added successfully</p>`
+        // document.querySelector("#popupMessageOpenBtn").click()
+        // setTimeout(()=>{
+        //   location.reload()
+        // }, 3000)
       } else {
         registerDevAddSubmitBtn.disabled = false;
         // console.log(data.ERROR);
@@ -942,9 +1067,12 @@ async function addNewDevice() {
           registerDevAddTypeErr.innerText = data.ERROR[0].DEVICE_TYPE;
         }
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
       registerDevAddSubmitBtn.disabled = false;
     });
 }

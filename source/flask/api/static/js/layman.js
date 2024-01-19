@@ -107,8 +107,11 @@ function changeWeek(weekChange) {
 
 function checkWeekLimit(date){
   let next = date
+  next.setHours(0, 0, 0, 0);
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
   next.setDate(next.getDate() + 7);
-  if (next > new Date()){
+  if (next >= currentDate){
     nextWeekButton.disabled = true
   }else{
     nextWeekButton.disabled = false
@@ -140,7 +143,7 @@ function getAlerts(unread=true){
     let body = Object.assign({}, roomD);
     body["unread"] = unread
     body["set"] = true
-
+    showLoading()
     fetch(`${host}/api/getRoomAlerts`, {
         method: "POST",
         headers: {
@@ -192,7 +195,7 @@ function getAlerts(unread=true){
             noAlertText.style.display = 'block';
           }
 
-          
+          hideLoading()
       })
 }
 
@@ -235,6 +238,7 @@ function setLaymanDetails(){
     let body = Object.assign({}, roomD);
     let curr = dateInput.value
     body["eow"] = curr
+    showLoading()
     fetch(`${host}/api/getRoomLaymanDetail`, {
         method: "POST",
         headers: {
@@ -904,6 +908,8 @@ function setLaymanDetails(){
                 heartBarDom.style.height = "0vh"
               }
           }
+
+          hideLoading()
       })
 }
 

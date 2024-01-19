@@ -225,3 +225,62 @@ def Add_Vernemq_db(mac):
 #     cursor.close()
 #     connection.close()
 #     return result
+
+
+def insertDeviceCredential(req):
+    try:
+        result = defaultdict(list)
+        # if req.get('mountpoint') == None:
+        #     result['ERROR'].append({'mountpoint': 'mountpoint is not provided!'})
+            
+        # if req.get('client_id') == None:
+        #     result['ERROR'].append({'client_id': 'client_id is not provided!'})
+        # elif req.get('client_id') == '':
+        #     result['ERROR'].append({'client_id': 'client_id is empty!'})
+
+        if req.get('username') == None:
+            result['ERROR'].append({'username': 'username is not provided!'})
+        elif req.get('username') == '':
+            result['ERROR'].append({'username': 'username is empty!'})
+
+        if req.get('password') == None:
+            result['ERROR'].append({'password': 'password is not provided!'})
+        elif req.get('password') == '':
+            result['ERROR'].append({'password': 'password is empty!'})
+
+        # if req.get('publish_acl') == None:
+        #     result['ERROR'].append({'publish_acl': 'publish_acl is not provided!'})
+        # elif req.get('publish_acl') == '':
+        #     result['ERROR'].append({'publish_acl': 'publish_acl is empty!'})
+
+        # if req.get('subscribe_acl') == None:
+        #     result['ERROR'].append({'subscribe_acl': 'subscribe_acl is not provided!'})
+        # elif req.get('subscribe_acl') == '':
+        #     result['ERROR'].append({'subscribe_acl': 'subscribe_acl is empty!'})
+
+
+        if len(result['ERROR']):
+            return result
+        
+        mountpoint = ''# req['mountpoint']
+        mac = req['username']
+        client_id = mac#req['client_id']
+        username = "_"+mac
+        password = req['password']
+        publish_acl = '[{"pattern":"/GMT/DEV/'+mac+'/#"}]' #req['publish_acl']
+        subscribe_acl = '[{"pattern":"/GMT/DEV/'+mac+'/#"}]' #req['subscribe_acl']
+        connection = mysql.connector.connect(**vernemq_db)
+        cursor = connection.cursor()
+        result = {}
+        sql = "INSERT INTO vmq_auth_acl (mountpoint,client_id,username,password,publish_acl,subscribe_acl) VALUES ('%s','%s','%s',md5('%s'),'%s','%s')"%(mountpoint,client_id,username,password,publish_acl,subscribe_acl)
+        
+        cursor.execute(sql)
+        connection.commit()
+        return {
+            "DATA": ["Device credential inserted!"]
+        }
+    except Exception as e:
+        print(e)
+        return {
+            "ERROR": ["Failed to insert device credential!"]
+        }

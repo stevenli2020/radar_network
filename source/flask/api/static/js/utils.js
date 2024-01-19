@@ -1,5 +1,4 @@
-//const host = "http://143.198.199.16:5000";
-const host = "http://aswelfarehome.gaitmetrics.org"
+const host = "http://143.198.199.16:5000";
 const loginPage = `${host}/api/login`;
 const borderOri = "1px solid #ced4da";
 const borderRed = "1px solid red";
@@ -21,11 +20,22 @@ const localDate = new Date()
 const localGMTVal = Math.abs(localDate.getTimezoneOffset() * 60 * 1000)
 // console.log(localGMTVal)
 
+const loadingOverlay = document.getElementById('loading-overlay')
+
 if(checkLogin()){
   loginId.style.display = 'none'
 } else {
   logoutId.style.display = 'none'
   window.location = loginPage
+}
+
+const currentURL = window.location.href;
+if (currentURL == `${host}/`){
+  document.getElementById('home-id').classList.add("active")
+}else if (currentURL == `${host}/usersManagement`){
+  document.getElementById('users-management-id').classList.add("active")
+}else if (currentURL == `${host}/saveDevice`){
+  document.getElementById('save-devices-id').classList.add("active")
 }
 
 if(checkAdmin()){
@@ -127,6 +137,7 @@ function checkStatus(num){
 async function logout(){
   let response = [];
   let Rdata = RequestData();
+  showLoading()
   await fetch(`${host}/api/logout`, {
     method: "POST",
     headers: {
@@ -144,8 +155,10 @@ async function logout(){
         eraseCookie('ID')
         window.location.href = loginPage
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       console.error("Error:", error);
     });
   return response;
@@ -160,6 +173,7 @@ async function API_Call(time, deviceId, location) {
     DEVICEID: deviceId,
     // LOCATION: location,
   };
+  showLoading()
   await fetch(`${host}/getData`, {
     method: "POST",
     headers: {
@@ -173,8 +187,11 @@ async function API_Call(time, deviceId, location) {
       // if(data["CODE"] == 0)
       // response = data["DATA"];
       response = data;
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
   // console.log(response);
@@ -544,6 +561,7 @@ const upload_image = (file, Elname, fileError, imgLink) => {
 
 	form_data.append(Elname, file);
 
+  showLoading()
 	fetch(`${host}/api/uploadImg`, {
 
 		method:"POST",
@@ -551,7 +569,7 @@ const upload_image = (file, Elname, fileError, imgLink) => {
     	body:form_data
 
 	}).then(function(response){
-
+    hideLoading()
 		return response.json();
 
 	}).then(function(responseData){
@@ -560,7 +578,7 @@ const upload_image = (file, Elname, fileError, imgLink) => {
     fileLink = `${host}/static/uploads/${responseData.image_source}`
     
 		document.getElementsByName(Elname)[0].value = '';
-
+    hideLoading()
 	});
 
 }
@@ -595,4 +613,48 @@ function secondsToDhms(seconds) {
   var mDisplay = m > 0 ? m + (" M, ") : "";
   var sDisplay = s > 0 ? s + (" S") : "";
   return dDisplay + hDisplay + mDisplay + sDisplay;
+}
+
+function showLoading(){
+  loadingOverlay.style.display = 'block'
+}
+
+function hideLoading(){
+  loadingOverlay.style.display = 'none'
+}
+
+
+
+function showToast(message, success) {
+  var toastContainer = document.getElementById('toastContainer');
+
+  // Create a new Toast element
+  var newToast = document.createElement('div');
+  newToast.className = 'toast mb-2'; // Remove "hide" class to make it appear with animation
+  var iconClass = success ? 'bi bi-check-circle' : 'bi bi-x-circle'; // Icon based on success
+  var backgroundColor = success ? 'bg-success' : 'bg-danger'; // Background color based on success
+  newToast.innerHTML = `
+    <div class="toast-header ${backgroundColor}">
+      <i class="${iconClass} text-light me-2"></i>
+      <strong class="me-auto text-light">${success ? 'Success' : 'Failure'}</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      ${message}
+    </div>
+  `;
+  
+  // Append the new Toast to the container
+  toastContainer.appendChild(newToast);
+
+  // Create a new Toast instance
+  var dynamicToast = new bootstrap.Toast(newToast);
+
+  // Show the Toast
+  dynamicToast.show();
+
+  // Automatically remove the Toast element after it has been hidden
+  dynamicToast._element.addEventListener('hidden.bs.toast', function () {
+    newToast.remove();
+  });
 }

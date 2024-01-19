@@ -57,6 +57,7 @@ async function passSubmit(e) {
       CODE: crtPage[1],
       AUTH: crtPage[2],
     };
+    showLoading()
     await fetch(`${host}/api/updatePassword`, {
       method: "POST",
       headers: {
@@ -87,8 +88,10 @@ async function passSubmit(e) {
                 confirmPasswordInput.parentElement.classList.add("alert-validate");
             }
         }
+        hideLoading()
       })
       .catch((error) => {
+        hideLoading()
         console.error("Error:", error);
         submitBtn.disabled = false;
       });

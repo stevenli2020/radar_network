@@ -31,6 +31,7 @@ async function logInSubmit(e) {
       LOGIN_NAME: loginUsernameInput.value,
       PWD: SHA256(loginPasswordInput.value)
     };
+    showLoading()
     await fetch(`${host}/api/login`, {
       method: "POST",
       headers: {
@@ -63,8 +64,10 @@ async function logInSubmit(e) {
                 loginPasswordInput.parentElement.classList.add("alert-validate");
             }
         }
+        hideLoading()
       })
       .catch((error) => {
+        hideLoading()
         console.error("Error:", error);
         loginSubmitBtn.disabled = false;
       });

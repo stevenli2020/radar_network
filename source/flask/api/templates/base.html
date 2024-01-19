@@ -20,7 +20,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
-
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
@@ -32,9 +35,10 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg bg-light">
+  <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">GaitMetrics</a>
+      <!-- <a class="navbar-brand" href="/">GaitMetrics</a> -->
+      <img class="navbar-brand" src="https://i0.wp.com/gaitmetrics.com/wp-content/uploads/2021/06/header_logo.png?fit=255%2C36&ssl=1"/>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -42,15 +46,13 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/"><i class="bi bi-house"></i> Home</a>
+            <a class="nav-link" aria-current="page" href="/" id="home-id">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" style="display: none;" href="/saveDevice" id="save-devices-id"><i class="bi bi-robot"></i>
-              Devices</a>
+            <a class="nav-link" aria-current="page" style="display: none;" href="/saveDevice" id="save-devices-id">Devices</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" style="display: none;" id="users-management-id" href="/usersManagement"><i class="bi bi-person-square"></i>
-              Users</a>
+            <a class="nav-link" aria-current="page" style="display: none;" id="users-management-id" href="/usersManagement">Users</a>
           </li>
         </ul>
         <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
@@ -59,7 +61,7 @@
               Login</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" onclick="logout()" id="logout-id" ><i class="bi bi-box-arrow-left"></i>
+            <a class="nav-link active px-3 logout-div" aria-current="page" onclick="logout()" id="logout-id" ><i class="bi bi-box-arrow-left"></i>
               Logout</a>
           </li>
         </ul>
@@ -84,6 +86,18 @@
       </div>
     </div>
   </div>
+
+
+  <div class="overlay" id="loading-overlay">
+    <div class="overlay__inner">
+      <div class="overlay__content"><span class="spinner"></span></div>
+      </div>
+  </div>
+
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 5">
+    <div id="toastContainer"></div>
+  </div>
+
 </body>
 
 </html>

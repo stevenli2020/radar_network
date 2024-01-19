@@ -25,13 +25,13 @@ def getRoomData(req, admin):
     # sql = "SELECT * FROM ROOMS_DETAILS WHERE MAC='%s'"%(req['MAC'])
     sql = ''
     if admin:
-        sql = "SELECT ROOMS_DETAILS.*, DEVICES.LAST_DATA_RECEIVED FROM Gaitmetrics.ROOMS_DETAILS JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC GROUP BY ROOMS_DETAILS.ID"
+        sql = "SELECT ROOMS_DETAILS.*, DEVICES.LAST_DATA_RECEIVED, ROOMS_ON_MAP.x, ROOMS_ON_MAP.y, ROOMS_ON_MAP.w, ROOMS_ON_MAP.h FROM Gaitmetrics.ROOMS_DETAILS JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC LEFT JOIN Gaitmetrics.ROOMS_ON_MAP ON ROOMS_DETAILS.ID=ROOMS_ON_MAP.ID GROUP BY ROOMS_DETAILS.ID"
     else:
-        sql = "SELECT ROOMS_DETAILS.*, DEVICES.LAST_DATA_RECEIVED FROM Gaitmetrics.ROOMS_DETAILS JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC RIGHT JOIN Gaitmetrics.RL_USER_ROOM ON ROOMS_DETAILS.ID=RL_USER_ROOM.ROOM_ID WHERE RL_USER_ROOM.USER_ID='%s' GROUP BY ROOMS_DETAILS.ID"%(req['ID'])
+        sql = "SELECT ROOMS_DETAILS.*, DEVICES.LAST_DATA_RECEIVED, ROOMS_ON_MAP.x, ROOMS_ON_MAP.y, ROOMS_ON_MAP.w, ROOMS_ON_MAP.h FROM Gaitmetrics.ROOMS_DETAILS JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC LEFT JOIN Gaitmetrics.ROOMS_ON_MAP ON ROOMS_DETAILS.ID=ROOMS_ON_MAP.ID RIGHT JOIN Gaitmetrics.RL_USER_ROOM ON ROOMS_DETAILS.ID=RL_USER_ROOM.ROOM_ID WHERE RL_USER_ROOM.USER_ID='%s' GROUP BY ROOMS_DETAILS.ID"%(req['ID'])
     cursor.execute(sql)
     # one device one room
     # result["DATA"] = [{"ID": ID, "ROOM_NAME": ROOM_NAME, "MAC": MAC, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "RADAR_X_LOC": RADAR_X_LOC, "RADAR_Y_LOC":RADAR_Y_LOC, "IMAGE_NAME": IMAGE_NAME} for (ID, ROOM_NAME, MAC, ROOM_X, ROOM_Y, RADAR_X_LOC, RADAR_Y_LOC, IMAGE_NAME) in cursor]
-    result["DATA"] = [{"ID": ID, "ROOM_LOC": ROOM_LOC, "ROOM_NAME": ROOM_NAME, "ROOM_UUID":ROOM_UUID, "IMAGE_NAME": IMAGE_NAME, "INFO": INFO, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "STATUS":STATUS, "OCCUPANCY":OCCUPANCY, "LAST_DATA_TS":LAST_DATA_TS, "LAST_DATA_RECEIVED": LAST_DATA_RECEIVED} for (ID, ROOM_LOC, ROOM_NAME, ROOM_UUID, IMAGE_NAME, INFO, ROOM_X, ROOM_Y, STATUS, OCCUPANCY, LAST_DATA_TS, LAST_DATA_RECEIVED) in cursor]
+    result["DATA"] = [{"ID": ID, "ROOM_LOC": ROOM_LOC, "ROOM_NAME": ROOM_NAME, "ROOM_UUID":ROOM_UUID, "IMAGE_NAME": IMAGE_NAME, "INFO": INFO, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "STATUS":STATUS, "OCCUPANCY":OCCUPANCY, "LAST_DATA_TS":LAST_DATA_TS, "LAST_DATA_RECEIVED": LAST_DATA_RECEIVED, "x":x, "y":y, "w":w, "h":h} for (ID, ROOM_LOC, ROOM_NAME, ROOM_UUID, IMAGE_NAME, INFO, ROOM_X, ROOM_Y, STATUS, OCCUPANCY, LAST_DATA_TS, LAST_DATA_RECEIVED,x,y,w,h) in cursor]
     for room in result["DATA"]:
         cursor.execute(f"""SELECT `ID`,`TIMESTAMP`,`URGENCY`,`TYPE`,`DETAILS`,`NOTIFY` ,`NOTIFY_TIMESTAMP` FROM `ALERT` WHERE `ROOM_ID`={room["ID"]} AND `NOTIFY`=0 GROUP BY `URGENCY` ORDER BY `URGENCY` DESC;""")
         room["ALERTS"] = [{"ID":ID,"TIMESTAMP":TIMESTAMP,"URGENCY": URGENCY, "TYPE": TYPE,"DETAILS":DETAILS,"NOTIFY":NOTIFY,"NOTIFY_TIMESTAMP":NOTIFY_TIMESTAMP} for (ID,TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP ) in cursor]
@@ -210,5 +210,75 @@ def readRoomAlertsData(alerts):
     except Exception as e:
         print(e)
         return {
+            "RESULT": False
+        }
+    
+def getFilterLocationHistoryData(room_id):
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    result = defaultdict(list)
+
+    sql = f"SELECT X_START,X_END,Y_START,Y_END FROM `ROOMS_FILTER_AREA` WHERE `ROOM_ID`='{room_id}'"
+    print(sql)
+    cursor.execute(sql)   
+    result["DATA"] = [{"X_START":X_START, "X_END":X_END, "Y_START":Y_START, "Y_END":Y_END} for (X_START,X_END,Y_START,Y_END) in cursor]
+    
+    cursor.close()
+    connection.close()
+    print("Result",result)
+    return result
+
+def updateFilterLocationHistoryData(room_id,data):
+    try:
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor()
+        result = defaultdict(list)
+        print(result)
+        sql = f"DELETE FROM `ROOMS_FILTER_AREA` WHERE `ROOM_ID`='{room_id}'"
+        cursor.execute(sql)   
+        connection.commit() 
+        print(sql)
+        
+        for row in data:
+            sql = f"""INSERT INTO `ROOMS_FILTER_AREA` (ROOM_ID,X_START,X_END,Y_START,Y_END) VALUES ('{room_id}','{row["X_START"]}','{row["X_END"]}','{row["Y_START"]}','{row["Y_END"]}');"""
+            cursor.execute(sql)   
+            connection.commit() 
+            print(sql)
+        cursor.close()
+        connection.close()
+        return {
+            "RESULT": True
+        }
+    except Exception as e:
+        print(e)
+        return {
+            "RESULT": False
+        }
+    
+def updateRoomLocationOnMapData(data):
+    try:
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor()
+        result = defaultdict(list)
+        print(result)
+        sql = f"DELETE FROM `ROOMS_ON_MAP`;"
+        cursor.execute(sql)   
+        connection.commit() 
+        print(sql)
+        
+        for row in data:
+            sql = f"""INSERT INTO `ROOMS_ON_MAP` (ID,x,y,w,h) VALUES ({row["ID"]},'{row["x"]}','{row["y"]}','{row["w"]}','{row["h"]}');"""
+            cursor.execute(sql)   
+            connection.commit() 
+            print(sql)
+        cursor.close()
+        connection.close()
+        return {
+            "RESULT": True
+        }
+    except Exception as e:
+        print(e)
+        return {
+            "ERROR":str(e),
             "RESULT": False
         }

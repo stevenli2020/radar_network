@@ -8,22 +8,22 @@ from collections import defaultdict
 config = config()
 
 def auth(data):    
-    sql = "SELECT * FROM USERS WHERE LOGIN_NAME='%s' AND ID='%s' AND CODE='%s' AND TYPE='%s'"%(data['Username'], data['ID'], data['CODE'], data['TYPE'])
+    sql = "SELECT * FROM USERS WHERE `LOGIN_NAME`='%s' AND `ID`='%s' AND `CODE`='%s' AND `TYPE`='%s'"%(data.get('Username'), data.get('ID'), data.get('CODE'), data.get('TYPE'))
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     cursor.execute(sql)
-    dbresult = cursor.fetchone()
+    dbresult = cursor.fetchall()
     login = False
     admin = False
-    if not dbresult:
+    if len(dbresult)==1:
         login = False
         admin = False
     cursor.close()
     connection.close()
-    if data['TYPE'] == '0':
+    if data.get('TYPE') == '0':
         login = True
         admin = False
-    elif data['TYPE'] == '1':
+    elif data.get('TYPE') == '1':
         login = True
         admin = True
     return login, admin

@@ -1,0 +1,14 @@
+version: '3'
+services:
+  react-app-dev:
+    image: node:14
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3001"  # Change this line to map host port 3001 to container port 3001
+    volumes:
+      - ./src:/usr/src/app/src
+    environment:
+      NODE_ENV: development
+    command: npm run start:dev

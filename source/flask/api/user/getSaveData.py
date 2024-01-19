@@ -434,21 +434,35 @@ def getSummaryDataofPosition(data):
     elif t == "MONTH":
         timeRange = "1 MONTH" 
     # macString = "IN ('"+db[0]+"','"+db[1]+"')"
-    sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE FROM ROOMS_DETAILS RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N, N, data['DEVICEMAC'])
+    sql = "SELECT ROOM_X*%d AS X_RANGE,ROOM_Y*%d AS Y_RANGE,ID FROM ROOMS_DETAILS RIGHT JOIN RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE RL_ROOM_MAC.MAC='%s';" %(N, N, data['DEVICEMAC'])
     cursor.execute(sql)
     dbresult = cursor.fetchone()    
     X_RANGE = int(dbresult[0])
-    Y_RANGE = int(dbresult[1])  
+    Y_RANGE = int(dbresult[1])
+    ROOM_ID = int(dbresult[2])  
+
+    sql = "SELECT X_START, X_END, Y_START, Y_END FROM ROOMS_FILTER_AREA WHERE ROOM_ID='%s';"%(ROOM_ID)
+    cursor.execute(sql)
+    areas = cursor.fetchall()    
+    filtering = ""
+    for area in areas:
+        X_START = area[0]
+        X_END = area[1]
+        Y_START = area[2]
+        Y_END = area[3]
+        if (filtering == ""):
+            filtering = f" AND ((PX < {X_START} OR PX > {X_END}) AND (PY < {Y_START} OR PY > {Y_END})"
+        else:
+            filtering += f" AND (PX < {X_START} OR PX > {X_END}) AND (PY < {Y_START} OR PY > {Y_END})"
+
+    if (filtering != ""):
+            filtering += ")"  
+
     if t == "CUSTOM":
-        if (data['DEVICEMAC'] == 'F412FAE252E8'):
-            sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND PY IS NOT NULL AND ((`PX` < 2.6 OR `PX` > 4.0) AND (`PY` < 3.0 OR `PY` > 3.4));" %(data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'])
-        else:
-            sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'])
+        sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND PY IS NOT NULL%s;" %(data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'],filtering)
     else:
-        if (data['DEVICEMAC'] == 'F412FAE252E8'):
-            sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL AND ((`PX` < 2.6 OR `PX` > 4.0) AND (`PY` < 3.0 OR `PY` > 3.4));" %(data['DEVICEMAC'], timeRange)
-        else:
-            sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL;" %(data['DEVICEMAC'], timeRange)
+        sql = "SELECT ROUND((MAX(PX)-MIN(PX)),1) AS DELTA_X,ROUND((MAX(PY)-MIN(PY)),1) AS DELTA_Y,ROUND(MIN(PX),1),ROUND(MIN(PY),1) FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND PY IS NOT NULL%s;" %(data['DEVICEMAC'], timeRange,filtering)
+    print(sql)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
     # print(dbresult)
@@ -464,16 +478,11 @@ def getSummaryDataofPosition(data):
 
     HMAP = np.zeros((X_RANGE*3, Y_RANGE*3))
     if t == "CUSTOM":
-        if (data['DEVICEMAC'] == 'F412FAE252E8'):
-            sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND `PY` IS NOT NULL AND ((`PX` < 2.6 OR `PX` > 4.0) AND (`PY` < 3.0 OR `PY` > 3.4)) GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'])
-        else:
-            sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'])
+        sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` BETWEEN '%s' AND '%s' AND `PX` IS NOT NULL AND `PY` IS NOT NULL%s GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], data['TIMESTART'], data['TIMEEND'],filtering)
     else:
-        if (data['DEVICEMAC'] == 'F412FAE252E8'):
-            sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL AND ((`PX` < 2.6 OR `PX` > 4.0) AND (`PY` < 3.0 OR `PY` > 3.4)) GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
-        else:
-            sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange)
-    # print(sql)
+        sql = "SELECT CONCAT(ROUND(PX*%d),',',ROUND(PY*%d)) AS XY,COUNT(*) AS CNT FROM Gaitmetrics.PROCESSED_DATA WHERE MAC='%s' AND `TIMESTAMP` > DATE_SUB(NOW(), INTERVAL %s) AND `PX` IS NOT NULL AND `PY` IS NOT NULL%s GROUP BY XY ORDER BY XY ASC;" %(N, N, data['DEVICEMAC'], timeRange,filtering)
+    print(sql)
+    print(filtering)
     cursor.execute(sql)
     dbresult = cursor.fetchall() 
     cursor.close()

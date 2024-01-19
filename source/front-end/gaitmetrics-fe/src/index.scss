@@ -1,0 +1,57 @@
+@import '~bootstrap/scss/bootstrap';
+
+:root {
+  --geekblue-1: #f0f5ff;
+  --geekblue-2: #d6e4ff;
+  --geekblue-3: #adc6ff;
+  --geekblue-4: #85a5ff;
+  --geekblue-5: #597ef7;
+  --geekblue-6: #2f54eb;
+  --geekblue-7: #1d39c4;
+  --geekblue-8: #10239e;
+  --geekblue-9: #061178;
+  --geekblue-10: #030852;
+}
+
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  background-color: var(--geekblue-1);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+#root{
+  height: 100vh;
+  width: 100vw;
+}
+
+.min-max-container{
+  // padding: 10px 0 10px 0;
+}
+
+.grid-layout{
+  // background-color: white;
+  height: 50vh;
+  width: 60vw;
+}
+
+.grid-item {
+  background-color: #2196f3;
+  padding: 8px;
+  border-radius: 4px;
+  color: white;
+}
+
+.red-background{
+  background-color: red;
+}

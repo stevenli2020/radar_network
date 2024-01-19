@@ -8,14 +8,41 @@
     <div class="row mt-2 justify-content-center" id="track-chart-row" >
         <div class="col-lg-6 col-sm-12" id="real-time" style="position: relative;">
             <div style="position: relative;">
-                <h5 id="realtime-location-chart-title" style="position: absolute; z-index: 1;color: white;left: 10px;top: 2%;">Real-time location</h5>
+                <h5 id="realtime-location-chart-title" style="position: absolute; z-index: 1;color: rgb(0, 0, 0);left: 10px;top: 2%;">Real-time location</h5>
                 <div id="Scatter" ></div>
                 <div id="empty-lable">Empty</div>
+                <div class="legend" id="status-label">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #080808;"></div>
+                        <div class="legend-label">None</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f8fc03;"></div>
+                        <div class="legend-label">Moving</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #0918e3;"></div>
+                        <div class="legend-label">Upright</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #8d61be;"></div>
+                        <div class="legend-label">Laying</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #fc0303;"></div>
+                        <div class="legend-label">Fall</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #20fc03;"></div>
+                        <div class="legend-label">Social</div>
+                    </div>
+                </div>
             </div>
             
             <br>
         </div>
         <div class="col-lg-6 col-sm-12" style="position: relative;">
+            <h5 id="history-location-chart-title" style="position: absolute; z-index: 1;left: 20px;top: 2%;color: rgb(0, 0, 0);">Location History</h5>
             <ul class="nav nav-tabs justify-content-center heatmap-tab" id="locTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="hour-loc-tab" data-bs-toggle="tab" data-bs-target="#hour-loc-tab-pane" type="button" role="tab" aria-controls="hour-loc-tab-pane" aria-selected="true">Hour</button>
@@ -38,8 +65,9 @@
                     <input type="text" id="loc-datetime-input" name="loc-datetimes" />
                 </div>
             </div>
-            <h5 id="history-location-chart-title" style="position: absolute; z-index: 1;left: 20px;top: 2%;color: white;">Location History</h5>
             <div id="history-loc-heatmap"></div>
+
+            <button style="float: right;" class="button-18" id="edit-location">Edit</button>
         </div>
         
     </div>
@@ -47,7 +75,7 @@
         
         <div class="col-lg-6 col-sm-12">
             <div style="padding-left: 2%; padding-right: 2.5%;">
-                <div class="row mt-5" id="vital-row" style="backdrop-filter: blur(35px);color: white;">
+                <div class="row mt-5" id="vital-row" style="backdrop-filter: blur(35px);color: rgb(0, 0, 0);">
                     <div class="col-3" style="position: relative;">
                         <h5 id="vital-chart-title" style="position: absolute; z-index: 1;left: 10px;top: 2%;">Vital Signs</h5>
                         <h5 id="heart-rate-title">Heart Rate</h5>
@@ -92,7 +120,7 @@
         </div>
         <div class="col-lg-6 col-sm-12">
             <div style="position: relative;" id="multiBarContainer">
-                <h5 id="history-analytic-chart-title" style="position: absolute; z-index: 1;left: 10px;top: 2%;color: white;">Occupancy Status History</h5>
+                <h5 id="history-analytic-chart-title" style="position: absolute; z-index: 1;left: 10px;top: 2%;color: rgb(0, 0, 0);">Occupancy Status History</h5>
                 <div id="multiBarHori" class="mt-5" style="width:90%"></div>
                 <div style="text-align: left;">
                     <p id="in-bed-hour"></p>

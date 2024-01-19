@@ -14,6 +14,14 @@ services:
       TZ: Asia/Singapore    
     networks:
       - net01    
+    depends_on:
+      - redis  # This ensures that the Flask app starts after the Redis container
+
+  redis:
+    image: "redis:latest"
+    restart: always
+    networks:
+      - net01
   
 networks:
   net01:

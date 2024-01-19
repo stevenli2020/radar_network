@@ -45,7 +45,7 @@ function randR() {
 }
 optionLine = {
   textStyle: {
-    color: "#fff",
+    color: "#000",
   },
   // Make gradient line here
   visualMap: [
@@ -184,7 +184,7 @@ optionLine = {
       end: 100,
       xAxisIndex: [0, 1],
       textStyle: {
-        color: "#fff"
+        color: "#000"
       }
     },
     // {

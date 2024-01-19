@@ -72,6 +72,7 @@ getRoomData();
 // setInterval(getRoomData, 5000, 5)
 
 async function getRoomData(t = 1) {
+  showLoading()
   await fetch(`${host}/api/getRoomDetails`, {
     method: "POST",
     headers: {
@@ -81,6 +82,7 @@ async function getRoomData(t = 1) {
   })
     .then((response) => response.json())
     .then((data) => {
+
       if (data.DATA) {
         while (indiCard.firstChild) {
           indiCard.removeChild(indiCard.firstChild);
@@ -90,9 +92,13 @@ async function getRoomData(t = 1) {
           else updateCard(d);
         });
       }
+
+      hideLoading()
     })
     .catch((error) => {
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
+      hideLoading()
     });
 }
 
@@ -102,6 +108,7 @@ async function getSpecificDevice(mac, t = 1) {
   };
   let result = null;
   Object.assign(rData, RequestData());
+  showLoading()
   await fetch(`${host}/getRegDevice`, {
     method: "POST",
     headers: {
@@ -115,9 +122,13 @@ async function getSpecificDevice(mac, t = 1) {
       if (data.DATA) {
         result = data.DATA;
       }
+
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
     });
   return result;
 }
@@ -203,7 +214,7 @@ function addCard(d) {
   let rowS = document.createElement("div");
   firDiv.setAttribute("class", "ag-courses_item");
   secDiv.style.position = "absolute";
-  secDiv.style.bottom = "1%";
+  secDiv.style.bottom = "5%";
   secDiv.style.right = "5%";
 
   firDiv.addEventListener("mouseover", function (event) {
@@ -264,7 +275,7 @@ function addCard(d) {
     // secDiv.innerHTML = `
     //   <i style='color: red; margin-right: 20px;' class='bi bi-trash3 tooltipcss' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Delete</span></i>&nbsp;&nbsp;&nbsp;<i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"><span class='tooltiptextcss'>Update</span></i>
     //   `;
-    secDiv.innerHTML = `<i id="popper-firstDiv" style="cursor: pointer;" class="bi bi-three-dots icon-popper-${d.ROOM_UUID}"  aria-describedby="tooltip-popper"></i>
+    secDiv.innerHTML = `<i id="popper-firstDiv" style="cursor: pointer;" class="bi bi-three-dots-vertical icon-popper-${d.ROOM_UUID}"  aria-describedby="tooltip-popper"></i>
     <div id="tooltip-popper" class="tooltip-popper-${d.ROOM_UUID}" role="tooltip-popper">
       <i style='color: green; cursor: pointer;float: left; width: 50%; margin-top: 4px;' class='bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='update' data-bs-whatever="${d.ROOM_UUID}"></i>&nbsp;&nbsp;&nbsp;<i style='color: red; cursor: pointer;float: left; width: 50%; margin-top: 4px;' class='bi bi-trash3' class='btn btn-danger' data-bs-toggle='modal' data-bs-target='#room-update-modal' attr='delete' data-bs-whatever="${d.ROOM_UUID}"></i>
     <div id="arrow-popper" data-popper-arrow></div>
@@ -433,6 +444,7 @@ async function addNewRoom() {
   };
   Object.assign(RData, RequestData());
   console.log(RData);
+  showLoading()
   await fetch(`${host}/api/addNewRoom`, {
     method: "POST",
     headers: {
@@ -447,7 +459,10 @@ async function addNewRoom() {
       console.log(data);
       if ("DATA" in data) {
         // console.log(data)
-        location.reload();
+        // location.reload();
+        showToast("New room added!", true);
+        getRoomData()
+        document.getElementById("close-add-modal").click()
       } else {
         if ("ROOM_NAME" in data.ERROR[0]) {
           addRoomNameError.innerText = data.ERROR[0].ROOM_NAME;
@@ -470,9 +485,12 @@ async function addNewRoom() {
         //   imgUpload.style.border = borderRed
         // }
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
       addRoomSubmitBtn.disabled = false;
     });
 }
@@ -540,6 +558,7 @@ async function updateRoom() {
   };
   Object.assign(RData, RequestData());
   console.log(RData);
+  showLoading()
   await fetch(`${host}/api/updateRoom`, {
     method: "POST",
     headers: {
@@ -554,7 +573,10 @@ async function updateRoom() {
       console.log(data);
       if ("DATA" in data) {
         // console.log(data)
-        location.reload();
+        // location.reload();
+        showToast("Room information updated!", true);
+        getRoomData()
+        document.getElementById("close-update-modal").click()
       } else {
         if ("ROOM_NAME" in data.ERROR[0]) {
           updateRoomNameError.innerText = data.ERROR[0].ROOM_NAME;
@@ -577,9 +599,12 @@ async function updateRoom() {
         //   imgUpload.style.border = borderRed
         // }
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       console.error("Error:", error);
+      showToast("Error"+String(error), false);
       updateRoomSubmitBtn.disabled = false;
     });
 }
@@ -590,6 +615,7 @@ async function deletRoom() {
     IMAGE_NAME: updateRoomSubmitBtn.getAttribute("img"),
   };
   Object.assign(Rdata, RequestData());
+  showLoading()
   await fetch(`${host}/api/deleteRoom`, {
     method: "POST",
     headers: {
@@ -600,10 +626,16 @@ async function deletRoom() {
     .then((response) => response.json())
     .then((data) => {
       if ("DATA" in data) {
-        location.reload();
+        // location.reload();
+        showToast("Room deleted!", true);
+        getRoomData()
+        document.getElementById("close-update-modal").click()
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
 }
@@ -618,6 +650,7 @@ updateRoomBtn.addEventListener("show.bs.modal", async (event) => {
     ROOM_UUID: roomId,
   };
   Object.assign(Rdata, RequestData());
+  showLoading()
   await fetch(`${host}/api/getRoomDetail`, {
     method: "POST",
     headers: {
@@ -638,7 +671,7 @@ updateRoomBtn.addEventListener("show.bs.modal", async (event) => {
           updateRoomSubmitBtn.setAttribute("o-img-name", d.IMAGE_NAME);
           updateRoomSubmitBtn.removeAttribute("onclick");
           updateRoomSubmitBtn.setAttribute("onclick", "updateRoom()");
-          updateRoomSubmitBtn.innerText = "update";
+          updateRoomSubmitBtn.innerText = "Update";
           updateRoomFormTitle.innerText = "Update Room";
           updateRoomName.value = d.ROOM_NAME;
           updateRoomLoc.value = d.ROOM_LOC;
@@ -660,7 +693,7 @@ updateRoomBtn.addEventListener("show.bs.modal", async (event) => {
           updateRoomForm.style.display = "none";
           updateRoomSubmitBtn.classList.remove("btn-primary");
           updateRoomSubmitBtn.classList.add("btn-danger");
-          updateRoomSubmitBtn.innerText = "delete";
+          updateRoomSubmitBtn.innerText = "Delete";
           updateRoomSubmitBtn.removeAttribute("onclick");
           updateRoomSubmitBtn.setAttribute("uuid", d.ROOM_UUID);
           updateRoomSubmitBtn.setAttribute("img", d.IMAGE_NAME);
@@ -669,8 +702,11 @@ updateRoomBtn.addEventListener("show.bs.modal", async (event) => {
           deleteRoomP.innerHTML = `Are you sure you want to delete, <strong>${d.ROOM_NAME}</strong>?`;
         }
       });
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
 });

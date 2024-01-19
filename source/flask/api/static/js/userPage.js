@@ -43,152 +43,309 @@ if(!checkAdmin()){
 
 let Rdata = RequestData();
 var screenWidth = screen.width;
-fetch(`${host}/getAllUsers`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(Rdata),
-})
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data); 
-     
-    if(data.DATA){
-      let tHeadA = document.createElement('thead')
-      let tBodyA = document.createElement('tbody')
-      let tHeadU = document.createElement('thead')
-      let tBodyU = document.createElement('tbody')
-      // console.log(screenWidth)
-      if(screenWidth <= 415){
-        removeChildEl("admin-user-table")        
-        removeChildEl("user-data-table")        
-        tHeadA.innerHTML = `<tr><th>Id</th><th>Login Name</th><th>Email</th><th>Status</th><th>Option</th></tr>`
-        tHeadU.innerHTML = `<tr><th>Id</th><th>Login Name</th><th>Email</th><th>Status</th><th>Option</th></tr>`
-        adminUsersTable.appendChild(tHeadA)
-        adminUsersTable.appendChild(tBodyA)
-        adminUsersTable.style.fontSize = "small";
-        usersTable.appendChild(tHeadU)
-        usersTable.appendChild(tBodyU)
-        usersTable.style.fontSize = "small";
-      } else if(screenWidth <= 821){
-        removeChildEl("admin-user-table")        
-        removeChildEl("user-data-table")        
-        tHeadA.innerHTML = `<tr><th>Id</th><th>Login Name</th><th>Fullname</th><th>Email</th><th>Phone</th><th>Status</th><th>Option</th></tr>`
-        tHeadU.innerHTML = `<tr><th>Id</th><th>Login Name</th><th>Fullname</th><th>Email</th><th>Phone</th><th>Status</th><th>Option</th></tr>`
-        adminUsersTable.appendChild(tHeadA)
-        adminUsersTable.appendChild(tBodyA)
-        adminUsersTable.style.fontSize = "small";
-        usersTable.appendChild(tHeadU)
-        usersTable.appendChild(tBodyU)
-        usersTable.style.fontSize = "small";
-      }
-      data.DATA.forEach(d => {
-        created = String(d.CREATED)
-        lastModified = String(d.LAST_UPDATE)
-        userStatus = checkStatus(d.STATUS)
-        newRow = ''
-        if(d.TYPE == 0){   
-          let macArr = []  
-          if(d.ROOM_NAME != null){
-            let macA = []
-            if(d.ROOM_NAME.includes(',')){
-              macA = d.ROOM_NAME.split(",")              
-            } else {
-              macA.push(d.ROOM_NAME)
-            }            
-            for(var i=0; i<macA.length; i++){
-              macArr.push(macA[i])
-            }
-          }
-          
-          if(screenWidth <= 415){
-            newRow = $(
-              "<tr><td>"+d.ID+"</td><td>"+d.LOGIN_NAME+"</td><td style='word-break: break-word;'>"+d.EMAIL+"</td><td>"+userStatus+"</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Update User</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Delete User</span></i>&nbsp;&nbsp;<i class='bi bi-envelope tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Reset Password</span></i></td></tr>"
-            )
-          } else if (screenWidth <= 821) {
-            newRow = $(
-              "<tr><td>"+d.ID+"</td><td>"+d.LOGIN_NAME+"</td><td>"+d.FULL_NAME+"</td><td style='word-break: break-word;'>"+d.EMAIL+"</td><td>"+d.PHONE+"</td><td>"+userStatus+"</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Update User</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Delete User</span></i>&nbsp;&nbsp;<i class='bi bi-envelope tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Reset Password</span></i></td></tr>"
-            )
-          } else {
-            // macArr.map(m => `<strong style="color: #67a9c9;"> ${m}</strong>`)
-            newRow = $(
-              "<tr><td>"+d.ID+"</td><td>"+d.LOGIN_NAME+"</td><td>"+d.FULL_NAME+"</td><td style='word-break: break-word;'>"+d.EMAIL+"</td><td>"+d.PHONE+"</td><td>"+userStatus+"</td><td style='word-break: break-word;'>"+d.CODE+"</td><td style='word-break: break-word;'>"+created.substring(0, created.length - 3)+"</td><td style='word-break: break-word;color: #67a9c9;font-weight: bold;'>"+d.ROOM_NAME+"</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Update User</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Delete User</span></i>&nbsp;&nbsp;<i class='bi bi-envelope tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Reset Password</span></i></td></tr>"
-            )
-          }               
-          $("#user-data-table tbody").append(newRow);
-        } else {
-          if(screenWidth <= 415){
-            newRow = $(
-              "<tr><td>"+d.ID+"</td><td>"+d.LOGIN_NAME+"</td><td style='word-break: break-word;'>"+d.EMAIL+"</td><td>"+userStatus+"</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Update User</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Delete User</span></i>&nbsp;&nbsp;<i class='bi bi-envelope tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Reset Password</span></i></td></tr>"
-            )
-          } else if (screenWidth <= 821) {
-            newRow = $(
-              "<tr><td>"+d.ID+"</td><td>"+d.LOGIN_NAME+"</td><td>"+d.FULL_NAME+"</td><td style='word-break: break-word;'>"+d.EMAIL+"</td><td>"+d.PHONE+"</td><td>"+userStatus+"</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Update User</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Delete User</span></i>&nbsp;&nbsp;<i class='bi bi-envelope tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Reset Password</span></i></td></tr>"
-            )
-          } else {
-            newRow = $(
-              "<tr><td>"+d.ID+"</td><td>"+d.LOGIN_NAME+"</td><td>"+d.FULL_NAME+"</td><td style='word-break: break-word;'>"+d.EMAIL+"</td><td>"+d.PHONE+"</td><td>"+userStatus+"</td><td style='word-break: break-word;'>"+d.CODE+"</td><td style='word-break: break-word;'>"+created.substring(0, created.length - 3)+"</td><td style='word-break: break-word;'>"+lastModified.substring(0, lastModified.length - 3)+"</td><td><i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Update User</span></i>&nbsp;&nbsp;<i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Delete User</span></i>&nbsp;&nbsp;<i class='bi bi-envelope tooltipcss' data-bs-toggle='modal'  data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever=" +
-              d.ID +
-              "><span class='tooltiptextcss'>Reset Password</span></i></td></tr>"
-            )
-          }
-          $("#admin-user-table tbody").append(newRow);
-        }
-      })
-      $("#admin-user-table").dataTable({
-        order: [[0, "desc"]],
-      });
-      $("#user-data-table").dataTable({
-        order: [[0, "desc"]],
-      });
-    } else {
-      $("#admin-user-table").dataTable({
-        order: [[0, "desc"]],
-      });
-      $("#user-data-table").dataTable({
-        order: [[0, "desc"]],
-      });
-    }
+
+function getAdminTableHeaders() {
+  if (screenWidth <= 415) {
+    return [
+      "<th>Id</th>",
+      "<th>Login Name</th>",
+      "<th>Email</th>",
+      "<th>Status</th>",
+      "<th>Option</th>",
+    ];
+  } else if (screenWidth <= 821) {
+    return [
+      "<th>Id</th>",
+      "<th>Login Name</th>",
+      "<th>Fullname</th>",
+      "<th>Email</th>",
+      "<th>Phone</th>",
+      "<th>Status</th>",
+      "<th>Option</th>",
+    ];
+  } else {
+    return [
+      "<th>Id</th>",
+      "<th>Login Name</th>",
+      "<th>Fullname</th>",
+      "<th>Email</th>",
+      "<th>Phone</th>",
+      "<th>Status</th>",
+      "<th>Code</th>",
+      "<th>Created</th>",
+      "<th>Last Modified</th>",
+      "<th>Manage</th>",
+    ];
+  }
+}
+
+function getUserTableHeaders() {
+  if (screenWidth <= 415) {
+    return [
+      "<th>Id</th>",
+      "<th>Login Name</th>",
+      "<th>Email</th>",
+      "<th>Status</th>",
+      "<th>Option</th>",
+    ];
+  } else if (screenWidth <= 821) {
+    return [
+      "<th>Id</th>",
+      "<th>Login Name</th>",
+      "<th>Fullname</th>",
+      "<th>Email</th>",
+      "<th>Phone</th>",
+      "<th>Status</th>",
+      "<th>Option</th>",
+    ];
+  } else {
+    return [
+      "<th>Id</th>",
+      "<th>Login Name</th>",
+      "<th>Fullname</th>",
+      "<th>Email</th>",
+      "<th>Phone</th>",
+      "<th>Status</th>",
+      "<th>Code</th>",
+      "<th>Created</th>",
+      "<th>Assign Room</th>",
+      "<th>Manage</th>",
+    ];
+  }
+}
+
+function getTableUserRow(d) {
+  const created = String(d.CREATED);
+  const lastModified = String(d.LAST_UPDATE);
+  const userStatus = checkStatus(d.STATUS);
+
+  let newRow = "";
+
+  if (screenWidth <= 415) {
+    newRow = createUserRow(d, userStatus, created, null);
+  } else if (screenWidth <= 821) {
+    newRow = createUserRow(d, userStatus, created, d.FULL_NAME);
+  } else {
+    newRow = createUserRowWithCode(d, userStatus, created, lastModified);
+  }
+
+  return newRow;
+}
+
+function getTableAdminRow(d) {
+  const created = String(d.CREATED);
+  const lastModified = String(d.LAST_UPDATE);
+  const userStatus = checkStatus(d.STATUS);
+
+  let newRow = "";
+
+  if (screenWidth <= 415) {
+    newRow = createAdminRow(d, userStatus);
+  } else if (screenWidth <= 821) {
+    newRow = createAdminRow(d, userStatus, d.FULL_NAME);
+  } else {
+    newRow = createAdminRowWithCode(d, userStatus, created, lastModified);
+  }
+
+  return newRow;
+}
+
+function createUserRow(d, userStatus, created, extraColumn) {
+  return $(
+    `<tr>
+      <td>${d.ID}</td>
+      <td>${d.LOGIN_NAME}</td>
+      <td style='word-break: break-word;'>${d.EMAIL}</td>
+      <td>${userStatus}</td>
+      <td>
+        <i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Update User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Delete User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i class='bi bi-envelope tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Reset Password</span>
+        </i>
+      </td>
+    </tr>`
+  );
+}
+
+function createAdminRow(d, userStatus, extraColumn) {
+  return $(
+    `<tr>
+      <td>${d.ID}</td>
+      <td>${d.LOGIN_NAME}</td>
+      <td style='word-break: break-word;'>${d.EMAIL}</td>
+      <td>${userStatus}</td>
+      <td>
+        <i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Update User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Delete User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i class='bi bi-envelope tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Reset Password</span>
+        </i>
+      </td>
+    </tr>`
+  );
+}
+
+function createUserRowWithCode(d, userStatus, created, lastModified) {
+  return $(
+    `<tr>
+      <td>${d.ID}</td>
+      <td>${d.LOGIN_NAME}</td>
+      <td>${d.FULL_NAME}</td>
+      <td style='word-break: break-word;'>${d.EMAIL}</td>
+      <td>${d.PHONE}</td>
+      <td>${userStatus}</td>
+      <td style='word-break: break-word;'>${d.CODE}</td>
+      <td style='word-break: break-word;'>${created.substring(0, created.length - 3)}</td>
+      <td style='word-break: break-word; color: #67a9c9; font-weight: bold;'>${d.ROOM_NAME}</td>
+      <td>
+        <i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Update User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever="${d.ID}">
+          <span class 'tooltiptextcss'>Delete User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i class='bi bi-envelope tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Reset Password</span>
+        </i>
+      </td>
+    </tr>`
+  );
+}
+
+function createAdminRowWithCode(d, userStatus, created, lastModified) {
+  return $(
+    `<tr>
+      <td>${d.ID}</td>
+      <td>${d.LOGIN_NAME}</td>
+      <td>${d.FULL_NAME}</td>
+      <td style='word-break: break-word;'>${d.EMAIL}</td>
+      <td>${d.PHONE}</td>
+      <td>${userStatus}</td>
+      <td style='word-break: break-word;'>${d.CODE}</td>
+      <td style='word-break: break-word;'>${created.substring(0, created.length - 3)}</td>
+      <td style='word-break: break-word;'>${lastModified.substring(0, lastModified.length - 3)}</td>
+      <td>
+        <i style='color: green;' class='tooltipcss bi bi-pencil-square' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='update' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Update User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i style='color: red;' class='bi bi-trash3 tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='delete' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Delete User</span>
+        </i>
+        &nbsp;&nbsp;
+        <i class='bi bi-envelope tooltipcss' data-bs-toggle='modal' data-bs-target='#user-data-update-modal' attr='reset' data-bs-whatever="${d.ID}">
+          <span class='tooltiptextcss'>Reset Password</span>
+        </i>
+      </td>
+    </tr>`
+  );
+}
+
+function fetchAllUsers(){
+  showLoading()
+  fetch(`${host}/getAllUsers`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(Rdata),
   })
-  .catch((error) => {
-    submitFormBtn.disabled = false
-    console.error("Error:", error);
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data); 
+       
+      if(data.DATA){
+
+        if ($.fn.DataTable.isDataTable('#admin-user-table')) {
+          $('#admin-user-table').DataTable().destroy();
+        }
+
+        $('#admin-user-table thead').remove();
+        $('#admin-user-table tbody').remove();
+
+        if ($.fn.DataTable.isDataTable('#user-data-table')) {
+          $('#user-data-table').DataTable().destroy();
+        }
+
+        $('#user-data-table thead').remove();
+        $('#user-data-table tbody').remove();
+
+        let tHeadA = document.createElement('thead')
+        let tBodyA = document.createElement('tbody')
+        let tHeadU = document.createElement('thead')
+        let tBodyU = document.createElement('tbody')
+
+        let atableHeaders = getAdminTableHeaders()
+        let utableHeaders = getUserTableHeaders()
+
+        // Add the table headers to the thead element
+        tHeadA.innerHTML = `<tr>${atableHeaders.join('')}</tr>`;
+        adminUsersTable.appendChild(tHeadA);
+        adminUsersTable.appendChild(tBodyA);
+        adminUsersTable.style.fontSize = "small";
+
+        tHeadU.innerHTML = `<tr>${utableHeaders.join('')}</tr>`;
+        usersTable.appendChild(tHeadU);
+        usersTable.appendChild(tBodyU);
+        usersTable.style.fontSize = "small";
+
+        // Clear the existing data in the table body
+        $("#admin-user-table tbody").empty();
+        $("#user-data-table tbody").empty();
+
+        data.DATA.forEach((d) => {
+          // Populate table rows based on screen width
+          if(d.TYPE == 0){   
+            let usertableRow = getTableUserRow(d); // Define this function
+            $("#user-data-table tbody").append(usertableRow);
+          }else{
+            let admintableRow = getTableAdminRow(d); // Define this function
+            $("#admin-user-table tbody").append(admintableRow);
+          }
+        });
+
+        // Reinitialize the DataTable
+        
+        $("#admin-user-table").dataTable({
+          order: [[0, "desc"]],
+        });
+        $("#user-data-table").dataTable({
+          order: [[0, "desc"]],
+        });
+      } else {
+        $("#admin-user-table").dataTable({
+          order: [[0, "desc"]],
+        });
+        $("#user-data-table").dataTable({
+          order: [[0, "desc"]],
+        });
+      }
+      hideLoading()
+    })
+    .catch((error) => {
+      hideLoading()
+      submitFormBtn.disabled = false
+      showToast("Error"+String(error), false);
+      console.error("Error:", error);
+    });
+}
+
+fetchAllUsers()
 
 UserManagementIcon.addEventListener('show.bs.modal', async (event) => {
   const button = event.relatedTarget;
@@ -219,6 +376,7 @@ UserManagementIcon.addEventListener('show.bs.modal', async (event) => {
     }
     console.log(userId)
     Object.assign(Rdata, RequestData())
+    showLoading()
     await fetch(`${host}/getSpecificUser`, {
       method: "POST",
       headers: {
@@ -333,8 +491,11 @@ UserManagementIcon.addEventListener('show.bs.modal', async (event) => {
             }
           });
         }
+        hideLoading()
       })
       .catch((error) => {
+        hideLoading()
+        showToast("Error"+String(error), false);
         console.error("Error:", error);
       });
   } else {
@@ -361,6 +522,7 @@ async function deleteUser(){
     USER_ID: submitFormBtn.getAttribute('user-id')
   }
   Object.assign(Rdata, RequestData())
+  showLoading()
   await fetch(`${host}/deleteUser`, {
     method: "POST",
     headers: {
@@ -374,19 +536,24 @@ async function deleteUser(){
       // console.log(data);
       document.querySelector("#update-user-close-btn").click();
       if(data.DATA){
-        popupMessageTitle.innerHTML = "Delete User"
-        popupMessageBody.innerHTML = `<p><strong>${submitFormBtn.getAttribute('user-name')}</strong> has been deleted successfully</p>`
-        document.querySelector("#popupMessageOpenBtn").click()
-        setTimeout(()=>{
-          location.reload()
-        }, 3000)
+        showToast(`<p><strong>${submitFormBtn.getAttribute('user-name')}</strong> has been deleted successfully</p>`, true);
+        fetchAllUsers()
+        // popupMessageTitle.innerHTML = "Delete User"
+        // popupMessageBody.innerHTML = `<p><strong>${submitFormBtn.getAttribute('user-name')}</strong> has been deleted successfully</p>`
+        // document.querySelector("#popupMessageOpenBtn").click()
+        // setTimeout(()=>{
+        //   location.reload()
+        // }, 3000)
         
       } else {
         submitFormBtn.disabled = false
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       submitFormBtn.disabled = false
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
 }
@@ -409,6 +576,7 @@ async function updateUserDetail(){
   }
   Object.assign(Rdata, RequestData())
   console.log(Rdata)
+  showLoading()
   await fetch(`${host}/updateUser`, {
     method: "POST",
     headers: {
@@ -422,12 +590,14 @@ async function updateUserDetail(){
       // console.log(data);
       document.querySelector("#update-user-close-btn").click();
       if(data.DATA){
-        popupMessageTitle.innerHTML = "Update User"
-        popupMessageBody.innerHTML = `<p><strong>${submitFormBtn.getAttribute('user-name')}</strong> has been updated successfully</p>`
-        document.querySelector("#popupMessageOpenBtn").click()
-        setTimeout(()=>{
-          location.reload()
-        }, 3000)
+        showToast(`<p><strong>${submitFormBtn.getAttribute('user-name')}</strong> has been updated successfully</p>`, true);
+        fetchAllUsers()
+        // popupMessageTitle.innerHTML = "Update User"
+        // popupMessageBody.innerHTML = `<p><strong>${submitFormBtn.getAttribute('user-name')}</strong> has been updated successfully</p>`
+        // document.querySelector("#popupMessageOpenBtn").click()
+        // setTimeout(()=>{
+        //   location.reload()
+        // }, 3000)
       } else {
         submitFormBtn.disabled = false
         if ("Username" in data.ERROR[0]) {
@@ -451,9 +621,12 @@ async function updateUserDetail(){
           return;
         }
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       submitFormBtn.disabled = false
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
 }
@@ -464,6 +637,7 @@ async function resetUserPassword(){
     USER_ID: submitFormBtn.getAttribute('user-id')
   }
   Object.assign(Rdata, RequestData())
+  showLoading()
   await fetch(`${host}/api/sentEmail`, {
     method: "POST",
     headers: {
@@ -486,9 +660,12 @@ async function resetUserPassword(){
       } else {
         submitFormBtn.disabled = false
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       submitFormBtn.disabled = false
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
 }
@@ -558,6 +735,7 @@ async function addNewUser() {
     ROOM: roomArr,
   };
   Object.assign(FData, RequestData());
+  showLoading()
   await fetch(`${host}/usersManagement`, {
     method: "POST",
     headers: {
@@ -570,12 +748,15 @@ async function addNewUser() {
       // console.log(data);
       document.querySelector("#update-user-close-btn").click();
       if(data.DATA){
-        popupMessageTitle.innerHTML = "Add User"
-        popupMessageBody.innerHTML = `<p>New user <strong>${updateUsernameInput.value}</strong> has been added successfully</p>`
-        document.querySelector("#popupMessageOpenBtn").click()
-        setTimeout(()=>{
-          location.reload()
-        }, 3000)
+        showToast(`<p>New user <strong>${updateUsernameInput.value}</strong> has been added successfully</p>`, true);
+        fetchAllUsers()
+        // popupMessageTitle.innerHTML = "Add User"
+        // popupMessageBody.innerHTML = `<p>New user <strong>${updateUsernameInput.value}</strong> has been added successfully</p>`
+        // document.querySelector("#popupMessageOpenBtn").click()
+        // setTimeout(()=>{
+        //   location.reload()
+        // }, 3000)
+        
       } else {
         submitFormBtn.disabled = false
         if ("Username" in data.ERROR[0]) {
@@ -599,9 +780,12 @@ async function addNewUser() {
           // return;
         }
       }
+      hideLoading()
     })
     .catch((error) => {
+      hideLoading()
       submitFormBtn.disabled = false
+      showToast("Error"+String(error), false);
       console.error("Error:", error);
     });
 }

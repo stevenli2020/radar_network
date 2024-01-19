@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 # import redis
 from typing import List, Dict
 from flask import Flask, render_template, request, redirect, url_for
+from flask_cors import CORS
 import mysql.connector
 import json
 from blueprint import blueprint
@@ -26,6 +27,7 @@ from user.registerDevice import registerNewDevice
 from user.registerDevice import updateDeviceDetail
 from user.registerDevice import deleteDeviceDetail
 from user.registerDevice import getRLMacRoomData
+from user.registerDevice import insertDeviceCredential
 # from user.registerDevice import getDeviceStatusData
 # add New User
 from user.usersManagement import addNewUser
@@ -48,6 +50,9 @@ from user.roomManager import getRoomData
 from user.roomManager import getSpecificRoomData
 from user.roomManager import getRoomAlertsData
 from user.roomManager import readRoomAlertsData
+from user.roomManager import getFilterLocationHistoryData
+from user.roomManager import updateFilterLocationHistoryData
+from user.roomManager import updateRoomLocationOnMapData
 
 # add new room
 from user.roomManager import addNewRoomDetail
@@ -62,8 +67,12 @@ from user.searchDevManager import searchDevDetail
 from user.laymanDetail import getLaymanData
 
 import os
+import json
+from redis import Redis
 
 app = Flask(__name__)
+CORS(app)
+redis = Redis(host='redis', port=6379)
 app.register_blueprint(blueprint, url_prefix="")
 # app.config['MYSQL_HOST'] = "db"
 # app.config['MYSQL_USER'] = "root"
@@ -120,17 +129,17 @@ def test_table() -> List[Dict]:
 #     connection.close()
 
 # Home page
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/api', methods=['GET', 'POST'])
 def hello():
     return render_template('Home.html')
 
 # Detail page
-@app.route('/Detail', methods=['GET', 'POST'])
+@app.route('/api/Detail', methods=['GET', 'POST'])
 def Detail():
     return render_template('Detail.html')
 
 # get one register device details 
-@app.route('/getRegDevice', methods=['POST'])
+@app.route('/api/getRegDevice', methods=['POST'])
 def getRegDevice():
     # count = get_hit_count()
     if request.method == 'POST': 
@@ -142,7 +151,7 @@ def getRegDevice():
             return {"ERROR": 'Not authorized!'}
 
 # get all register device details
-@app.route('/getRegDevices', methods=['POST'])
+@app.route('/api/getRegDevices', methods=['POST'])
 def getRegDevices():
     # count = get_hit_count()
     if request.method == 'POST': 
@@ -157,7 +166,7 @@ def getRegDevices():
             return {"ERROR": 'Not authorized!'}
 
 # register new device
-@app.route('/addNewDevice', methods=['POST'])
+@app.route('/api/addNewDevice', methods=['POST'])
 def addNewDevice():
     # count = get_hit_count()
     if request.method == 'POST':
@@ -170,9 +179,23 @@ def addNewDevice():
                 return {"ERROR": 'Not authorized!'}
         else:
             return {"ERROR": 'Not authorized!'}
+        
+# register new device
+@app.route('/api/addDeviceCredential', methods=['POST'])
+def addDeviceCredential():
+    if request.method == 'POST':
+        data = request.json 
+        login, admin = auth(data)
+        if login:
+            if admin:                   
+                return insertDeviceCredential(data)
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Not authorized!'}
 
 #update register device detail
-@app.route('/updateDevice', methods=['POST'])
+@app.route('/api/updateDevice', methods=['POST'])
 def updateDevice():
     # count = get_hit_count()
     if request.method == 'POST':
@@ -187,7 +210,7 @@ def updateDevice():
             return {"ERROR": 'Not authorized!'}
 
 #delete register device
-@app.route('/deleteDevice', methods=['POST'])
+@app.route('/api/deleteDevice', methods=['POST'])
 def deleteDevice():
     # count = get_hit_count()
     if request.method == 'POST':
@@ -203,7 +226,7 @@ def deleteDevice():
 
 
 # register device mac address and date/time to save raw data
-@app.route('/saveDevice', methods=['GET', 'POST'])
+@app.route('/api/saveDevice', methods=['GET', 'POST'])
 def registerDeviceData():
     # count = get_hit_count()
     if request.method == 'POST':
@@ -214,7 +237,7 @@ def registerDeviceData():
     return render_template('SaveDevice.html')
 
 # users management page url
-@app.route('/usersManagement', methods=['GET', 'POST'])
+@app.route('/api/usersManagement', methods=['GET', 'POST'])
 def usersManagement():
     if request.method == 'POST':
         data = request.json        
@@ -232,7 +255,7 @@ def usersManagement():
     return render_template('Users.html')
 
 # update user
-@app.route('/updateUser', methods=['POST'])
+@app.route('/api/updateUser', methods=['POST'])
 def updateUser():
     if request.method == 'POST':
         data = request.json        
@@ -249,7 +272,7 @@ def updateUser():
             return {"ERROR": 'Empty json!'}
 
 # delete user
-@app.route('/deleteUser', methods=['POST'])
+@app.route('/api/deleteUser', methods=['POST'])
 def deleteUser():
     if request.method == 'POST':
         data = request.json        
@@ -266,7 +289,7 @@ def deleteUser():
             return {"ERROR": 'Empty json!'}
 
 # get all users
-@app.route('/getAllUsers', methods=['POST'])
+@app.route('/api/getAllUsers', methods=['POST'])
 def getAllUsers():
     if request.method == 'POST':
         data = request.json        
@@ -283,7 +306,7 @@ def getAllUsers():
             return {"ERROR": 'Empty json!'}
 
 # get specific user
-@app.route('/getSpecificUser', methods=['POST'])
+@app.route('/api/getSpecificUser', methods=['POST'])
 def getSpecificUsers():
     if request.method == 'POST':
         data = request.json        
@@ -297,7 +320,7 @@ def getSpecificUsers():
             return {"ERROR": 'Empty json!'}
 
 # get list of device status
-@app.route('/getStatusDevice', methods=['POST'])
+@app.route('/api/getStatusDevice', methods=['POST'])
 def getStatusDevice():
     if request.method == 'POST':
         data = request.json        
@@ -311,7 +334,7 @@ def getStatusDevice():
             return {"ERROR": 'Empty json!'}
 
 # get list of save device data
-@app.route('/getSaveDeviceRawData', methods=['POST'])
+@app.route('/api/getSaveDeviceRawData', methods=['POST'])
 def getSaveDeviceRawData():
     if request.method == 'POST':
         data = request.json        
@@ -325,7 +348,7 @@ def getSaveDeviceRawData():
             return {"ERROR": 'Empty json!'}
 
 # get one list of save device data
-@app.route('/getSaveDevice', methods=['POST'])
+@app.route('/api/getSaveDevice', methods=['POST'])
 def getSaveDevice():
     if request.method == 'POST':
         data = request.json        
@@ -339,7 +362,7 @@ def getSaveDevice():
             return {"ERROR": 'Empty json!'}
 
 # update save device time
-@app.route('/updateSaveDeviceTime', methods=['POST'])
+@app.route('/api/updateSaveDeviceTime', methods=['POST'])
 def updateSaveDeviceTime():
     if request.method == 'POST':
         data = request.json
@@ -353,7 +376,7 @@ def updateSaveDeviceTime():
             return {"ERROR": 'Empty json!'}
 
 # delete save device time
-@app.route('/deleteSaveDeviceTime', methods=['POST'])
+@app.route('/api/deleteSaveDeviceTime', methods=['POST'])
 def deleteSaveDeviceTime():
     if request.method == 'POST':
         data = request.json
@@ -366,7 +389,7 @@ def deleteSaveDeviceTime():
         else:
             return {"ERROR": 'Empty json!'}
 
-@app.route('/updateData', methods=["POST"])
+@app.route('/api/updateData', methods=["POST"])
 def updateData():
     if request.method == 'POST':
         now = datetime.now()
@@ -397,7 +420,15 @@ def getData():
         if data:                 
             login, admin = auth(data)
             if login:
-                return getHistOfVitalData(data)  
+                data["API"] = "VITAL_DATA"
+                cached_result = get_data_from_redis(data)
+                if cached_result:
+                    return cached_result
+                
+                result = getHistOfVitalData(data) 
+                cache_data(data, json.dumps(result))
+                return result
+                # return getHistOfVitalData(data)  
                 # return getSaveRawData(data)  
             else:
                 return {"ERROR": 'Not authorized!'}
@@ -411,7 +442,15 @@ def getMovingAverageData():
         if data:                 
             login, admin = auth(data)
             if login:
-                return getHistOfVitalMovingAverageData(data)  
+                data["API"] = "MA_VITAL_DATA"
+                cached_result = get_data_from_redis(data)
+                if cached_result:
+                    return cached_result
+                
+                result = getHistOfVitalMovingAverageData(data)  
+                cache_data(data, json.dumps(result))
+                return result
+                # return getHistOfVitalMovingAverageData(data)  
                 # return getSaveRawData(data)  
             else:
                 return {"ERROR": 'Not authorized!'}
@@ -426,12 +465,38 @@ def getAnalyticData():
         if data:                 
             login, admin = auth(data)
             if login:
-                return getAnalyticDataofPosture(data)  
+                data["API"] = "ANALYTICS_DATA"
+                cached_result = get_data_from_redis(data)
+                if cached_result:
+                    return cached_result
+                
+                result = getAnalyticDataofPosture(data)  
+                cache_data(data, json.dumps(result))
+                return result
+                # return getAnalyticDataofPosture(data)  
                 # return getSaveRawData(data)  
             else:
                 return {"ERROR": 'Not authorized!'}
         else:
             return {"ERROR": 'Empty json!'} 
+
+def get_data_from_redis(data):
+    # Convert the JSON data to a string to use it as a key
+    del data["Username"]
+    del data["CODE"]
+    del data["TYPE"]
+    del data["ID"]
+    key = str(data)
+    cached_data = redis.get(key)
+    if cached_data:
+        return json.loads(cached_data)
+    else:
+        return None
+
+def cache_data(data, result):
+    key = str(data)
+    redis.set(key, result)
+    redis.expire(key, 3600)
 
 # retrieve summary saved data of trackdata
 @app.route('/api/getSummaryPositionData', methods=["POST"])
@@ -441,8 +506,14 @@ def getSummaryPositionData():
         if data:                 
             login, admin = auth(data)
             if login:
-                return getSummaryDataofPosition(data)  
-                # return getSaveRawData(data)  
+                data["API"] = "SUMMARY_POSITION"
+                cached_result = get_data_from_redis(data)
+                if cached_result:
+                    return cached_result
+                
+                result = getSummaryDataofPosition(data)  
+                cache_data(data, json.dumps(result))
+                return result
             else:
                 return {"ERROR": 'Not authorized!'}
         else:
@@ -646,11 +717,11 @@ def getTest():
 #         else:
 #             return {"ERROR": 'Empty json!'}
 
-@app.route("/admin")
+@app.route("/api/admin")
 def admin():
     return redirect(url_for("home"))
 
-@app.route('/Detail/Layman', methods=['GET'])
+@app.route('/api/Detail/Layman', methods=['GET'])
 def Layman():
     room_id = request.args.get('room', type=str)
     if room_id is not None:
@@ -659,6 +730,48 @@ def Layman():
         return render_template('Layman.html')
     else:
         return "Room ID not provided."
+    
+@app.route('/api/LocationHistory', methods=['GET'])
+def LocationHistory():
+    room_id = request.args.get('room', type=str)
+    if room_id is not None:
+
+        # Render the HTML template with the data and ID
+        return render_template('LocationHistory.html')
+    else:
+        return "Room ID not provided."
+
+@app.route('/api/getFilterLocationHistory', methods=['POST'])
+def getFilterLocationHistory():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                if "room_id" in data:              
+                    return getFilterLocationHistoryData(data.get("room_id"))
+                else:
+                    return {"ERROR": 'Please provide room id!'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/updateFilterLocationHistory', methods=['POST'])
+def updateFilterLocationHistory():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                if "room_id" in data:              
+                    return updateFilterLocationHistoryData(data.get("room_id"),data=data.get("data",[]))
+                else:
+                    return {"ERROR": 'Please provide room id!'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
 
 @app.route('/api/getRoomLaymanDetail', methods=['POST'])
 def getRoomLaymanDetail():
@@ -703,6 +816,19 @@ def readRoomAlerts():
                     return readRoomAlertsData(data.get("alerts"))
                 else:
                     return {"ERROR": 'Please provide alerts id!'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/updateRoomLocationOnMap', methods=['POST'])
+def updateRoomLocationOnMap():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login and admin:              
+                return updateRoomLocationOnMapData(data=data.get("data",[]))
             else:
                 return {"ERROR": 'Not authorized!'}
         else:

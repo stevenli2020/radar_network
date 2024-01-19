@@ -361,6 +361,7 @@ def analyseLaymanData(data):
                             current_pointer = timeslot[0]
                             previous_pointer = timeslot[0]
 
+                            onbed_deduct_sec = onbed_disruption_arr[index]
                             for t in range(len(timeslot)):
                                 current_pointer = timeslot[t]
 

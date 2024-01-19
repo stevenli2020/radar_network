@@ -5,6 +5,7 @@ async function init(element, macA=null) {
     // const updatemultipleSelect = document.getElementById('update-mul-sel')
     removeChildEl('mul-sel')
     // removeChildEl('update-mul-sel')
+    showLoading()
     await fetch(`${host}/api/getRoomDetails`, {
         method: "POST",
         headers: {
@@ -33,8 +34,10 @@ async function init(element, macA=null) {
             //   updatemultipleSelect.appendChild(optionTag)
             });            
           } 
+          hideLoading()
         })
         .catch((error) => {
+            hideLoading()
           console.error("Error:", error);
         });
     const wrapper = document.createElement("div");

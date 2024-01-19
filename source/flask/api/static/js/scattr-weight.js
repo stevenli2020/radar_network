@@ -32,7 +32,7 @@ option = {
   //   }
   // }],
   textStyle: {
-    color: "#fff",
+    color: "#000",
   },
   // title: {
   //   text: "Real-time location",

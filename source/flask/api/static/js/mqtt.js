@@ -146,7 +146,6 @@ async function onMessageArrived(message) {
   var num = 0;
   //  document.querySelector("#home-time-select").value == "REAL TIME"
   // console.log(macPos, macVital)
-  console.log(data)
   if (
     data.length > 0 &&
     (macPos == mac[3] || macVital == mac[3])    
@@ -190,10 +189,11 @@ async function onMessageArrived(message) {
           // if(data[index].hasOwnProperty("numSubjects")){
           if(parseInt(data[index]["numSubjects"]) > 0){
             document.querySelector('#empty-lable').style.display = 'none'
+            document.querySelector('#status-label').style.display = 'block'
             checkRoomEmpty = new Date()
           }
           if (parseInt(data[index]["numSubjects"]) > 0) { 
-            seriesD = radars
+            let series = [...radars]
             // [
             //   {
             //     name: "Radar",
@@ -250,7 +250,15 @@ async function onMessageArrived(message) {
             //   ]
             // }
             
+            var object_list = []
+
             for (let i = 0 ; i < data.length ; i++){
+              if (object_list.includes(data[i].trackIndex)){
+                continue
+              }
+
+              object_list.push(data[i].trackIndex)
+
               if(data[i].velX == 0 && data[i].velY == 0)
                 defaultSymbol = dashCircleFill
               else if(data[i].velX == 0 && data[i].velY > 0)
@@ -271,7 +279,7 @@ async function onMessageArrived(message) {
                 defaultSymbol = arrowDownLeftCircleFill
 
               
-              seriesD.push({
+              series.push({
                 tooltip: {
                   // trigger: 'axis',
                   showDelay: 0,
@@ -305,7 +313,7 @@ async function onMessageArrived(message) {
                     },
                   },
                 },
-                name: "Person " + String(i+1),
+                name: "Person ID:" + String(data[i].trackIndex),
                 type: "scatter",
                 symbol: defaultSymbol,
                 symbolSize: 30,
@@ -314,22 +322,34 @@ async function onMessageArrived(message) {
                     Math.abs((data[i].posX??0).toFixed(2)),
                     Math.abs((data[i].posY??0).toFixed(2)),
                   ],
-                ],              
+                ],
+                itemStyle: {
+                  color: function () {
+                    if (!("state" in data[i]) || data[i].state == null || data[i].state == "None") {
+                      return '#080808';
+                    } else if (data[i].state == "Moving") {
+                      return '#f8fc03'; 
+                    } else if (data[i].state == "Upright") {
+                      return '#0918e3'; 
+                    } else if (data[i].state == "Laying") {
+                      return '#8d61be'; 
+                    } else if (data[i].state == "Fall") {
+                      return '#fc0303'; 
+                    } else if (data[i].state == "Social") {
+                      return '#20fc03'; 
+                    } 
+                  },
+                },        
               });
             }
-            scatterWeight.setOption({
-              // legend: {
-              //   data: legendD,
-              // },
+            const updatedOptions = {
               xAxis: [
                 {
                   axisLabel: {
                     formatter: "{value} m",
                   },
-                  // min: -6,
-                  // max: 6,
                   min: 0,
-                  max: roomX
+                  max: roomX,
                 },
               ],
               yAxis: [
@@ -337,14 +357,18 @@ async function onMessageArrived(message) {
                   axisLabel: {
                     formatter: "{value} m",
                   },
-                  // min: 0,
-                  // max: 6,
                   min: 0,
-                  max: roomY
+                  max: roomY,
                 },
               ],
-              series: seriesD,
-            });
+              series: series, // Replace 'updatedSeries' with your new series data
+            };
+            
+            // Update the chart with the new options
+            scatterWeight.setOption(updatedOptions);
+            
+            // Resize the chart to fit the container (assuming 'scatterWeight' is your chart instance)
+            scatterWeight.resize();
           }
           // }        
         // }

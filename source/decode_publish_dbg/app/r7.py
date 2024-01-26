@@ -1560,7 +1560,7 @@ def decode_process_publish(mac, data):
                         # x_coord = vitalStateParam[mac]['previous_pointClouds'][:, 0]
                         y_coord = vitalStateParam[mac]['previous_pointClouds'][:, 1]
                         # z_coord = vitalStateParam[mac]['previous_pointClouds'][:, 2]
-                        # v_coord = vitalStateParam[mac]['previous_pointClouds'][:, 3]
+                        v_coord = vitalStateParam[mac]['previous_pointClouds'][:, 3]
                         # points = np.stack((x_coord, y_coord, z_coord), axis=-1)
 
                         # Decode 3D People Counting Target List TLV
@@ -1658,7 +1658,8 @@ def decode_process_publish(mac, data):
                                     # vitalStateParam[mac]['label_list'].append(2)
 
                                 # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
-                                if np.abs(x_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
+                                if len(v_coord[trackIndices == trackId]) > 5:
+                                  if np.abs(x_pos) < 0.5 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
                                     # if np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) <= 0.3:
                                     # print("In Bed, Subject Stationary")
                                     vital_dict['bedOccupancy'] = 1
@@ -1672,8 +1673,8 @@ def decode_process_publish(mac, data):
                                     # print(vitalStateParam[mac]['periodStationary'])
                                     vitalStateParam[mac]['label_list'].append(1)
 
-                                # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
-                                elif np.abs(x_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
+                                  # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
+                                  elif np.abs(x_pos) < 0.5 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
                                     # elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) > 0.3:
                                     # print("In Bed, Subject Moving")
                                     vital_dict['bedOccupancy'] = 1
@@ -1682,7 +1683,7 @@ def decode_process_publish(mac, data):
                                     vitalStateParam[mac]['periodStationary'] = 0
                                     vitalStateParam[mac]['label_list'].append(1)
 
-                                elif np.abs(x_pos) > 1.0 or np.abs(z_pos) > 1.0:
+                                  elif np.abs(x_pos) > 1.0 or np.abs(z_pos) > 1.0:
                                     # print("Out of Bed")
                                     vital_dict['bedOccupancy'] = 0
                                     # label_list.append(2)

@@ -94,7 +94,7 @@ def emailTemplate(name, link, passT):
 				<td>
 					<table align="center" border="0" cellpadding="0" cellspacing="0" class="row row-1"
 						role="presentation"
-						style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #091548; background-image: url('http://143.198.199.16:5000/static/images/background_2.png'); background-position: center top; background-repeat: repeat;"
+						style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #091548; background-image: url('https://aswelfarehome.gaitmetrics.org/static/images/background_2.png'); background-position: center top; background-repeat: repeat;"
 						width="100%">
 						<tbody>
 							<tr>
@@ -117,7 +117,7 @@ def emailTemplate(name, link, passT):
 																style="width:100%;padding-right:0px;padding-left:0px;padding-top:8px;">
 																<div align="center" class="alignment"
 																	style="line-height:10px"><img alt="Main Image"
-																		src="http://143.198.199.16:5000/static/images/header3.png"
+																		src="https://aswelfarehome.gaitmetrics.org/static/images/header3.png"
 																		style="display: block; height: auto; border: 0; width: 232px; max-width: 100%;"
 																		title="Main Image" width="232" /></div>
 															</td>
@@ -263,7 +263,7 @@ def emailTemplate(name, link, passT):
 															<td class="pad">
 																<div align="center" class="alignment"
 																	style="line-height:10px"><img alt="Your Logo"
-																		src="http://143.198.199.16:5000/static/images/logo.png"
+																		src="https://aswelfarehome.gaitmetrics.org/static/images/logo.png"
 																		style="display: block; height: auto; border: 0; width: 145px; max-width: 100%;"
 																		title="Your Logo" width="145" /></div>
 															</td>
@@ -307,7 +307,7 @@ def emailTemplate(name, link, passT):
 																					href="https://www.facebook.com/"
 																					target="_blank"><img alt="Facebook"
 																						height="32"
-																						src="http://143.198.199.16:5000/static/images/facebook2x.png"
+																						src="https://aswelfarehome.gaitmetrics.org/static/images/facebook2x.png"
 																						style="display: block; height: auto; border: 0;"
 																						title="Facebook"
 																						width="32" /></a></td>
@@ -315,7 +315,7 @@ def emailTemplate(name, link, passT):
 																					href="https://instagram.com/"
 																					target="_blank"><img alt="Instagram"
 																						height="32"
-																						src="http://143.198.199.16:5000/static/images/instagram2x.png"
+																						src="https://aswelfarehome.gaitmetrics.org/static/images/instagram2x.png"
 																						style="display: block; height: auto; border: 0;"
 																						title="Instagram"
 																						width="32" /></a></td>
@@ -323,7 +323,7 @@ def emailTemplate(name, link, passT):
 																					href="https://twitter.com/"
 																					target="_blank"><img alt="Twitter"
 																						height="32"
-																						src="http://143.198.199.16:5000/static/images/twitter2x.png"
+																						src="https://aswelfarehome.gaitmetrics.org/static/images/twitter2x.png"
 																						style="display: block; height: auto; border: 0;"
 																						title="Twitter"
 																						width="32" /></a></td>
@@ -425,7 +425,7 @@ def emailTemplate(name, link, passT):
 																								align="center"
 																								alt="Designed with BEE"
 																								class="icon" height="32"
-																								src="http://143.198.199.16:5000/static/images/bee.png"
+																								src="https://aswelfarehome.gaitmetrics.org/static/images/bee.png"
 																								style="display: block; height: auto; margin: 0 auto; border: 0;"
 																								width="34" /></a></td>
 																					<td

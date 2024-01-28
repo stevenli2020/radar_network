@@ -21,7 +21,7 @@ def resetPasswordLink(data):
         if not dbresult:
             result['ERROR'].append({'ID': 'User not found'})
             return result
-        body = emailTemplate(dbresult[1], "http://143.198.199.16:5000/api/updatePassword?"+str(dbresult[1])+"&"+str(dbresult[8])+"&update", "update")
+        body = emailTemplate(dbresult[1], "https://aswelfarehome.gaitmetrics.org/api/updatePassword?"+str(dbresult[1])+"&"+str(dbresult[8])+"&update", "update")
         sentMail(dbresult[3], 'Request to change password', body)        
     else:
         sql = "SELECT * FROM USERS WHERE EMAIL='%s'"%(data)
@@ -30,7 +30,7 @@ def resetPasswordLink(data):
         if not dbresult:
             result['ERROR'].append({'EMAIL': 'Email not found'})
             return result
-        body = emailTemplate(dbresult[1], "http://143.198.199.16:5000/api/updatePassword?"+str(dbresult[1])+"&"+str(dbresult[8])+"&update", "update")
+        body = emailTemplate(dbresult[1], "https://aswelfarehome.gaitmetrics.org/api/updatePassword?"+str(dbresult[1])+"&"+str(dbresult[8])+"&update", "update")
         sentMail(dbresult[3], 'Request to change password', body)
     cursor.close()
     connection.close()

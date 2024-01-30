@@ -13,8 +13,7 @@ const HOC = (WrappedComponent) => {
       devices: [],
       selectedDevice: null,
       roomSuggestions: [],
-      rooms: [],
-      deviceConfMac: null
+      rooms: []
     };
 
     onChangeHOC = (key, val) => this.setState({ [key]: val });

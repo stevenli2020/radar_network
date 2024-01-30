@@ -18,34 +18,34 @@ let client = null
 
 const Devices = props => {
 
+  const [deviceConfMac,setDeviceMac] = useState(null)
+
   const doFail = (e) => {
     console.error("Connection failed:", e);
   };
 
   const configureDevice = (device) => {
+    setDeviceMac(device.MAC)
     console.log("Configure... MQTT")
     setConfigureVisible(false)
     publishToMQTT(device.CONFIGURATION,"/GMT/DEV/"+device.MAC+"/C/SAVECFG")
-    props.onChangeHOC('deviceConfMac',device.MAC)
   }
 
   const publishToMQTT = (msg, topic) => {
-    let message = new Paho.MQTT.Message(msg);
+    let message = new Paho.Message(msg);
     message.destinationName = topic;
     client.send(message);
   }
 
   const onMessageArrived = async (message) => {
     try {
-      
       if(message.destinationName.includes("DECODE_PUBLISH/R")){
         if(!message.payloadString.includes("CONNECTED")){
           requestSuccess("Process Status: "+ message.payloadString)
         }    
       }
-      if(props.deviceConfMac){
-        console.log(props.deviceConfMac)
-        if(message.destinationName.includes(`GMT/DEV/${props.deviceConfMac}/R`)){
+      if(deviceConfMac){
+        if(message.destinationName.includes(`GMT/DEV/${deviceConfMac}/R`)){
           requestSuccess("Process Status: "+ message.payloadString)
         }
       }
@@ -83,7 +83,7 @@ const Devices = props => {
     if (getItem("LOGIN_TOKEN")){
       connectToBroker();
     }
-  }, []); // Include dependencies if needed
+  }, [deviceConfMac]); // Include dependencies if needed
 
   const [addVisible, setAddVisible] = useState(false);
   const [updateVisible, setUpdateVisible] = useState(false);

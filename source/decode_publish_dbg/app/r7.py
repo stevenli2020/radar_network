@@ -22,19 +22,23 @@ import atexit
 
 ##while 1: #time.sleep(10)
 
-brokerAddress="vernemq" 
-clientID="0002"
-userName="decode-publish"  
-userPassword="/-K3tuBhod3-FIzv"
-dataBuffer=[]
-SpecialSensors={}
-
 # brokerAddress="vernemq" 
-# clientID="1013"
-# userName="decode-publish-dbg-ojb1"  
+# clientID="0002"
+# userName="decode-publish"  
 # userPassword="/-K3tuBhod3-FIzv"
 # dataBuffer=[]
 # SpecialSensors={}
+
+#clientID = "1235"
+#userName = "js-client2"
+#userPassword = "c764eb2b5fa2d259dc667e2b9e195218"
+
+brokerAddress="vernemq" 
+clientID="1013"
+userName="decode-publish-dbg-ojb1"  
+userPassword="/-K3tuBhod3-FIzv"
+dataBuffer=[]
+SpecialSensors={}
 
 config = {
     'user': 'flask',
@@ -92,6 +96,7 @@ def decode_process_publish(mac, data):
             continue
         if ts == 0:
             continue
+
         # if len(byteAD) > 52:
         if len(byteAD) > 0:
             # Error happens occasionally when decoding the raw data frame,
@@ -173,9 +178,11 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['rollingX'] = []
                     wallStateParam[mac]['rollingY'] = []
                     wallStateParam[mac]['rollingZ'] = []
+                    wallStateParam[mac]['rollingHeight'] = []
                     wallStateParam[mac]['averageX'] = []
                     wallStateParam[mac]['averageY'] = []
                     wallStateParam[mac]['averageZ'] = []
+                    wallStateParam[mac]['averageHeight'] = []
                     wallStateParam[mac]['labelCount'] = []
                     wallStateParam[mac]['labelGuess'] = []
                     wallStateParam[mac]['trackPos'] = np.zeros((0, 3))  # tracker position
@@ -395,9 +402,11 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingX'].append([])
                                 wallStateParam[mac]['rollingY'].append([])
                                 wallStateParam[mac]['rollingZ'].append([])
+                                wallStateParam[mac]['rollingHeight'].append([])
                                 wallStateParam[mac]['averageX'].append([])
                                 wallStateParam[mac]['averageY'].append([])
                                 wallStateParam[mac]['averageZ'].append([])
+                                wallStateParam[mac]['averageHeight'].append([])
                                 wallStateParam[mac]['x_coord_multi'].append([])
                                 wallStateParam[mac]['y_coord_multi'].append([])
                                 wallStateParam[mac]['z_coord_multi'].append([])
@@ -442,10 +451,11 @@ def decode_process_publish(mac, data):
                                     del wallStateParam[mac]['rollingY'][minDistIdx][0]
                                     del wallStateParam[mac]['rollingZ'][minDistIdx][0]
 
-                                if len(wallStateParam[mac]['averageX'][minDistIdx]) > 10:
+                                if len(wallStateParam[mac]['averageX'][minDistIdx]) > 100:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
                                     deltaY = wallStateParam[mac]['averageY'][minDistIdx][-1] - wallStateParam[mac]['averageY'][minDistIdx][-10]
                                     deltaZ = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-10]
+                                    deltaZPos = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-47]
                                     del wallStateParam[mac]['averageX'][minDistIdx][0]
                                     del wallStateParam[mac]['averageY'][minDistIdx][0]
                                     del wallStateParam[mac]['averageZ'][minDistIdx][0]
@@ -479,8 +489,18 @@ def decode_process_publish(mac, data):
                                         wall_Dict['bodyHeight'] = z_dim[0]
                                         wall_Dict['bodyWidth'] = body_width[0]
 
-                                        if deltaZ < -0.35 and body_width > 0.5 and z_height < 1.0 and \
-                                            ((body_width) / (z_dim + 0.2)) > 1.0:
+                                        wallStateParam[mac]['rollingHeight'][minDistIdx].append(z_height)
+
+                                        if len(wallStateParam[mac]['rollingHeight'][minDistIdx]) == 10:
+                                            wallStateParam[mac]['averageHeight'][minDistIdx].append(np.average(wallStateParam[mac]['rollingHeight'][minDistIdx]))
+                                            del(wallStateParam[mac]['rollingHeight'][minDistIdx][0])
+
+                                        if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 47:
+                                          deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-47]
+                                          del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
+
+                                          # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
+                                          if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.6 and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 2.0:
                                             # print('Fall')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 3
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 2
@@ -491,7 +511,7 @@ def decode_process_publish(mac, data):
                                             jsonData = json.dumps(pubPayload)
                                             mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
 
-                                        elif deltaDist > 0.3:
+                                          elif deltaDist > 0.3:
                                             # print('Moving')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 0
                                             wall_Dict['state'] = 0
@@ -502,19 +522,19 @@ def decode_process_publish(mac, data):
                                             elif z_height > 0.4 and z_height < 1.0 and body_width < 0.5:
                                                 wall_Dict['kidOrAdult'] = 0
 
-                                        elif body_width > 0.5 and z_height < 1.5 and ((body_width) / (z_dim + 0.2)) > 1.3:
+                                          elif body_width > 0.5 and z_height < 1.1 and ((body_width) / (z_dim + 0.2)) > 1.5:
                                             # print('Laying')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 2
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 2
                                             wall_Dict['state'] = 2
 
-                                        elif z_dim > 0.5 and body_width > 0.2 and z_height > 0.5 and ((z_dim) / (body_width + 0.0001)) > 1.0:
+                                          elif z_dim > 0.5 and body_width > 0.2 and z_height > 0.5 and ((z_dim) / (body_width + 0.0001)) > 1.2:
                                             # print('Upright')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 1
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 1
                                             wall_Dict['state'] = 1
 
-                                        else:
+                                          else:
                                             wallStateParam[mac]['labelCount'][minDistIdx] = wallStateParam[mac]['labelGuess'][minDistIdx]
                                             # wall_Dict['state'] = wallStateParam[mac]['label_state'][wallStateParam[mac]['labelCount'][minDistIdx]]
                                             wall_Dict['state'] = wallStateParam[mac]['labelCount'][minDistIdx]
@@ -641,9 +661,11 @@ def decode_process_publish(mac, data):
                             wallStateParam[mac]['rollingX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZ'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['rollingHeight'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageZ'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['averageHeight'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['labelCount'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['labelGuess'].pop(trackerInvalidIdx[Idx])
 
@@ -1691,7 +1713,7 @@ def decode_process_publish(mac, data):
                                     vitalStateParam[mac]['periodStationary'] = 0
                                     vitalStateParam[mac]['label_list'].append(0)
 
-                                if len(vitalStateParam[mac]['rollingHeight'][minDistIdx]) > 4:
+                                  if len(vitalStateParam[mac]['rollingHeight'][minDistIdx]) > 4:
                                     del vitalStateParam[mac]['rollingHeight'][minDistIdx][0]
                                     del vitalStateParam[mac]['rollingVelY'][minDistIdx][0]
  
@@ -1858,7 +1880,7 @@ def on_message(mosq, obj, msg):
         cursor.execute(sql)
         connection.commit()        
         cursor.close()
-        connection.close()
+        connection.close()        
     # print(devicesTbl)
     # if not devName == 'F412FAE261A4':
     #     return

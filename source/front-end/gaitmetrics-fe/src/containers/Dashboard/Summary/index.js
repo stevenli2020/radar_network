@@ -33,7 +33,8 @@ const Summary = props => {
   const onMessageArrived = async (message) => {
     try {
       console.log("onMessageArrived:", message.payloadString, message.destinationName.split('/'), message);
-      props.getRoomAlerts(props.room_uuid,false)
+			console.log(props.room_uuid)
+      props.getRoomAlerts(props.room_uuid)
     } catch (error) {
       console.error("Error processing MQTT message:", error);
     }
@@ -65,8 +66,13 @@ const Summary = props => {
 		if (getItem("LOGIN_TOKEN")){
     	connectToBroker();
 		}
-  }, []); // Include dependencies if needed
+  }, [props.room_uuid]); // Include dependencies if needed
   
+	useEffect(() => {
+		if (props.alerts.length>0){
+			setAlertVisible(true)
+		}
+	}, [props.alerts])
 
 	useEffect(() => {
 
@@ -510,7 +516,7 @@ const Summary = props => {
 				</Row>
 			</Container>
 			
-			<AlertsModal visible={alertVisible} close={closeAlertModal} alerts={props.alerts}></AlertsModal>
+			{alertVisible && <AlertsModal visible={alertVisible} close={closeAlertModal} alerts={props.alerts}></AlertsModal>}
 
 			{
 				props.onLoading && <LoadingOverlay/>

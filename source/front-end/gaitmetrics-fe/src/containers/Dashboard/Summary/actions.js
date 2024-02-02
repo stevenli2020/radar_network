@@ -401,7 +401,27 @@ const HOC = (WrappedComponent) => {
     }
     
     getRoomAlertsSuccess = payload => {
-      this.setState({ alerts: payload.DATA })
+      if (payload.DATA.length > 0){
+        this.setState({ alerts: payload.DATA })
+
+        const hasUrgency3 = payload.DATA.some(alert => alert.URGENCY === 3 && alert.NOTIFY === 0);
+        if (hasUrgency3) {
+          try{
+            const sound = new Audio(alertSound)
+            sound.play().then(() => {
+              // If playback is successful, sound permission is likely granted
+              console.log("Permission granted")
+            }).catch((error) => {
+              // If playback fails, sound permission is likely denied
+              console.log(error)
+            });
+          } catch (error) {
+            // If an exception occurs, sound permission status is uncertain
+          }
+        }
+      }
+      
+
     }
 
     render = () => {

@@ -340,7 +340,7 @@ def analyseLaymanData(data):
                     sleep_count+=1
             sleep_percentage = sleep_count/len(timeslot)
 
-            if (diff.total_seconds() > sleeping_threshold and sleep_percentage >= 0.3):
+            if (diff.total_seconds() > sleeping_threshold and sleep_percentage >= 0.2):
                 if (len(timeslot) > 1):
                     start_sleep_time.append(timeslot[0]["TIMESTAMP"])
                     if ((now_datetime - timeslot[-1]["TIMESTAMP"]).total_seconds() > (5*60)):

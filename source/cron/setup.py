@@ -334,7 +334,7 @@ def analyseLaymanData(data):
                     sleep_count+=1
             sleep_percentage = sleep_count/len(timeslot)
 
-            if (diff.total_seconds() > sleeping_threshold and sleep_percentage >= 0.3):
+            if (diff.total_seconds() > sleeping_threshold and sleep_percentage >= 0.2):
                 if (len(timeslot) > 1):
                     start_sleep_time.append(timeslot[0]["TIMESTAMP"])
                     if ((now_datetime - timeslot[-1]["TIMESTAMP"]).total_seconds() > (5*60)):
@@ -716,8 +716,8 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-start_date = "2023-12-01"
-end_date = "2023-12-12"
+start_date = "2024-02-04"
+end_date = "2024-02-04"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")

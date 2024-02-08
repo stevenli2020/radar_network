@@ -1,21 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Modal, Row, Col, Select } from 'antd';
-import _ from 'lodash'
 
 const AddDeviceModal = (props) => {
   const [form] = Form.useForm();
+  const [userType, setUserType] = useState(null);
 
   const onFinish = (values) => {
     // Handle the form submission logic (e.g., send data to the server)
-    console.log('Received values:', values);
-    props.action(values)
-    props.close()
+    props.action(values);
+    form.resetFields();
+    props.close();
+  };
+
+  const handleUserTypeChange = (value) => {
+    setUserType(value); // Update the user type when it changes
   };
 
   return (
     <Modal
       title="Add User"
-      open={props.visible}
+      visible={props.visible}
       onOk={() => form.submit()}
       onCancel={props.close}
     >
@@ -67,33 +71,31 @@ const AddDeviceModal = (props) => {
               name="usertype"
               rules={[{ required: true, message: 'Please select the user type' }]}
             >
-              <Select placeholder="Please select">
+              <Select placeholder="Please select" onChange={handleUserTypeChange}>
                 <Select.Option value={1}>Admin</Select.Option>
                 <Select.Option value={0}>User</Select.Option>
               </Select>
             </Form.Item>
           </Col>
 
-          <Col span={24}>
-            <Form.Item
-              label="Assign Room"
-              name="assignroom"
-              rules={[{ required: true, message: 'Please select the assign room' }]}
-            >
-              <Select
-                mode="multiple"
-                placeholder="Please select"
-                options={props.suggestions}
+          {userType === 0 && (
+            <Col span={24}>
+              <Form.Item
+                label="Assign Room"
+                name="assignroom"
+                rules={[{ message: 'Please select the assign room' }]}
               >
-                {/* <Select.Option value="Admin">Admin</Select.Option>
-                <Select.Option value="User">User</Select.Option> */}
-              </Select>
-            </Form.Item>
-          </Col>
+                <Select
+                  mode="multiple"
+                  placeholder="Please select"
+                  options={props.suggestions}
+                />
+              </Form.Item>
+            </Col>
+          )}
         </Row>
       </Form>
     </Modal>
-    
   );
 };
 

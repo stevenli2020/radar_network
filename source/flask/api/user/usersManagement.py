@@ -163,8 +163,9 @@ def updateUserDetails(data):
     cursor.execute(sql)
     connection.commit()
     RoomList = str(data['ROOM']).split(',')
-    # print(RoomList)
     for Room in RoomList:
+        if (not Room):
+            continue
         RoomName = Room.replace("'", "")
         RoomName = RoomName.replace("]", "")
         RoomName = RoomName.replace("[", "")

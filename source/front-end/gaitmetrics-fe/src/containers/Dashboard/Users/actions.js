@@ -64,7 +64,6 @@ const HOC = (WrappedComponent) => {
     } 
     
     registerUser = (values) => {
-      console.log(values)
       let payload = {
         LOGIN_NAME: values.username,
         FULL_NAME: values.fullname,
@@ -74,7 +73,6 @@ const HOC = (WrappedComponent) => {
         ROOM: values.assignroom,
       }
       payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
-      console.log(payload)
       Post(
         `/api/usersManagement`,
         payload,
@@ -88,7 +86,6 @@ const HOC = (WrappedComponent) => {
     }
 
     updateUser = (values) => {
-      console.log(values)
       let payload = {
         USER_ID:this.state.selectedUser.ID,
         LOGIN_NAME: values.LOGIN_NAME,
@@ -99,7 +96,6 @@ const HOC = (WrappedComponent) => {
         ROOM: values.rooms,
       }
       payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
-      console.log(payload)
       Post(
         `/api/updateUser`,
         payload,

@@ -2,3 +2,4 @@ schedule
 pytz
 mysql.connector
 numpy
+pandas

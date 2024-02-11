@@ -5,6 +5,8 @@ import { requestError, requestSuccess } from "utils/requestHandler";
 import { Get, Post, Put, Delete, PostForm } from "utils/axios";
 import { getItem } from 'utils/tokenStore'
 
+import alertSound from "../../../assets/alert.wav"
+
 const HOC = (WrappedComponent) => {
   class WithHOC extends Component {
     state = {
@@ -33,10 +35,30 @@ const HOC = (WrappedComponent) => {
     getRoomDetailsSuccess = payload => {
       this.setState({rooms:payload.DATA})
       let c = 0
+      let urgent = false
       payload.DATA.map(room => {
         c += room.ALERTS.length
+
+        const hasUrgency3 = room.ALERTS.some(alert => alert.URGENCY === 3);
+
+        if (hasUrgency3) {
+            urgent = true
+        }
       });
-      console.log(payload,c)
+      if (urgent){			
+        try{
+          const sound = new Audio(alertSound)
+          sound.play().then(() => {
+            // If playback is successful, sound permission is likely granted
+            console.log("Permission granted")
+          }).catch((error) => {
+            // If playback fails, sound permission is likely denied
+            console.log(error)
+          });
+        } catch (error) {
+          // If an exception occurs, sound permission status is uncertain
+        }
+      }
       this.setState({alertLength:c})
     }
 

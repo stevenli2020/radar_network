@@ -5,6 +5,7 @@ import { requestError } from "utils/requestHandler";
 import { Post } from "utils/axios";
 import { getItem } from 'utils/tokenStore'
 import moment from 'moment';
+import alertSound from "../../../assets/alert.wav"
 
 const HOC = (WrappedComponent) => {
   

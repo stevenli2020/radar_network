@@ -98,11 +98,16 @@ def insert_data(date,room_id,type,data,mode="week"):
             connection.commit()
             
         else:
-            max = data.get("max")
-            min = data.get("min")
-            average = data.get("average")
-            try:
+            if mode == "day":
+                value = data
+                update_query = f"UPDATE ANALYSIS_DAY SET `VALUE`='{value}' WHERE `DATE`='{date}' AND `ROOM_ID`='{room_id}' AND `TYPE`='{type}';"
+            else:
+                max = data.get("max")
+                min = data.get("min")
+                average = data.get("average")
                 update_query = f"UPDATE ANALYSIS SET `MAX`='{max}',`MIN`='{min}',`AVERAGE`='{average}' WHERE `EOW`='{date}' AND `ROOM_ID`='{room_id}' AND `TYPE`='{type}';"
+                    
+            try:
                 cursor.execute(update_query)
                 connection.commit()
             except Exception as e:
@@ -147,7 +152,7 @@ def analyseLaymanData(data,current_date):
     now_datetime = datetime.datetime.now()
 
     # in seconds
-    threshold = 60 * 60
+    threshold = 60 * 90
     sleeping_threshold = 60 * 45
     inroom_threshold = 60 * 45
     disruption_threshold = 60 * 2.5
@@ -373,7 +378,7 @@ def analyseLaymanData(data,current_date):
 
                     if (start_date_str == end_date_str):
                         sleeping_analysis[start_date_str].append(diff.total_seconds())
-                        # print("Sleep From "+start_date_str+" to "+end_date_str)
+                        print("Sleep From "+start_date_str+" to "+end_date_str)
                     else:
                         if (len(timeslot)>0):
                             start_pointer = timeslot[0]
@@ -390,15 +395,15 @@ def analyseLaymanData(data,current_date):
                                     # print(onbed_deduct_sec)
                                     sleeping_analysis[start_date_str].append((previous_pointer["TIMESTAMP"] - start_pointer["TIMESTAMP"]).total_seconds() - onbed_deduct_sec)
                                     onbed_deduct_sec = 0
-                                    # print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
+                                    print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
                                     start_pointer = timeslot[t]
 
                                 previous_pointer = timeslot[t]
                             
                             sleeping_analysis[start_date_str].append((previous_pointer["TIMESTAMP"] - start_pointer["TIMESTAMP"]).total_seconds() - onbed_deduct_sec)
                             onbed_deduct_sec = 0
-                            # print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
-
+                            print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
+                
                     result.append({
                         "data_length":len(timeslot),
                         "start":timeslot[0],
@@ -473,6 +478,8 @@ def analyseLaymanData(data,current_date):
             current_sleeping_seconds = seconds_to_text(current_sleeping_seconds)
 
     sleeping_seconds = list(filter(filter_non_zero, sleeping_seconds))
+
+    print(sleeping_seconds)
     
     try:
         sleeping_longest = int(max(sleeping_seconds))
@@ -573,7 +580,7 @@ def analyseLaymanData(data,current_date):
         disruption_least = int(min(real_disruptions))
         disruption_average = sum(real_disruptions) / len(real_disruptions)
 
-        current_disruption = real_disruptions[-1]
+        current_sleep_disruption = real_disruptions[-1]
 
         sleep_disruption_result = {
             "average":round(disruption_average,3),
@@ -640,8 +647,6 @@ def analyseLaymanData(data,current_date):
         disrupt_duration_result = None
 
     return sleeping_hour_result,time_in_bed_result,bed_time_result,wake_up_time_result,in_room_result,sleep_disruption_result, breath_rate_result,heart_rate_result,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration
-
-import numpy as np
 
 def remove_outliers_iqr(data):
     q1 = np.percentile(data, 25)
@@ -790,26 +795,32 @@ def get_analysis_data(date,room_id):
     global config
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
-    sql = f"SELECT AVERAGE, `TYPE` FROM ANALYSIS WHERE ROOM_ID={room_id} AND EOW='{date}';"
+    sql = f"SELECT `VALUE`, `TYPE` FROM ANALYSIS_DAY WHERE ROOM_ID={room_id} AND DATE='{date}';"
     cursor.execute(sql)
     sleeping_hour = None
     sleep_disruption = None
+    disrupt_duration = None
     data = cursor.fetchall()
     if data:
         for row in data:
             if (row["TYPE"] == "sleeping_hour"):
-                sleeping_hour = row["AVERAGE"]
+                sleeping_hour = row["VALUE"]
             if (row["TYPE"] == "sleep_disruption"):
-                sleep_disruption = row["AVERAGE"]
+                sleep_disruption = row["VALUE"]
+            if (row["TYPE"] == "disrupt_duration"):
+                disrupt_duration = row["VALUE"]
     cursor.close()
     connection.close()  
 
-    return sleeping_hour, sleep_disruption
+    return sleeping_hour, sleep_disruption, disrupt_duration
 
 def is_anomaly(series,last_data,threshold):
     df = pd.DataFrame({'value': series})
 
     z_score_last_point = np.abs((last_data - df['value'].mean()) / df['value'].std())
+
+    # if z_score_last_point > threshold:
+    # print(z_score_last_point)
 
     return z_score_last_point > threshold
 
@@ -820,7 +831,7 @@ def insert_alert(room_id,urgency,type,details):
     cursor.execute(insert_query)
     connection.commit()
 
-def check_anomaly(date,room_id,type,data,message,data_type,threshold=2.5,mode="week"):
+def check_anomaly(date,room_id,type,data,data_type,threshold=2.5,mode="week"):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
     if (mode == "weekday"):
@@ -830,11 +841,11 @@ def check_anomaly(date,room_id,type,data,message,data_type,threshold=2.5,mode="w
     cursor.execute(sql)
     all_data = cursor.fetchall()
     avgs = []
+    temp_data = data
     if (data_type == "text"):
         data = text_to_seconds(data)
     else:
         data = float(data)
-
     for d in all_data:
         average = d.get("AVERAGE")
         if (mode == "weekday"):
@@ -847,22 +858,29 @@ def check_anomaly(date,room_id,type,data,message,data_type,threshold=2.5,mode="w
             average = float(average)
         
         avgs.append(average)
-        
-    if (len(avgs) > 15):
+    flag = False
+    if (mode == "weekday"):
+        min_count = 5
+    else:
+        min_count = 15
+    if (len(avgs) > min_count):
 
         if len(avgs) > 30:
             avgs = avgs[-30:]
 
         if is_anomaly(avgs,data,threshold):
-            # insert_alert(room_id,2,1,message)
-            print("########################################",date,data, message)
+            flag = True
+        #     print("########################################",date,data,avgs, message)
+        # elif (mode == "weekday"):
+        #     print("########################################",date,data,avgs)
 
     cursor.close()
     connection.close()
+    return flag
 
 def same_weekday(date_str1, date_str2, date_format="%Y-%m-%d"):
-    date1 = dt.strptime(date_str1, date_format)
-    date2 = dt.strptime(date_str2, date_format)
+    date1 = dt.strptime(str(date_str1), date_format)
+    date2 = dt.strptime(str(date_str2), date_format)
 
     weekday1 = date1.weekday()
     weekday2 = date2.weekday()
@@ -871,28 +889,25 @@ def same_weekday(date_str1, date_str2, date_format="%Y-%m-%d"):
 
 def text_to_seconds(text):
 
+    matches = re.findall(r'(\d+\.\d+|\d+)([hms])', text)
+
+    total_seconds = 0
+
     hours = 0
     minutes = 0
     seconds = 0
 
-    i = 0
-    while i < len(text):
-        value = ""
-        while i < len(text) and text[i].isdigit():
-            value += text[i]
-            i += 1
-
-        unit = text[i]
-        i += 1
-
+    # Convert each time unit to seconds
+    for value, unit in matches:
         if unit == 'h':
-            hours = int(value)
+            hours += float(value)
+            total_seconds += float(value) * 3600
         elif unit == 'm':
-            minutes = int(value)
+            minutes += float(value)
+            total_seconds += float(value) * 60
         elif unit == 's':
-            seconds = int(value)
-
-    total_seconds = hours * 3600 + minutes * 60 + seconds
+            seconds += float(value)
+            total_seconds += float(value)
 
     return total_seconds
 
@@ -904,34 +919,32 @@ for curr in dates_between:
     for room in rooms:
         print(curr,room["ID"],room["ROOM_UUID"])
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(curr,room["ROOM_UUID"])
-        # insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
-        # insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
-        # insert_data(curr,room["ID"],"bed_time",bed_time)
-        # insert_data(curr,room["ID"],"wake_up_time",wake_up_time)
-        # insert_data(curr,room["ID"],"in_room",in_room)
-        # insert_data(curr,room["ID"],"sleep_disruption",sleep_disruption)
-        # insert_data(curr,room["ID"],"breath_rate",breath_rate)
-        # insert_data(curr,room["ID"],"heart_rate",heart_rate)
-        # insert_data(curr,room["ID"],"disrupt_duration",disrupt_duration)
-
-        # sleeping_hour, sleep_disruption = get_analysis_data(curr,room["ID"])
-        # print(sleeping_hour,sleep_disruption)
+        insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
+        insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
+        insert_data(curr,room["ID"],"bed_time",bed_time)
+        insert_data(curr,room["ID"],"wake_up_time",wake_up_time)
+        insert_data(curr,room["ID"],"in_room",in_room)
+        insert_data(curr,room["ID"],"sleep_disruption",sleep_disruption)
+        insert_data(curr,room["ID"],"breath_rate",breath_rate)
+        insert_data(curr,room["ID"],"heart_rate",heart_rate)
+        insert_data(curr,room["ID"],"disrupt_duration",disrupt_duration)
 
         if (current_sleeping_hour):
-            # print("SLeeping hour",current_sleeping_hour)
-            # check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"Sleeping hour abnormal (last 30 days)","text")
-            # check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"Sleeping hour abnormal (weekday)","text",mode="weekday")
+            if (check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",threshold=3.5) and check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"Sleeping hour abnormal (weekday) - " + curr,"text",mode="weekday",threshold=1.5)):
+                print(curr,"Sleeping hour abnormal",current_sleeping_hour)
+                insert_alert(room["ID"],1,1,"Sleeping hour abnormal - " + curr)
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
         
         if (current_sleep_disruption):
-            # print("disruption",current_sleep_disruption)
-            # check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"Sleep disruption abnormal (last 30 days)","float")
-            # check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"Sleep disruption abnormal (weekday)","float",mode="weekday")
+            if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
+                insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
+            
+            # check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"Sleep disruption abnormal (weekday) - " + curr,"float",mode="weekday")
             insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
 
         if (current_disrupt_duration):
-            # print("Duration",current_disrupt_duration)
-            # check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"Sleep disrupt duration abnormal (last 30 days)","text")
-            # check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"Sleep disrupt duration abnormal (weekday)","text",mode="weekday")
+            if (check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"text")):
+                insert_alert(room["ID"],1,1,"Sleep disrupt duration abnormal (last 30 days) - " + curr)
+            
+            # check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"Sleep disrupt duration abnormal (weekday) - " + curr,"text",mode="weekday")
             insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")
-        # print("Done")

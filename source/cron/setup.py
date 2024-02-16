@@ -121,7 +121,7 @@ def current_layman():
     rooms = get_rooms()
     for room in rooms:
         # print(curr,room["ID"],room["ROOM_UUID"])
-        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(eow,room["ROOM_UUID"])
+        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -152,7 +152,7 @@ def analyseLaymanData(data,current_date):
     now_datetime = datetime.datetime.now()
 
     # in seconds
-    threshold = 60 * 90
+    threshold = 60 * 120
     sleeping_threshold = 60 * 45
     inroom_threshold = 60 * 45
     disruption_threshold = 60 * 2.5
@@ -369,7 +369,7 @@ def analyseLaymanData(data,current_date):
                     start_sleep_time.append(timeslot[0]["TIMESTAMP"])
                     if ((now_datetime - timeslot[-1]["TIMESTAMP"]).total_seconds() > (5*60)):
                         wake_up_time.append(timeslot[-1]["TIMESTAMP"])
-                    # print("From:",timeslot[0]["TIMESTAMP"],", to:",timeslot[-1]["TIMESTAMP"])
+                    print("From:",timeslot[0]["TIMESTAMP"],", to:",timeslot[-1]["TIMESTAMP"])
                     sleeping_hours.append(diff.total_seconds())
                     real_disruptions.append(disruptions[index])
                     real_disrupt_duration.append(disrupt_duration_seconds[index])
@@ -378,7 +378,7 @@ def analyseLaymanData(data,current_date):
 
                     if (start_date_str == end_date_str):
                         sleeping_analysis[start_date_str].append(diff.total_seconds())
-                        print("Sleep From "+start_date_str+" to "+end_date_str)
+                        # print("Sleep From "+start_date_str+" to "+end_date_str)
                     else:
                         if (len(timeslot)>0):
                             start_pointer = timeslot[0]
@@ -402,7 +402,7 @@ def analyseLaymanData(data,current_date):
                             
                             sleeping_analysis[start_date_str].append((previous_pointer["TIMESTAMP"] - start_pointer["TIMESTAMP"]).total_seconds() - onbed_deduct_sec)
                             onbed_deduct_sec = 0
-                            print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
+                            # print("Sleep From "+str(start_pointer["TIMESTAMP"])+" to "+str(previous_pointer["TIMESTAMP"]))
                 
                     result.append({
                         "data_length":len(timeslot),
@@ -683,6 +683,8 @@ def bedtime_processing(arr):
     
     # Function to convert minutes since midnight to 12-hour AM/PM time format
     def minutes_to_am_pm_time(minutes):
+        if (minutes > 24*60):
+            minutes -= 24*60
         hours, minutes = divmod(minutes, 60)
         period = "AM" if hours < 12 else "PM"
         if hours == 0:
@@ -773,8 +775,8 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-start_date = "2023-06-01"
-end_date = "2024-02-06"
+start_date = "2023-12-01"
+end_date = "2024-02-14"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")
@@ -917,6 +919,8 @@ for curr in dates_between:
     # print("Running current layman")
     rooms = get_rooms()
     for room in rooms:
+        if room["ID"] != 7:
+            continue
         print(curr,room["ID"],room["ROOM_UUID"])
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
@@ -930,21 +934,21 @@ for curr in dates_between:
         insert_data(curr,room["ID"],"disrupt_duration",disrupt_duration)
 
         if (current_sleeping_hour):
-            if (check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",threshold=3.5) and check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"Sleeping hour abnormal (weekday) - " + curr,"text",mode="weekday",threshold=1.5)):
-                print(curr,"Sleeping hour abnormal",current_sleeping_hour)
-                insert_alert(room["ID"],1,1,"Sleeping hour abnormal - " + curr)
+            # if (check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",threshold=3.5) and check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",mode="weekday",threshold=1.5)):
+            #     print(curr,"Sleeping hour abnormal",current_sleeping_hour)
+            #     insert_alert(room["ID"],1,1,"Sleeping hour abnormal - " + curr)
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
         
         if (current_sleep_disruption):
-            if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
-                insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
+            # if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
+            #     insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
             
             # check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"Sleep disruption abnormal (weekday) - " + curr,"float",mode="weekday")
             insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
 
         if (current_disrupt_duration):
-            if (check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"text")):
-                insert_alert(room["ID"],1,1,"Sleep disrupt duration abnormal (last 30 days) - " + curr)
+            # if (check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"text")):
+            #     insert_alert(room["ID"],1,1,"Sleep disrupt duration abnormal (last 30 days) - " + curr)
             
             # check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"Sleep disrupt duration abnormal (weekday) - " + curr,"text",mode="weekday")
             insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")

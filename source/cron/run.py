@@ -56,9 +56,7 @@ def getLaymanData(date,room_uuid):
     cursor.execute(sql)
     processed_data = cursor.fetchall()
     if (processed_data):
-        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseLaymanData(processed_data)
-    
-    print("Line 52",sleep_disruption)
+        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseLaymanData(processed_data,date)
 
     cursor.close()
     connection.close()
@@ -155,7 +153,7 @@ def previous_week():
         insert_data(curr,room["ID"],"disrupt_duration",disrupt_duration)
 
         if (current_sleeping_hour):
-            if (check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",threshold=3.5) and check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"Sleeping hour abnormal (weekday) - " + curr,"text",mode="weekday",threshold=1.5)):
+            if (check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",threshold=3.5) and check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",mode="weekday",threshold=1.5)):
                 print(curr,"Sleeping hour abnormal",current_sleeping_hour)
                 insert_alert(room["ID"],1,1,"Sleeping hour abnormal - " + curr)
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
@@ -274,7 +272,7 @@ def analyseLaymanData(data,current_date):
     now_datetime = datetime.datetime.now()
 
     # in seconds
-    threshold = 60 * 90
+    threshold = 60 * 120
     sleeping_threshold = 60 * 45
     inroom_threshold = 60 * 45
     disruption_threshold = 60 * 2.5
@@ -804,6 +802,8 @@ def bedtime_processing(arr):
     
     # Function to convert minutes since midnight to 12-hour AM/PM time format
     def minutes_to_am_pm_time(minutes):
+        if (minutes > 24*60):
+            minutes -= 24*60
         hours, minutes = divmod(minutes, 60)
         period = "AM" if hours < 12 else "PM"
         if hours == 0:

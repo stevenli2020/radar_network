@@ -58,6 +58,12 @@ def getLaymanData(date,room_uuid):
                 "max":"-",
                 "min":"-",
                 "previous_average":"-"
+            },
+            "disrupt_duration":{
+                "average":"-",
+                "max":"-",
+                "min":"-",
+                "previous_average":"-"
             }
         }
     }
@@ -130,6 +136,13 @@ def getLaymanData(date,room_uuid):
         result["data"]["heart_rate"]["average"] = heart_rate_average
         temp,temp,heart_rate_previous = get_data_from_analysis(previous_date,room_id,'heart_rate')
         result["data"]["heart_rate"]["previous_average"] = heart_rate_previous
+
+        disrupt_duration_max,disrupt_duration_min,disrupt_duration_average = get_data_from_analysis(date,room_id,'disrupt_duration')
+        result["data"]["disrupt_duration"]["max"] = disrupt_duration_max
+        result["data"]["disrupt_duration"]["min"] = disrupt_duration_min
+        result["data"]["disrupt_duration"]["average"] = disrupt_duration_average
+        temp,temp,disrupt_duration_previous = get_data_from_analysis(previous_date,room_id,'disrupt_duration')
+        result["data"]["disrupt_duration"]["previous_average"] = disrupt_duration_previous
 
     cursor.close()
     connection.close()

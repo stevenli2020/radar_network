@@ -20,6 +20,7 @@ const HOC = (WrappedComponent) => {
       sleep_disruption:{min:"-",max:"-",average:"-",previous_average:"-"},
       heart_rate:{min:"-",max:"-",average:"-",previous_average:"-"},
       breath_rate:{min:"-",max:"-",average:"-",previous_average:"-"},
+      disrupt_duration:{min:"-",max:"-",average:"-",previous_average:"-"},
       alerts:[],
       room_uuid:null,
       room_name:"-",
@@ -29,6 +30,7 @@ const HOC = (WrappedComponent) => {
       time_in_bed_options:null,
       in_room_options:null,
       sleep_disruption_options:null,
+      disrupt_duration_options:null,
       heart_rate_options:null,
       breath_rate_options:null,
       receivedAlert:0
@@ -62,22 +64,24 @@ const HOC = (WrappedComponent) => {
     }
 
     timeStringToMinutes = (timeString) => {
-      // Split the string to extract hours and minutes
-      var timeParts = timeString.split("h");
       // Initialize hours and minutes
       var hours = 0;
       var minutes = 0;
-      if (timeParts.length > 0) {
-        hours = parseInt(timeParts[0]);
-      }
-      // Check if there's a minutes part
-      if (timeParts.length > 1) {
-        // Extract minutes from the second part
-        var minutesPart = timeParts[1].replace("m", "");
-        if (minutesPart !== "") {
+      
+      // Check if the time string contains "h" (hours)
+      var indexOfHours = timeString.indexOf('h');
+      if (indexOfHours !== -1) {
+        hours = parseInt(timeString.slice(0, indexOfHours));
+        // Extract the part after 'h' to find minutes
+        var minutesPart = timeString.slice(indexOfHours + 1).replace('m', '');
+        if (minutesPart !== '') {
           minutes = parseInt(minutesPart);
         }
+      } else {
+        // If no 'h' is found, assume the whole string represents minutes
+        minutes = parseInt(timeString.replace('m', ''));
       }
+      
       // Convert hours to minutes and add to the minutes
       var totalMinutes = hours * 60 + minutes;
       return totalMinutes;
@@ -236,7 +240,7 @@ const HOC = (WrappedComponent) => {
       }
     }
 
-    generatePieOptions = (average,posText,negText) => {
+    generatePieOptions = (posText,negText,posVal,negVal=(60*24)-posVal) => {
       return {
         legend: {
           orient: 'vertical',
@@ -246,8 +250,8 @@ const HOC = (WrappedComponent) => {
         dataset: [
           {
             source: [
-              { value: average, name: posText },
-              { value: (60*24)-average, name: negText }
+              { value: posVal, name: posText },
+              { value: negVal, name: negText }
             ],
             
           }
@@ -275,12 +279,12 @@ const HOC = (WrappedComponent) => {
             // Set colors for each name (category)
             data: [
               {
-                value: average,
+                value: posVal,
                 name: posText,
                 itemStyle: { color: '#088395' } // Set the color for 'Sleeping'
               },
               {
-                value: (60 * 24) - average,
+                value: negVal,
                 name: negText,
                 itemStyle: { color: '#35A29F' } // Set the color for 'Not Sleeping'
               }
@@ -307,6 +311,7 @@ const HOC = (WrappedComponent) => {
       this.setState({ sleep_disruption: payload.data.sleep_disruption })
       this.setState({ heart_rate: payload.data.heart_rate })
       this.setState({ breath_rate: payload.data.breath_rate })
+      this.setState({ disrupt_duration: payload.data.disrupt_duration })
       this.setState({ room_name: payload.data.room_name.split("@")[0] })
 
       if (payload.data.bed_time.average != "-"){
@@ -330,7 +335,18 @@ const HOC = (WrappedComponent) => {
       if (payload.data.sleeping_hour.average != "-"){
         let sleeping_mins = 0
         sleeping_mins = this.timeStringToMinutes(payload.data.sleeping_hour.average)
-        let options =  this.generatePieOptions(sleeping_mins,"Sleeping","Not Sleeping")
+        let options =  this.generatePieOptions("Sleeping","Not Sleeping",sleeping_mins)
+
+        if (payload.data.disrupt_duration.average != "-"){
+          let disrupt_mins = 0
+          disrupt_mins = this.timeStringToMinutes(payload.data.disrupt_duration.average)
+          console.log(disrupt_mins,sleeping_mins)
+          let disruptOptions =  this.generatePieOptions("Disrupt Disruption","Not Disrupted",disrupt_mins,sleeping_mins)
+
+          this.setState({ disrupt_duration_options: disruptOptions })
+        }else{
+          this.setState({ disrupt_duration_options: null })
+        }
 
         this.setState({ sleeping_hour_options: options })
       }else{
@@ -340,7 +356,7 @@ const HOC = (WrappedComponent) => {
       if (payload.data.time_in_bed.average != "-"){
         let sleeping_mins = 0
         sleeping_mins = this.timeStringToMinutes(payload.data.time_in_bed.average)
-        let options =  this.generatePieOptions(sleeping_mins,"On Bed","Not On Bed")
+        let options =  this.generatePieOptions("On Bed","Not On Bed",sleeping_mins)
 
         this.setState({ time_in_bed_options: options })
       }else{
@@ -350,7 +366,7 @@ const HOC = (WrappedComponent) => {
       if (payload.data.in_room.average != "-"){
         let sleeping_mins = 0
         sleeping_mins = this.timeStringToMinutes(payload.data.in_room.average)
-        let options =  this.generatePieOptions(sleeping_mins,"In Room","Not In Room")
+        let options =  this.generatePieOptions("In Room","Not In Room",sleeping_mins)
 
         this.setState({ in_room_options: options })
       }else{

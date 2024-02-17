@@ -168,9 +168,6 @@ def analyseLaymanData(data,current_date):
     onbed_analysis = {}
     sleeping_analysis = {}
 
-    sleep_disruption_sec = 0 
-    onbed_disruption_sec = 0
-
     onbed_disruption_arr = []
 
     curr_timeslot = 0
@@ -224,7 +221,7 @@ def analyseLaymanData(data,current_date):
         # if (len(inroom_analysis[date_str]) <= curr_day_timeslot):
         #     inroom_analysis[date_str].append([])
 
-        if (row["TYPE"] == 3):
+        if (row["TYPE"] == 3 and row["BREATH_RATE"] is not None and row["HEART_RATE"] is not None):
             if (date_str not in onbed_analysis):
                 onbed_analysis[date_str] = []
             

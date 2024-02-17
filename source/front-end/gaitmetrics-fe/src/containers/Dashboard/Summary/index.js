@@ -203,7 +203,7 @@ const Summary = props => {
 			<Divider/>
 			<Container>
 				<Row gutter={[16, 16]} >
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -242,7 +242,7 @@ const Summary = props => {
 						</Card>
 					</Col>
 
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -281,7 +281,7 @@ const Summary = props => {
 						</Card>
 					</Col>
 
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -320,7 +320,7 @@ const Summary = props => {
 						</Card>
 					</Col>
 
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -359,7 +359,7 @@ const Summary = props => {
 						</Card>
 					</Col>
 
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -398,7 +398,7 @@ const Summary = props => {
 						</Card>
 					</Col>
 
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -437,7 +437,7 @@ const Summary = props => {
 						</Card>
 					</Col>
 
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -476,7 +476,7 @@ const Summary = props => {
 						</Card>
 					</Col>
 
-					<Col xl={12} xxl={12} lg={12} md={12} sm={24} xs={24}>
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
 						<Card 
 							headStyle={{textAlign:'center'}}
 							title={ 
@@ -513,6 +513,46 @@ const Summary = props => {
 							</div>
 						</Card>
 					</Col>
+
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+						<Card 
+							headStyle={{textAlign:'center'}}
+							title={ 
+								<>
+									<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Disrupt Duration
+								</>  } 
+							style={{}} 
+							className='content-card'
+						>
+							<Row style={{textAlign:'center'}}>
+								<Col span={16}>
+									<p>Week's Average</p>
+									<Title level={2}>{props.disrupt_duration.average}</Title>
+									{
+										props.disrupt_duration_options ? <ReactECharts option={props.disrupt_duration_options}/>: null
+									}
+								</Col>
+								<Col span={8} className='my-auto'>
+									<div className='min-max-container'>
+										<p>Maximum</p>
+										<Title level={4}>{props.disrupt_duration.max}</Title>
+									</div>
+									<div className='min-max-container'>
+										<p>Minimum</p>
+										<Title level={4}>{props.disrupt_duration.min}</Title>
+									</div>
+								</Col>
+							</Row>
+							<div>
+								<Divider/>
+								<div style={{textAlign:'center'}}>
+									Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.disrupt_duration.previous_average}</span> 
+								</div>
+							</div>
+							
+						</Card>
+					</Col>
+
 				</Row>
 			</Container>
 			

@@ -45,20 +45,55 @@ def getLaymanData(date,room_uuid):
     breath_rate = None
     heart_rate = None
 
-    disrupt_duration_result = None
+    disrupt_duration = None
+
     current_sleeping_seconds = None
     current_sleep_disruption = None
     current_disrupt_duration = None
 
-    sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE`, pd.`OBJECT_LOCATION`,pd.`TYPE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
-    cursor.execute(sql)
+    # sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE`, pd.`OBJECT_LOCATION`,pd.`TYPE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
+    sql = """
+        SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,
+            MAX(CASE WHEN pd.`STATE` = 2 THEN 1 ELSE 0 END) AS `IS_LAYING`,
+            (SUM(OBJECT_LOCATION)) > 0 AS 'IN_ROOM',
+            (SUM(IN_BED)) > 0 AS 'IN_BED',
+            MAX(CASE WHEN pd.`HEART_RATE` IS NOT NULL THEN 1 ELSE 0 END) AS `HAS_HEART_RATE`,
+            MAX(CASE WHEN pd.`BREATH_RATE` IS NOT NULL THEN 1 ELSE 0 END) AS `HAS_BREATH_RATE`,
+            pd.`TYPE`
+        FROM `RL_ROOM_MAC` rrm
+        LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC
+        WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB(%s, INTERVAL 6 DAY) AND DATE_ADD(%s, INTERVAL 1 DAY)
+        AND rrm.ROOM_UUID = %s
+        GROUP BY `MINUTE`
+        ORDER BY pd.`TIMESTAMP`;
+    """
+
+    # Execute the query with parameters
+    cursor.execute(sql, (date, date, room_uuid))
     processed_data = cursor.fetchall()
     if (processed_data):
-        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseLaymanData(processed_data,date)
-        
+        # sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseLaymanData(processed_data,date)
+        in_room, time_in_bed, sleeping_hour, bed_time, wake_up_time, sleep_disruption,disrupt_duration,current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseData(processed_data,date)
+
+    sql = """
+        SELECT pd.`HEART_RATE`,pd.`BREATH_RATE`
+        FROM `RL_ROOM_MAC` rrm
+        LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC
+        WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB(%s, INTERVAL 6 DAY) AND DATE_ADD(%s, INTERVAL 1 DAY)
+        AND (pd.`HEART_RATE` IS NOT NULL OR pd.`BREATH_RATE` IS NOT NULL)
+        AND rrm.ROOM_UUID = %s
+        ORDER BY pd.`TIMESTAMP`;
+    """
+
+    # Execute the query with parameters
+    cursor.execute(sql, (date, date, room_uuid))
+    vital_data = cursor.fetchall()
+    if (vital_data):
+        breath_rate,heart_rate = analyseVitalData(vital_data)
+    
     cursor.close()
     connection.close()
-    return sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration
+    return sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration
 
 def get_week_start_end(date):
     # Find the start (Monday) of the week
@@ -146,6 +181,343 @@ def previous_week():
         insert_data(curr,room["ID"],"sleep_disruption",sleep_disruption)
         insert_data(curr,room["ID"],"breath_rate",breath_rate)
         insert_data(curr,room["ID"],"heart_rate",heart_rate)
+
+def check_sleeping_intervals(data):
+    threshold = 60 * 90
+    sleeping_threshold = 60 * 45
+
+    disruption_threshold = 60 * 2.5
+    disruption_restore_threshold = 60 * 10
+
+    curr_timeslot = 0
+
+    last_disruption_time = None
+    last_row = None
+    sleeping = False
+    cache = []
+
+    sleep_intervals = []
+    disruptions = []
+    sleeping_disruptions = []
+    disrupt_durations = []
+    sleeping_disrupt_durations = []
+
+    analysis = []
+
+    date_format = "%Y-%m-%d %H:%M"
+    
+    for row in data:
+        row["MINUTE"] = dt.strptime(row["MINUTE"], date_format)
+        if (len(analysis) <= curr_timeslot):
+                analysis.append([])
+                disruptions.append(0)
+                disrupt_durations.append(0)
+
+        if (row["IS_LAYING"] == 1 and row["HAS_HEART_RATE"] == 1 and row["HAS_BREATH_RATE"] == 1 and row["IN_BED"] == 1 and row["IN_ROOM"] == 1):
+            sleeping = True
+            if (len(cache)>0):
+
+                if (len(analysis[curr_timeslot])>1):
+                    analysis[curr_timeslot][-1] = cache[-1]
+                else:
+                    analysis[curr_timeslot].append(cache[-1])
+
+                diff = cache[-1]["MINUTE"] - cache[0]["MINUTE"]
+                if (diff.total_seconds() > disruption_threshold):
+                    last_disruption_time = cache[-1]["MINUTE"]
+                cache = []
+            else:
+                if last_disruption_time is not None:
+                    diff = row["MINUTE"] - last_disruption_time
+                    if (diff.total_seconds() > disruption_restore_threshold and diff.total_seconds() < sleeping_threshold):
+                        last_disruption_time = None
+                        disruptions[-1] += 1
+                        disrupt_durations[-1] += int(diff.total_seconds())
+
+            if (len(analysis[curr_timeslot])>1):
+                analysis[curr_timeslot][-1] = row
+            else:
+                analysis[curr_timeslot].append(row)
+        else:
+            if (sleeping):
+                cache.append(row)
+            if (last_row):
+                diff = row["MINUTE"] - last_row["MINUTE"]
+
+                if ((diff.total_seconds()) > threshold and sleeping):
+                    sleeping = False
+                    curr_timeslot += 1
+                    cache = []
+
+        if (row["IS_LAYING"] == 1 and row["HAS_HEART_RATE"] == 1 and row["HAS_BREATH_RATE"] == 1 and row["IN_BED"] == 1 and row["IN_ROOM"] == 1):
+            last_row = row
+
+    if (len(cache)>0):
+        disruptions[-1] += 1
+        if (len(analysis[curr_timeslot])>1):
+            analysis[-1][-1] = cache[-1]
+        else:
+            analysis[-1].append(cache[-1])
+        cache = []
+
+    index = 0
+    for interval in analysis:
+        if (len(interval)>=2):
+
+            diff = interval[-1]["MINUTE"] - interval[0]["MINUTE"]
+            if (diff.total_seconds() > sleeping_threshold):
+                print("From",interval[0]["MINUTE"],"to",interval[-1]["MINUTE"])
+                sleep_intervals.append(interval)
+                sleeping_disruptions.append(disruptions[index])
+                sleeping_disrupt_durations.append(disrupt_durations[index])
+        
+        index += 1
+
+    for row in data:
+        for interval in sleep_intervals:
+            if (row["MINUTE"] >= interval[0]["MINUTE"] and row["MINUTE"] <= interval[-1]["MINUTE"] and row["IS_LAYING"] == 1 and row["HAS_HEART_RATE"] == 1 and row["HAS_BREATH_RATE"] == 1 and row["IN_BED"] == 1 and row["IN_ROOM"] == 1):
+                row["IS_SLEEPING"] = 1
+                break
+            else:
+                row["IS_SLEEPING"] = 0 
+    
+    return sleep_intervals, sleeping_disruptions, sleeping_disrupt_durations
+
+def analyseData(data,current_date):
+
+    sleeping_intervals, disruptions, disrupt_durations = check_sleeping_intervals(data)
+    
+    inroom_minutes = {}
+    inbed_minutes = {}
+    sleeping_minutes = {}
+
+    inroom_seconds = []
+    onbed_seconds = []
+    sleeping_seconds = []
+
+    start_sleep_time = []
+    wake_up_time = []
+
+    current_sleeping_seconds = None
+    current_sleep_disruption = None 
+    current_disrupt_duration = None
+
+    for row in data:
+        date_str = str(row["MINUTE"].date())
+        if (row["IN_ROOM"]):
+            if (date_str not in inroom_minutes):
+                inroom_minutes[date_str] = 1
+            else:
+                inroom_minutes[date_str] += 1
+
+            if (row["IN_BED"]):
+                if (date_str not in inbed_minutes):
+                    inbed_minutes[date_str] = 1
+                else:
+                    inbed_minutes[date_str] += 1
+                if (row.get("IS_SLEEPING")):
+                    if (date_str not in sleeping_minutes):
+                        sleeping_minutes[date_str] = 1
+                    else:
+                        sleeping_minutes[date_str] += 1
+
+    for date in inroom_minutes:
+        print("#########",date,"#########")
+        print("In room ",seconds_to_text(inroom_minutes[date]*60))
+        inroom_seconds.append(inroom_minutes[date]*60)
+        if (date in inbed_minutes):
+            onbed_seconds.append(inbed_minutes[date]*60)
+            print("On bed ",seconds_to_text(inbed_minutes[date]*60))
+        if (date in sleeping_minutes):
+            sleeping_seconds.append(sleeping_minutes[date]*60)
+            print("Sleeping ",seconds_to_text(sleeping_minutes[date]*60))
+
+            if (date == current_date):
+                current_sleeping_seconds = seconds_to_text(sleeping_minutes[date]*60)
+                current_sleep_disruption = disruptions[-1]
+                current_disrupt_duration = seconds_to_text(disrupt_durations[-1])
+
+        if (date == current_date):
+            break    
+
+    for interval in sleeping_intervals:
+        start_sleep_time.append(interval[0]["MINUTE"])
+        wake_up_time.append(interval[-1]["MINUTE"])
+
+    try:
+        sleeping_longest = int(max(sleeping_seconds))
+        sleeping_shortest = int(min(sleeping_seconds))
+        sleeping_average = int(sum(sleeping_seconds) / len(sleeping_seconds))
+
+        sleeping_hour_result = {
+            "average":seconds_to_text(sleeping_average),
+            "max":seconds_to_text(sleeping_longest),
+            "min":seconds_to_text(sleeping_shortest),
+        }
+        # print("sleeping",sleeping_hour_result)
+    except Exception as e:
+        sleeping_hour_result = None
+
+    onbed_seconds = list(filter(filter_non_zero, onbed_seconds))
+
+    try:
+        bed_longest = int(max(onbed_seconds))
+        bed_shortest = int(min(onbed_seconds))
+        bed_average = int(sum(onbed_seconds) / len(onbed_seconds))
+
+        time_in_bed_result = {
+            "average":seconds_to_text(bed_average),
+            "max":seconds_to_text(bed_longest),
+            "min":seconds_to_text(bed_shortest),
+        }
+        # print("bed",time_in_bed_result)
+    except Exception as e:
+        time_in_bed_result = None
+
+    inroom_seconds = list(filter(filter_non_zero, inroom_seconds))
+
+    try:
+        inroom_longest = int(max(inroom_seconds))
+        inroom_shortest = int(min(inroom_seconds))
+        inroom_average = int(sum(inroom_seconds) / len(inroom_seconds))
+
+        in_room_result = {
+            "average":seconds_to_text(inroom_average),
+            "max":seconds_to_text(inroom_longest),
+            "min":seconds_to_text(inroom_shortest),
+        }
+        # print("inroom",in_room_result)
+    except Exception as e:
+        in_room_result = None
+
+    try:
+        pattern = r'^(00:00:|00:01:|00:02:|00:03:|00:04:|00:05:)'
+        if re.match(pattern, str(start_sleep_time[0]).split(" ")[1]):
+            temp = []
+            for i in range(1,len(start_sleep_time)):
+                temp.append(start_sleep_time[i])
+            
+            start_sleep_time = temp
+        if (len(start_sleep_time) > 0):
+            average_bedtime,earliest_bedtime,latest_bedtime = bedtime_processing(start_sleep_time)
+        else:
+            average_waketime,earliest_waketime,latest_waketime = '-','-','-'
+        bed_time_result = {
+            "average":average_bedtime,
+            "max":latest_bedtime,
+            "min":earliest_bedtime,
+        }
+    except Exception as e:
+        print(start_sleep_time,e)
+        bed_time_result = None
+
+    try:
+        pattern = r'^(23:55:|23:56:|23:57:|23:58:|23:59:|00:00:)'
+        # print(str(wake_up_time[-1]).split(" ")[1])
+        if re.match(pattern, str(wake_up_time[-1]).split(" ")[1]):
+            # print("removed")
+            temp = []
+            for i in range(0,len(wake_up_time)-1):
+                temp.append(wake_up_time[i])
+            
+            wake_up_time = temp
+            # print(wake_up_time)
+
+        if (len(wake_up_time) > 0):
+            average_waketime,earliest_waketime,latest_waketime = waketime_processing(wake_up_time)
+        else:
+            average_waketime,earliest_waketime,latest_waketime = '-','-','-'
+        wake_up_time_result = {
+            "average":average_waketime,
+            "max":latest_waketime,
+            "min":earliest_waketime,
+        }
+    except Exception as e:
+        wake_up_time_result = None
+
+    try:
+        if (len(disruptions)==7):
+            disruptions[-1] += disruptions[0]
+            disruptions = disruptions[1:]
+        # print(real_disruptions)
+        disruption_most = int(max(disruptions))
+        disruption_least = int(min(disruptions))
+        disruption_average = sum(disruptions) / len(disruptions)
+
+        current_sleep_disruption = disruptions[-1]
+
+        sleep_disruption_result = {
+            "average":round(disruption_average,3),
+            "max":disruption_most,
+            "min":disruption_least,
+        }
+    except Exception as e:
+        if (len(sleeping_seconds)>0):
+            sleep_disruption_result = {
+                "average":0,
+                "max":0,
+                "min":0,
+            }
+        else:
+            sleep_disruption_result = None
+
+    try:
+        if (len(disrupt_durations)==7):
+            disrupt_durations[-1] += disrupt_durations[0]
+            disrupt_durations = disrupt_durations[1:]
+
+        disrupt_duration_longest = int(max(disrupt_durations))
+        disrupt_duration_shortest = int(min(disrupt_durations))
+        disrupt_duration_average = int(sum(disrupt_durations) / len(disrupt_durations))
+
+        disrupt_duration_result = {
+            "average":seconds_to_text(disrupt_duration_average),
+            "max":seconds_to_text(disrupt_duration_longest),
+            "min":seconds_to_text(disrupt_duration_shortest),
+        }
+    except Exception as e:
+        disrupt_duration_result = None
+
+    return in_room_result, time_in_bed_result, sleeping_hour_result, bed_time_result, wake_up_time_result, sleep_disruption_result, disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration
+
+def analyseVitalData(data):
+    breath_rate = []
+    heart_rate = []
+    for row in data:
+        if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] >= 8):
+            breath_rate.append(row["BREATH_RATE"])
+
+        if (row["HEART_RATE"] is not None and row["HEART_RATE"] >= 40):
+            heart_rate.append(row["HEART_RATE"])
+    
+    try:
+        breath_rate = remove_outliers_iqr(breath_rate)
+        breath_highest = max(breath_rate)
+        breath_lowest = min(breath_rate)
+        breath_average = sum(breath_rate) / len(breath_rate)
+
+        breath_rate_result = {
+            "average":round(breath_average,1),
+            "max":int(breath_highest),
+            "min":int(breath_lowest),
+        }
+    except Exception as e:
+        breath_rate_result = None
+
+    try:
+        heart_rate = remove_outliers_iqr(heart_rate)
+        heart_highest = max(heart_rate)
+        heart_lowest = min(heart_rate)
+        heart_average = sum(heart_rate) / len(heart_rate)
+        heart_rate_result = {
+            "average":round(heart_average,1),
+            "max":int(heart_highest),
+            "min":int(heart_lowest),
+        }
+    except Exception as e:
+        heart_rate_result = None
+
+    return breath_rate_result,heart_rate_result
 
 def analyseLaymanData(data,current_date):
 
@@ -772,8 +1144,8 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-start_date = "2023-12-01"
-end_date = "2024-02-14"
+start_date = "2023-06-01"
+end_date = "2024-02-18"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")
@@ -916,8 +1288,6 @@ for curr in dates_between:
     # print("Running current layman")
     rooms = get_rooms()
     for room in rooms:
-        if room["ID"] != 7:
-            continue
         print(curr,room["ID"],room["ROOM_UUID"])
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
@@ -931,21 +1301,10 @@ for curr in dates_between:
         insert_data(curr,room["ID"],"disrupt_duration",disrupt_duration)
 
         if (current_sleeping_hour):
-            # if (check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",threshold=3.5) and check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",mode="weekday",threshold=1.5)):
-            #     print(curr,"Sleeping hour abnormal",current_sleeping_hour)
-            #     insert_alert(room["ID"],1,1,"Sleeping hour abnormal - " + curr)
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
         
         if (current_sleep_disruption):
-            # if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
-            #     insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
-            
-            # check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"Sleep disruption abnormal (weekday) - " + curr,"float",mode="weekday")
             insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
 
         if (current_disrupt_duration):
-            # if (check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"text")):
-            #     insert_alert(room["ID"],1,1,"Sleep disrupt duration abnormal (last 30 days) - " + curr)
-            
-            # check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"Sleep disrupt duration abnormal (weekday) - " + curr,"text",mode="weekday")
             insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")

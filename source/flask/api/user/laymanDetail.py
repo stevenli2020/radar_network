@@ -151,7 +151,7 @@ def getLaymanData(date,room_uuid):
 def get_data_from_analysis(date,room_id,type):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
-    sql = "SELECT max,min,average FROM `ANALYSIS` WHERE `TYPE`='%s' AND `ROOM_ID`=%s AND `EOW`='%s' UNION ALL SELECT '-' AS `max`,'-' AS `min`,'-' AS `average` FROM ANALYSIS WHERE (SELECT COUNT(*) FROM `ANALYSIS` WHERE `TYPE`='%s' AND `ROOM_ID`=%s AND `EOW`='%s')=0 LIMIT 1;"%(type,room_id,date,type,room_id,date)
+    sql = "SELECT max,min,average FROM `ANALYSIS` WHERE `TYPE`='%s' AND `ROOM_ID`=%s AND `EOW`='%s' UNION ALL SELECT '-' AS `max`,'-' AS `min`,'-' AS `average` LIMIT 1;"%(type,room_id,date)
     cursor.execute(sql)
     data = cursor.fetchone()
     min = data["min"]

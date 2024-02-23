@@ -193,17 +193,17 @@ def previous_week():
                 insert_alert(room["ID"],1,1,"Sleeping hour abnormal - " + curr)
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
         
-        if (current_sleep_disruption):
-            if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
-                insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
-            
-            insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
+            if (current_sleep_disruption):
+                if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
+                    insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
+                
+                insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
 
-        if (current_disrupt_duration):
-            if (check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"text")):
-                insert_alert(room["ID"],1,1,"Sleep disrupt duration abnormal (last 30 days) - " + curr)
-            
-            insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")
+            if (current_disrupt_duration):
+                if (check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"text")):
+                    insert_alert(room["ID"],1,1,"Sleep disrupt duration abnormal (last 30 days) - " + curr)
+                
+                insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")
 
 def is_anomaly(series,last_data,threshold):
     df = pd.DataFrame({'value': series})

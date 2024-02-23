@@ -564,7 +564,7 @@ def decode_process_publish(mac, data):
                             if wallStateParam[mac]['pandasDF'].empty:
                                 
                                 # Append data frame
-                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                                wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
 
                             elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
@@ -641,13 +641,13 @@ def decode_process_publish(mac, data):
                                     # print(json_string)
 
                                 # Update the new data frame
-                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                                wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
                                 wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
 
                             else:
             
                                 # Append data frame
-                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                                wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
 
                                 # print(wallStateParam)
 
@@ -684,7 +684,7 @@ def decode_process_publish(mac, data):
                     if "pandasDF" in wallStateParam[mac]:
                         if wallStateParam[mac]['pandasDF'].empty:
                             # Append data frame
-                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                            wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
 
                         elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
@@ -713,12 +713,12 @@ def decode_process_publish(mac, data):
                             # print(json_string)
 
                             # Update the new data frame
-                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                            wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
                             wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
 
                         else:
                             # Append data frame
-                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                            wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 # Since track indexes are delayed a frame, delay showing the current points by 1 frame
@@ -1172,7 +1172,7 @@ def decode_process_publish(mac, data):
                             if ceilStateParam[mac]['pandasDF'].empty:
                                 
                                 # Append data frame
-                                ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                                ceilStateParam[mac]['pandasDF'] = pd.concat(ceilStateParam[mac]['pandasDF'], pd.DataFrame([ceil_Dict]), ignore_index=True)
 
                             elif (ceil_Dict['timeStamp'] - ceilStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
@@ -1248,13 +1248,13 @@ def decode_process_publish(mac, data):
                                     # print(json_string)
 
                                 # Update the new data frame
-                                ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                                ceilStateParam[mac]['pandasDF'] = pd.concat([ceilStateParam[mac]['pandasDF'], pd.DataFrame([ceil_Dict])], ignore_index=True)
                                 ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].iloc[-1:,:]
 
                             else:
                     
                                 # Append data frame
-                                ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                                ceilStateParam[mac]['pandasDF'] = pd.concat([ceilStateParam[mac]['pandasDF'], pd.DataFrame([ceil_Dict])], ignore_index=True)
 
 
                         # Remove unused tracker information and parameters
@@ -1288,7 +1288,7 @@ def decode_process_publish(mac, data):
                     if "pandasDF" in ceilStateParam[mac]:
                         if ceilStateParam[mac]['pandasDF'].empty:
                             # Append data frame
-                            ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                            ceilStateParam[mac]['pandasDF'] = pd.concat([ceilStateParam[mac]['pandasDF'], pd.DataFrame([ceil_Dict])], ignore_index=True)
 
                         elif (ceil_Dict['timeStamp'] - ceilStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
@@ -1317,12 +1317,12 @@ def decode_process_publish(mac, data):
                             # print(json_string)
 
                             # Update the new data frame
-                            ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                            ceilStateParam[mac]['pandasDF'] = pd.concat([ceilStateParam[mac]['pandasDF'], pd.DataFrame([ceil_Dict])], ignore_index=True)
                             ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].iloc[-1:,:]
 
                         else:
                             # Append data frame
-                            ceilStateParam[mac]['pandasDF'] = ceilStateParam[mac]['pandasDF'].append(ceil_Dict, ignore_index=True)
+                            ceilStateParam[mac]['pandasDF'] = pd.concat([ceilStateParam[mac]['pandasDF'], pd.DataFrame([ceil_Dict])], ignore_index=True)
 
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
@@ -1752,7 +1752,8 @@ def decode_process_publish(mac, data):
                 
                 if vitalStateParam[mac]['pandasDF'].empty:
                     # Append data frame
-                    vitalStateParam[mac]['pandasDF'] = vitalStateParam[mac]['pandasDF'].append(vital_dict, ignore_index=True)
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate'])
+                    vitalStateParam[mac]['pandasDF'] = pd.concat([vitalStateParam[mac]['pandasDF'], pd.DataFrame([vital_dict])], ignore_index=True)
 
                 elif (vital_dict['timeStamp'] - vitalStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
                     # aggregate_dict = vitalStateParam[mac]['pandasDF'].agg({'timeStamp': ['mean'], 'bedOccupancy': 'mean',
@@ -1794,11 +1795,11 @@ def decode_process_publish(mac, data):
                     # print("JSON: ", json_string)
 
                     # Update the new data frame
-                    vitalStateParam[mac]['pandasDF'] = vitalStateParam[mac]['pandasDF'].append(vital_dict, ignore_index=True)
+                    vitalStateParam[mac]['pandasDF'] = pd.concat([vitalStateParam[mac]['pandasDF'], pd.DataFrame([vital_dict])], ignore_index=True)
                     vitalStateParam[mac]['pandasDF'] = vitalStateParam[mac]['pandasDF'].iloc[-1:, :]
                 else:
                     # Append data frame
-                    vitalStateParam[mac]['pandasDF'] = vitalStateParam[mac]['pandasDF'].append(vital_dict, ignore_index=True)
+                    vitalStateParam[mac]['pandasDF'] = pd.concat([vitalStateParam[mac]['pandasDF'], pd.DataFrame([vital_dict])], ignore_index=True)
 
                 # Write key-value dictionary to JSON file
                 # json_string = json.dumps(vital_dict, indent=4)

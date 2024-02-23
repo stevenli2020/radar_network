@@ -112,7 +112,7 @@ const EditRoomOnMapModal = (props) => {
           <Col sm={24}  style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
             <GridLayout
               className="grid-layout"
-              style={{backgroundImage:`url(${backgroundImageUrl})`,backgroundRepeat:'no-repeat', backgroundSize:'60vw 400px'}}
+              style={{backgroundImage:`url(${backgroundImageUrl})`,backgroundRepeat:'no-repeat', backgroundSize:'700px 500px'}}
               layout={initialLayout}
               cols={100}
               autoSize={false}

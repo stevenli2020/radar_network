@@ -259,11 +259,11 @@ const Home = (props) => {
 
 			{props.mapView?
 			<div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-				<div className='mt-5' style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',width:'60vw',height:'400px' }}>
+				<div className='mt-5' style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',width:'700px',height:'500px' }}>
 					{/* <Image src={getDomainURL() + `/static/uploads/white.png`} preview={false} style={{width:'60vw',height:'50vh'}}/> */}
 					<GridLayout
 						className="grid-layout"
-						style={{backgroundImage:`url(${backgroundImageUrl})`,backgroundRepeat:'no-repeat', backgroundSize:'60vw 400px'}}
+						style={{backgroundImage:`url(${backgroundImageUrl})`,backgroundRepeat:'no-repeat', backgroundSize:'700px 500px'}}
 						layout={initialLayout}
 						cols={100}
 						autoSize={false}

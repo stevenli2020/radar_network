@@ -87,7 +87,12 @@ def getHistOfVitalData(data):
     # print(dbresult)
     try:
         db = dbresult[0].split(',')
-        List = "IN ('"+db[0]+"','"+db[1]+"')"
+        MAC_LIST = ""
+        for MAC in db:
+            if MAC_LIST != "":
+                MAC_LIST += ","
+            MAC_LIST += f"""'{MAC}'"""
+        List = f"IN ({MAC_LIST})"
     except:
         # print("No data related to room name")
         result["ERROR"].append({'Message': 'No data related to room name!'})

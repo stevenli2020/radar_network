@@ -1221,6 +1221,8 @@ def waketime_processing(arr):
     
     # Function to convert minutes since midnight to 12-hour AM/PM time format
     def minutes_to_am_pm_time(minutes):
+        if (minutes > 24*60):
+            minutes -= 24*60
         hours, minutes = divmod(minutes, 60)
         period = "AM" if hours < 12 else "PM"
         if hours == 0:
@@ -1254,8 +1256,8 @@ def waketime_processing(arr):
     latest_waketime = minutes_to_am_pm_time(waketime_minutes[-1])
 
     for i in range(len(waketime_minutes)):
-        if (waketime_minutes[i] > 20*60):
-            waketime_minutes[i] -= 24 * 60
+        if (waketime_minutes[i] < 13*60):
+            waketime_minutes[i] += 24 * 60
         # waketime_minutes[i] = minutes_to_am_pm_time(waketime_minutes[i])
 
     average_waketime = int(sum(waketime_minutes) / len(waketime_minutes))

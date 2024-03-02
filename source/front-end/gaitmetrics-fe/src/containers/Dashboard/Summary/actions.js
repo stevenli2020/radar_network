@@ -33,7 +33,8 @@ const HOC = (WrappedComponent) => {
       disrupt_duration_options:null,
       heart_rate_options:null,
       breath_rate_options:null,
-      receivedAlert:0
+      receivedAlert:0,
+      in_bed: false
     };
 
     barColors = ['#35A29F', '#088395', '#071952'];

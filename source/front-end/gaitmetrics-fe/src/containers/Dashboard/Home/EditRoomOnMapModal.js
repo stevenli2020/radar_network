@@ -117,7 +117,7 @@ const EditRoomOnMapModal = (props) => {
               cols={100}
               autoSize={false}
               rowHeight={2} // 50vh / 4 rows
-              width={(60 * viewportWidthInPixels) / 100} // 60vw * 12 cols
+              width={700} // 60vw * 12 cols
               onLayoutChange={onLayoutChange}
               verticalCompact={false}
               isDraggable={dragable}

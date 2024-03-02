@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import moment from 'moment';
 import WithHOC from './actions'
 import { useNavigate } from "react-router-dom"
-import { Typography, Card, Row, Col, Divider,Tag, Space, Modal, Button, Popover, Table, Image } from 'antd'
+import { Typography, Card, Row, Col, Divider,Tag, Space, Modal, Button, Popover, Table } from 'antd'
 import { ArrowRightOutlined, EditTwoTone, DeleteTwoTone, PlusOutlined, AlertFilled, EditOutlined } from '@ant-design/icons'
 
 import LoadingOverlay from 'components/LoadingOverlay'
@@ -11,7 +11,7 @@ import AddRoomModal from './AddRoomModal'
 import UpdateRoomModal from './UpdateRoomModal'
 import { getItem } from 'utils/tokenStore'
 import getDomainURL from 'utils/api'
-
+import _ from 'lodash';
 import Paho from 'paho-mqtt'
 
 import GridLayout from 'react-grid-layout';
@@ -33,8 +33,29 @@ const Home = (props) => {
 
   const onMessageArrived = async (message) => {
     try {
-      console.log("onMessageArrived:", message.payloadString, message.destinationName.split('/'), message);
-      props.getRoomDetails()
+			let destination = message.destinationName.split('/')
+			if (destination[destination.length-1] == "ALERT"){
+				props.getRoomDetails()
+			}else if (destination[destination.length-1] == "BED_ANALYSIS"){
+				// console.log("onMessageArrived:", message.payloadString, message.destinationName.split('/'), message);
+				const payloadBuffer = message.payloadString;
+
+				// Convert the Buffer to a UTF-8 encoded string
+				const payloadStr = payloadBuffer.toString('utf-8');
+
+				// Parse the JSON string to a JavaScript object
+				const payloadJson = JSON.parse(payloadStr);
+				// console.log(destination[3],payloadJson)
+				
+				const updatedRooms = [...props.rooms]; // Create a shallow copy of rooms
+				const roomToUpdate = _.find(updatedRooms, { ROOM_UUID: destination[4] });
+
+				if (roomToUpdate) {
+					roomToUpdate.IN_BED = payloadJson["IN_BED"];
+				}
+				
+				props.onChangeHOC('rooms',updatedRooms)
+			} 
     } catch (error) {
       console.error("Error processing MQTT message:", error);
     }
@@ -59,6 +80,7 @@ const Home = (props) => {
           onSuccess: () => {
             console.log("Connected");
             client.subscribe("/GMT/DEV/ROOM/+/ALERT");
+						client.subscribe("/GMT/DEV/ROOM/+/BED_ANALYSIS");
             client.onMessageArrived = onMessageArrived;
           },
           onFailure: doFail,
@@ -73,7 +95,7 @@ const Home = (props) => {
 		if (getItem("LOGIN_TOKEN")){
     	connectToBroker();
 		}
-  }, []); // Include dependencies if needed
+  }, [props.rooms]); // Include dependencies if needed
   
 
 	const [addVisible, setAddVisible] = useState(false);
@@ -132,20 +154,84 @@ const Home = (props) => {
 
 	const roomContent = (room) =>{
 		return (
-		<div>
-			<p>{room.INFO?room.INFO:'-'}</p>
-			<p>Status: <Tag>{
-				room.STATUS === 0? 'Room is empty':
-				room.STATUS === 1? 'Room is occupied':
-				room.STATUS === 2? 'Sleeping':
-				room.STATUS === 255? 'Alert':
-				'Room is empty'
-			}</Tag></p>
-			<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
-			<p>Last data: <Tag>{
-				moment(room.LAST_DATA_TS).add(timezoneOffset, 'minutes').fromNow()
-				}</Tag></p>
-		</div>)
+			<Card 
+				title={ room.ROOM_NAME } 
+				style={{ height: "100%"}} 
+				className='content-card'
+				extra={
+					<Space>
+						{
+							room.ALERTS.length>0?(
+								<Popover title="Alert(s)" content={popoverContent(room)}>
+									<AlertFilled style={{color:'red'}}></AlertFilled>
+								</Popover>):(<></>)
+						}
+						{room.IN_BED && room.ROOM_NAME!='Wall Sensor'?<Tag>In Bed</Tag>:''}
+						<EditTwoTone onClick={ ()=>{
+							props.onChangeHOC('updateUploadImg',null)
+							props.onChangeHOC('selectedRoom',room)
+							console.log(room)
+							showUpdateModal()
+						}
+						}></EditTwoTone>
+
+						<DeleteTwoTone onClick={() => 
+							Modal.confirm({
+								title: 'Delete Room',
+								content: 'Are you sure you want to delete '+room.ROOM_NAME+'?',
+								okText:'Confirm',
+								cancelText:'Cancel',
+								onOk:() => {
+									props.deleteRoom(room)
+								},
+							})
+						}></DeleteTwoTone>
+
+						{/* <ArrowRightOutlined onClick={
+							() => {
+								toSummary(room.ROOM_UUID)
+							}
+						}></ArrowRightOutlined> */}
+					</Space>
+				}
+			>
+				<div
+					onClick={
+						() => {
+							toSummary(room.ROOM_UUID)
+						}
+					} 
+				>
+					<p>{room.INFO?room.INFO:'-'}</p>
+					<p>Status: <Tag>{
+						room.STATUS === 0? 'Room is empty':
+						room.STATUS === 1? 'Room is occupied':
+						room.STATUS === 2? 'Sleeping':
+						room.STATUS === 255? 'Alert':
+						'Room is empty'
+					}</Tag></p>
+					<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
+					<p>Last data: <Tag>{
+						moment(room.LAST_DATA_RECEIVED).add(timezoneOffset, 'minutes').fromNow()
+						}</Tag></p>
+				</div>
+				
+			</Card>
+		// <div>
+		// 	<p>{room.INFO?room.INFO:'-'}</p>
+		// 	<p>Status: <Tag>{
+		// 		room.STATUS === 0? 'Room is empty':
+		// 		room.STATUS === 1? 'Room is occupied':
+		// 		room.STATUS === 2? 'Sleeping':
+		// 		room.STATUS === 255? 'Alert':
+		// 		'Room is empty'
+		// 	}</Tag></p>
+		// 	<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
+		// 	<p>Last data: <Tag>{
+		// 		moment(room.LAST_DATA_TS).add(timezoneOffset, 'minutes').fromNow()
+		// 		}</Tag></p>
+		// </div>
+		)
 	}
 
 	const columns = [ 
@@ -268,7 +354,7 @@ const Home = (props) => {
 						cols={100}
 						autoSize={false}
 						rowHeight={2} // 50vh / 4 rows
-						width={(60 * viewportWidthInPixels) / 100} // 60vw * 12 cols
+						width={700} // 60vw * 12 cols
 						onLayoutChange={onLayoutChange}
 						verticalCompact={false}
 						isDraggable={false}
@@ -278,17 +364,13 @@ const Home = (props) => {
 					>
 						{
 						props.rooms.filter((room) => room.x !== null && room.y !== null && room.w !== null && room.h !== null).map( room => (
-							<div key={room.ID.toString()} className={`grid-item ${room.ALERTS.length > 0 ? 'red-background' : ''}`} onClick={
-								() => {
-									toSummary(room.ROOM_UUID)
-								}
-							}>
-								<Popover title="Detail" content={roomContent(room)}>
+							<div key={room.ID.toString()} className={`grid-item ${room.ALERTS.length > 0 ? 'red-background' : ''}`} >
+								<Popover content={roomContent(room)}>
 									<div style={{display:'flex',alignItems:'center',justifyContent: 'center',height:'100%',cursor:'pointer'}}>
-										{room.ROOM_NAME}
+										{room.ROOM_NAME} 
 									</div>
 								</Popover>
-							</div>))
+							</div>)) 
 						}
 					</GridLayout>
 				</div>
@@ -355,7 +437,7 @@ const Home = (props) => {
 									}</Tag></p>
 									<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
 									<p>Last data: <Tag>{
-										moment(room.LAST_DATA_TS).add(timezoneOffset, 'minutes').fromNow()
+										moment(room.LAST_DATA_RECEIVED).add(timezoneOffset, 'minutes').fromNow()
 										}</Tag></p>
 								</div>
 								

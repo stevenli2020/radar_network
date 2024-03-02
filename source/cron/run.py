@@ -124,14 +124,17 @@ def insert_data(date,room_id,type,data,mode="week"):
 
         if existing_data is None:
 
-            if mode == "day":
+            if mode == "day" and data != '':
                 value = data
                 insert_query = f"INSERT INTO ANALYSIS_DAY (`DATE`,ROOM_ID,`TYPE`,`VALUE`) VALUES ('{date}', '{room_id}', '{type}', '{value}')"
             else:
                 max = data.get("max")
                 min = data.get("min")
                 average = data.get("average")
-                insert_query = f"INSERT INTO ANALYSIS (EOW,ROOM_ID,TYPE,MAX,MIN,AVERAGE) VALUES ('{date}', '{room_id}', '{type}', '{max}', '{min}', '{average}')"
+                if (max != '' and min != '' and average != ''):
+                    insert_query = f"INSERT INTO ANALYSIS (EOW,ROOM_ID,TYPE,MAX,MIN,AVERAGE) VALUES ('{date}', '{room_id}', '{type}', '{max}', '{min}', '{average}')"
+                else:
+                    insert_query = ''
             cursor.execute(insert_query)
             connection.commit()
             
@@ -151,7 +154,7 @@ def insert_data(date,room_id,type,data,mode="week"):
             except Exception as e:
                 print(e)
         cursor.close()
-        connection.close()  
+        connection.close()   
 
 def current_layman():
     curr = str(datetime.datetime.now(timezone("Asia/Singapore"))).split(' ')[0]

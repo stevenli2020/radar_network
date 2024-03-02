@@ -5,8 +5,10 @@ import json
 
 broker = '143.198.199.16'
 port = 1883
-sub_topic = "/GMT/DEV/+/ALERT"
-pub_topic = "/GMT/DEV/ROOM/ROOM_UUID/ALERT"
+sub_topic1 = "/GMT/DEV/+/ALERT"
+sub_topic2 = "/GMT/DEV/+/DATA/+/JSON"
+pub_topic1 = "/GMT/DEV/ROOM/ROOM_UUID/ALERT"
+pub_topic2 = "/GMT/DEV/ROOM/ROOM_UUID/BED_ANALYSIS"
 client_id = f'1237'
 username = 'py-client1'
 password = 'c764eb2b5fa2d259dc667e2b9e195218'
@@ -68,17 +70,35 @@ def subscribe(client: paho):
         parts = curr_topic.split('/')
         mac_value = parts[3]
         room_detail = get_room_uuid_by_mac(mac_value)
-        insert_alert(room_detail["ID"],msg)
-        real_topic = pub_topic.replace("ROOM_UUID",room_detail["ROOM_UUID"])
-        result = client.publish(real_topic, "New alert")
-        # result: [0, 1]
-        status = result[0]
-        if status == 0:
-            print(f"Send `{msg}` to topic `{real_topic}`")
-        else:
-            print(f"Failed to send message to topic {real_topic}")
+        if (parts[-1] == "ALERT"):
+            insert_alert(room_detail["ID"],msg)
+            real_topic = pub_topic1.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+            result = client.publish(real_topic, "New alert")
+            # result: [0, 1]
+            status = result[0]
+            if status == 0:
+                print(f"Send `{msg}` to topic `{real_topic}`")
+            else:
+                print(f"Failed to send message to topic {real_topic}")
+        elif (parts[-1] == "JSON"):
 
-    client.subscribe(sub_topic)
+            BED_ANALYSIS = {
+                "IN_BED":False
+            }
+            any_bed_occupied = any(item.get('bedOccupancy') for item in msg['DATA'])
+
+            if any_bed_occupied:
+                BED_ANALYSIS["IN_BED"] = True
+                print(room_detail)
+                print("At least one bed is occupied.")
+            else:
+                print("No beds are occupied.")
+
+            real_topic = pub_topic2.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+            result = client.publish(real_topic, json.dumps(BED_ANALYSIS))
+
+    client.subscribe(sub_topic1)
+    client.subscribe(sub_topic2)
     client.on_message = on_message
 
 def run():

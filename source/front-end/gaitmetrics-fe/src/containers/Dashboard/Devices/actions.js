@@ -117,7 +117,12 @@ const HOC = (WrappedComponent) => {
     updateDevice = (values) => {
       console.log(values)
       let room_uuid = _.find(this.state.rooms, { label: values.ROOM_NAME }).value
-      let o_room_uuid = _.find(this.state.rooms, { label: this.state.selectedDevice.ROOM_NAME }).value
+      let o_room_uuid = '';
+      const selectedRoom = _.find(this.state.rooms, { label: this.state.selectedDevice.ROOM_NAME });
+      if (selectedRoom) {
+          o_room_uuid = selectedRoom.value;
+      }
+      // let o_room_uuid = _.find(this.state.rooms, { label: this.state.selectedDevice.ROOM_NAME }).value
       let payload = {
         Id: this.state.selectedDevice.Id,
         MAC: values.MAC,

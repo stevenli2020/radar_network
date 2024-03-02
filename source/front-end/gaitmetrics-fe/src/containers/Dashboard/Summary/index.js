@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import WithHOC from './actions'
-import { Typography, Row, Col, Button, Card, Divider, Space } from 'antd'
+import { Typography, Row, Col, Button, Card, Divider, Space, Tag } from 'antd'
 import LoadingOverlay from 'components/LoadingOverlay'
 import { BsArrowLeft, BsArrowRight, BsCloudMoonFill, BsCloudSunFill, BsDoorClosedFill, BsFillLungsFill, BsFillSunsetFill, BsHeartFill, BsSignStopFill, BsTruckFlatbed } from "react-icons/bs";
 import { Container } from 'react-bootstrap';
@@ -32,9 +32,22 @@ const Summary = props => {
 
   const onMessageArrived = async (message) => {
     try {
-      console.log("onMessageArrived:", message.payloadString, message.destinationName.split('/'), message);
-			console.log(props.room_uuid)
-      props.getRoomAlerts(props.room_uuid)
+			let destination = message.destinationName.split('/')
+			if (destination[destination.length-1] == "ALERT"){
+				props.getRoomAlerts(props.room_uuid)
+			}else if (destination[destination.length-1] == "BED_ANALYSIS"){
+				const payloadBuffer = message.payloadString;
+
+				// Convert the Buffer to a UTF-8 encoded string
+				const payloadStr = payloadBuffer.toString('utf-8');
+
+				// Parse the JSON string to a JavaScript object
+				const payloadJson = JSON.parse(payloadStr);
+				console.log(payloadJson)
+				
+				props.onChangeHOC('in_bed',payloadJson["IN_BED"])
+			}
+      
     } catch (error) {
       console.error("Error processing MQTT message:", error);
     }
@@ -51,6 +64,7 @@ const Summary = props => {
           timeout: 3,
           onSuccess: () => {
             console.log("Connected");
+						client.subscribe("/GMT/DEV/ROOM/"+searchParams.get("roomId")+"/BED_ANALYSIS");
             client.subscribe("/GMT/DEV/ROOM/"+searchParams.get("roomId")+"/ALERT");
             client.onMessageArrived = onMessageArrived;
           },
@@ -159,7 +173,7 @@ const Summary = props => {
 		<Container>
 			<Row style={{alignItems: 'center' }}>
         <Col sm={12}>
-          <Title>Summary ({props.room_name})</Title> 
+          <Title>Summary ({props.room_name}) {props.in_bed && <Tag>In Bed</Tag>}</Title> 
         </Col>
         <Col sm={12}>
           <Button
@@ -403,6 +417,45 @@ const Summary = props => {
 							headStyle={{textAlign:'center'}}
 							title={ 
 								<>
+									<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Disrupt Duration
+								</>  } 
+							style={{}} 
+							className='content-card'
+						>
+							<Row style={{textAlign:'center'}}>
+								<Col span={16}>
+									<p>Week's Average</p>
+									<Title level={2}>{props.disrupt_duration.average}</Title>
+									{
+										props.disrupt_duration_options ? <ReactECharts option={props.disrupt_duration_options}/>: null
+									}
+								</Col>
+								<Col span={8} className='my-auto'>
+									<div className='min-max-container'>
+										<p>Maximum</p>
+										<Title level={4}>{props.disrupt_duration.max}</Title>
+									</div>
+									<div className='min-max-container'>
+										<p>Minimum</p>
+										<Title level={4}>{props.disrupt_duration.min}</Title>
+									</div>
+								</Col>
+							</Row>
+							<div>
+								<Divider/>
+								<div style={{textAlign:'center'}}>
+									Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.disrupt_duration.previous_average}</span> 
+								</div>
+							</div>
+							
+						</Card>
+					</Col>
+
+					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+						<Card 
+							headStyle={{textAlign:'center'}}
+							title={ 
+								<>
 									<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Sleep Disruption
 								</>  } 
 							style={{}} 
@@ -511,45 +564,6 @@ const Summary = props => {
 									Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.breath_rate.previous_average}</span> 
 								</div>
 							</div>
-						</Card>
-					</Col>
-
-					<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-						<Card 
-							headStyle={{textAlign:'center'}}
-							title={ 
-								<>
-									<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Disrupt Duration
-								</>  } 
-							style={{}} 
-							className='content-card'
-						>
-							<Row style={{textAlign:'center'}}>
-								<Col span={16}>
-									<p>Week's Average</p>
-									<Title level={2}>{props.disrupt_duration.average}</Title>
-									{
-										props.disrupt_duration_options ? <ReactECharts option={props.disrupt_duration_options}/>: null
-									}
-								</Col>
-								<Col span={8} className='my-auto'>
-									<div className='min-max-container'>
-										<p>Maximum</p>
-										<Title level={4}>{props.disrupt_duration.max}</Title>
-									</div>
-									<div className='min-max-container'>
-										<p>Minimum</p>
-										<Title level={4}>{props.disrupt_duration.min}</Title>
-									</div>
-								</Col>
-							</Row>
-							<div>
-								<Divider/>
-								<div style={{textAlign:'center'}}>
-									Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.disrupt_duration.previous_average}</span> 
-								</div>
-							</div>
-							
 						</Card>
 					</Col>
 

@@ -11,8 +11,8 @@ import numpy as np
 config = {
     'user': 'flask',
     'password': 'CrbI1q)KUV1CsOj-',
-    'host': 'db',
-    'port': '3306',
+    'host': '128.199.240.137',
+    'port': '2203',
     'database': 'Gaitmetrics'
     # 'user': 'root',
     # 'password': '14102022',
@@ -121,14 +121,17 @@ def insert_data(date,room_id,type,data,mode="week"):
 
         if existing_data is None:
 
-            if mode == "day":
+            if mode == "day" and data != '':
                 value = data
                 insert_query = f"INSERT INTO ANALYSIS_DAY (`DATE`,ROOM_ID,`TYPE`,`VALUE`) VALUES ('{date}', '{room_id}', '{type}', '{value}')"
             else:
                 max = data.get("max")
                 min = data.get("min")
                 average = data.get("average")
-                insert_query = f"INSERT INTO ANALYSIS (EOW,ROOM_ID,TYPE,MAX,MIN,AVERAGE) VALUES ('{date}', '{room_id}', '{type}', '{max}', '{min}', '{average}')"
+                if (max != '' and min != '' and average != ''):
+                    insert_query = f"INSERT INTO ANALYSIS (EOW,ROOM_ID,TYPE,MAX,MIN,AVERAGE) VALUES ('{date}', '{room_id}', '{type}', '{max}', '{min}', '{average}')"
+                else:
+                    insert_query = ''
             cursor.execute(insert_query)
             connection.commit()
             
@@ -1146,8 +1149,8 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-start_date = "2023-06-01"
-end_date = "2024-02-18"
+start_date = "2024-02-29"
+end_date = "2024-02-29"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")
@@ -1290,6 +1293,8 @@ for curr in dates_between:
     # print("Running current layman")
     rooms = get_rooms()
     for room in rooms:
+        if (room["ID"] != 8):
+            continue
         print(curr,room["ID"],room["ROOM_UUID"])
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)

@@ -264,8 +264,8 @@ const Devices = props => {
 				props.onLoading && <LoadingOverlay/>
 			}
 
-      <AddDeviceModal visible={addVisible} action={props.registerDevice} close={closeAddModal} suggestions={props.roomSuggestions} suggestRoom={props.suggestRoom} />
-      { updateVisible && <UpdateDeviceModal visible={updateVisible} action={props.updateDevice} close={closeUpdateModal} selectedDevice={props.selectedDevice} suggestions={props.roomSuggestions} suggestRoom={props.suggestRoom}/>}
+      <AddDeviceModal visible={addVisible} action={props.registerDevice} close={closeAddModal} suggestions={props.roomSuggestions} />
+      { updateVisible && <UpdateDeviceModal visible={updateVisible} action={props.updateDevice} close={closeUpdateModal} selectedDevice={props.selectedDevice} suggestions={props.roomSuggestions}/>}
       { configureVisible && <ConfigureDeviceModal visible={configureVisible} action={configureDevice} close={closeConfigureModal} selectedDevice={props.selectedDevice}/>}
     </Container>
 	)

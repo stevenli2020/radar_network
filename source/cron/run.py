@@ -1152,6 +1152,8 @@ def filter_non_zero(number):
     return number > 0
 
 def seconds_to_text(seconds):
+    if (seconds == 0):
+        return "0m"
     # Calculate hours, minutes, and remaining seconds
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)

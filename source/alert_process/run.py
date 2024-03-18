@@ -9,6 +9,7 @@ sub_topic1 = "/GMT/DEV/+/ALERT"
 sub_topic2 = "/GMT/DEV/+/DATA/+/JSON"
 pub_topic1 = "/GMT/DEV/ROOM/ROOM_UUID/ALERT"
 pub_topic2 = "/GMT/DEV/ROOM/ROOM_UUID/BED_ANALYSIS"
+pub_topic3 = "/GMT/DEV/ROOM/ROOM_UUID/HEART_RATE"
 client_id = f'1237'
 username = 'py-client1'
 password = 'c764eb2b5fa2d259dc667e2b9e195218'
@@ -24,6 +25,10 @@ config = {
     # 'host': 'localhost',
     # 'port': '2203',
     # 'database': 'Gaitmetrics'
+}
+
+heart_abnormal = {
+
 }
 
 def get_room_uuid_by_mac(mac):
@@ -89,10 +94,48 @@ def subscribe(client: paho):
 
             if any_bed_occupied:
                 BED_ANALYSIS["IN_BED"] = True
-                print(room_detail)
                 print("At least one bed is occupied.")
             else:
                 print("No beds are occupied.")
+
+            heart_rates = [item.get('heartRate') for item in msg['DATA'] if item.get('heartRate') is not None]
+            if (room_detail["ROOM_UUID"] not in heart_abnormal):
+                heart_abnormal[room_detail["ROOM_UUID"]] = {
+                    "alert": False,
+                    "data":[]
+                }
+            if (len(heart_rates) > 0):
+                abnormal = False
+                print("HEART",heart_rates, room_detail["ROOM_UUID"] )
+                for rate in heart_rates:
+                    if (rate >= 110 or rate <= 45):
+                        abnormal = True
+                        heart_abnormal[room_detail["ROOM_UUID"]]["data"].append(rate)
+                        # print(heart_abnormal)
+
+                    real_topic = pub_topic3.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+                    client.publish(real_topic, rate)
+                    break
+
+                if (abnormal):
+                    if (len(heart_abnormal[room_detail["ROOM_UUID"]]["data"]) > 3 and not heart_abnormal[room_detail["ROOM_UUID"]]["alert"]):
+                        heart_abnormal[room_detail["ROOM_UUID"]]["alert"] = True
+
+                        alert_msg = {
+                            "URGENCY":"2",
+                            "TYPE":"1",
+                            "DETAILS":"Abnormal heart rate detected!"
+                        }
+                        print("Insert heart rate alert")
+                        insert_alert(room_detail["ID"],alert_msg)
+                        real_topic = pub_topic1.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+                        client.publish(real_topic, "New alert")
+                else:
+                    print("reset")
+                    heart_abnormal[room_detail["ROOM_UUID"]] = {
+                        "alert": False,
+                        "data":[]
+                    }
 
             real_topic = pub_topic2.replace("ROOM_UUID",room_detail["ROOM_UUID"])
             result = client.publish(real_topic, json.dumps(BED_ANALYSIS))

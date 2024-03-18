@@ -197,8 +197,8 @@ def previous_week():
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
         
             if (current_sleep_disruption):
-                if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
-                    insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
+                # if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
+                #     insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
                 
                 insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
 

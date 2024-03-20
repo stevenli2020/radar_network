@@ -55,3 +55,11 @@ code {
 .red-background{
   background-color: red;
 }
+
+.ant-popover {
+  z-index: 1000; /* or any higher value */
+}
+
+.ant-menu{
+  z-index: 100;
+}

@@ -1716,7 +1716,13 @@ def decode_process_publish(mac, data):
                                   if len(vitalStateParam[mac]['rollingHeight'][minDistIdx]) > 4:
                                     del vitalStateParam[mac]['rollingHeight'][minDistIdx][0]
                                     del vitalStateParam[mac]['rollingVelY'][minDistIdx][0]
- 
+
+                                elif np.abs(x_pos) < 0.5:
+                                    vital_dict['bedOccupancy'] = 1
+
+                                elif np.abs(x_pos) > 1.0:
+                                    vital_dict['bedOccupancy'] = 0
+
                             # --------------------------------------------------------------------------------------------------
                             # --------------------------------------------------------------------------------------------------
 

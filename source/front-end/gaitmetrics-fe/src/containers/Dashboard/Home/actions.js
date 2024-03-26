@@ -24,13 +24,15 @@ const HOC = (WrappedComponent) => {
 
     load = (param) => this.setState({ loading: param });
 
-    getRoomDetails = () => Post(
+    getRoomDetails = async() => {
+      await Post(
         `/api/getRoomDetails`,
         JSON.parse(getItem("LOGIN_TOKEN")),
         this.getRoomDetailsSuccess,
         error => requestError(error),
         this.load
       )
+    }
 
     getRoomDetailsSuccess = payload => {
       this.setState({rooms:payload.DATA})

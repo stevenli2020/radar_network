@@ -35,7 +35,8 @@ const Home = (props) => {
     try {
 			let destination = message.destinationName.split('/')
 			if (destination[destination.length-1] == "ALERT"){
-				props.getRoomDetails()
+				setConnected(false)
+				await props.getRoomDetails()
 			}else if (destination[destination.length-1] == "BED_ANALYSIS"){
 				// console.log("onMessageArrived:", message.payloadString, message.destinationName.split('/'), message);
 				const payloadBuffer = message.payloadString;
@@ -61,6 +62,8 @@ const Home = (props) => {
     }
   };
 
+	const [connected, setConnected] = useState(false);
+
   useEffect(() => {
 
 		if (getItem("LOGIN_TOKEN")){
@@ -79,6 +82,7 @@ const Home = (props) => {
           timeout: 3,
           onSuccess: () => {
             console.log("Connected");
+						setConnected(true)
             client.subscribe("/GMT/DEV/ROOM/+/ALERT");
 						client.subscribe("/GMT/DEV/ROOM/+/BED_ANALYSIS");
             client.onMessageArrived = onMessageArrived;
@@ -92,10 +96,10 @@ const Home = (props) => {
       }
     };
 
-		if (getItem("LOGIN_TOKEN")){
+		if (getItem("LOGIN_TOKEN") && !connected && props.rooms.length > 0){
     	connectToBroker();
 		}
-  }, [props.rooms]); // Include dependencies if needed
+  }, [props.rooms,connected]); // Include dependencies if needed
   
 
 	const [addVisible, setAddVisible] = useState(false);

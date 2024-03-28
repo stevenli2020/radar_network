@@ -451,11 +451,12 @@ def decode_process_publish(mac, data):
                                     del wallStateParam[mac]['rollingY'][minDistIdx][0]
                                     del wallStateParam[mac]['rollingZ'][minDistIdx][0]
 
-                                if len(wallStateParam[mac]['averageX'][minDistIdx]) > 100:
+                                if len(wallStateParam[mac]['averageX'][minDistIdx]) > 35:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
                                     deltaY = wallStateParam[mac]['averageY'][minDistIdx][-1] - wallStateParam[mac]['averageY'][minDistIdx][-10]
                                     deltaZ = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-10]
-                                    deltaZPos = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-47]
+                                    # deltaZPos = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-47]
+                                    deltaZPos = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-35]
                                     del wallStateParam[mac]['averageX'][minDistIdx][0]
                                     del wallStateParam[mac]['averageY'][minDistIdx][0]
                                     del wallStateParam[mac]['averageZ'][minDistIdx][0]
@@ -470,15 +471,15 @@ def decode_process_publish(mac, data):
                                     #     wallStateParam[mac]['labelGuess'][minDistIdx] = 5
                                     #     wall_Dict['state'] = 5
 
-                                    if trackerRange > 10 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 40:
-                                        wallStateParam[mac]['labelCount'][minDistIdx] = 4
-                                        wallStateParam[mac]['labelGuess'][minDistIdx] = 4
+                                    # if trackerRange > 10 or np.abs(trackerAzimuth) > 50 or np.abs(trackerElevation) > 40:
+                                    #     wallStateParam[mac]['labelCount'][minDistIdx] = 4
+                                    #     wallStateParam[mac]['labelGuess'][minDistIdx] = 4
 
                                     # elif len(x_coord[trackIndices == trackId]) > 10:
                                     # elif numTracks == 1:
 
                                     # elif deltaDisp > 0.05 and len(x_coord[trackIndices == trackId]) > 5:
-                                    elif len(x_coord[trackIndices == trackId]) > 5:
+                                    if len(x_coord[trackIndices == trackId]) > 5:
                                         x_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['x_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
                                         y_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
                                         z_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
@@ -495,12 +496,14 @@ def decode_process_publish(mac, data):
                                             wallStateParam[mac]['averageHeight'][minDistIdx].append(np.average(wallStateParam[mac]['rollingHeight'][minDistIdx]))
                                             del(wallStateParam[mac]['rollingHeight'][minDistIdx][0])
 
-                                        if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 47:
-                                          deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-47]
+                                        # if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 47:
+                                        if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 35:
+                                          # deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-47]
+                                          deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-35]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
                                           # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
-                                          if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.6 and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 2.0:
+                                          if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8 and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 3
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 2
@@ -564,8 +567,8 @@ def decode_process_publish(mac, data):
                             if wallStateParam[mac]['pandasDF'].empty:
                                 
                                 # Append data frame
-                                # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
-                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                                wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
+                                # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
                             elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
@@ -642,15 +645,15 @@ def decode_process_publish(mac, data):
                                     # print(json_string)
 
                                 # Update the new data frame
-                                # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
-                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                                wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
+                                # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
                                 wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
 
                             else:
             
                                 # Append data frame
-                                # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
-                                wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                                wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
+                                # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
                                 # print(wallStateParam)
 
                         # Remove unused trackers' information and parameters
@@ -677,6 +680,7 @@ def decode_process_publish(mac, data):
                         wallStateParam[mac]['trackerInvalid'] = wallStateParam[mac]['trackerInvalid'][wallStateParam[mac]['trackerInvalid'] == 0]
                         wallStateParam[mac]['trackerInvalid'] = wallStateParam[mac]['trackerInvalid'] + 1
 
+                  """
                   else:
                     
                     wall_Dict = {}
@@ -724,6 +728,8 @@ def decode_process_publish(mac, data):
                             # Append data frame
                             # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
                             wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                     
+                  """
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 # Since track indexes are delayed a frame, delay showing the current points by 1 frame

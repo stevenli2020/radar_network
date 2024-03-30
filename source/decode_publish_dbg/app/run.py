@@ -728,7 +728,6 @@ def decode_process_publish(mac, data):
                             # Append data frame
                             # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
                             wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
-                     
                   """
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index

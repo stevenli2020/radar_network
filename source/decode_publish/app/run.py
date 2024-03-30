@@ -1495,7 +1495,7 @@ def decode_process_publish(mac, data):
                     vitalStateParam[mac]['rollingHeight'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving'])
 
                 # Vital Sign Data Extraction
                 # numTracks = 0
@@ -1711,6 +1711,7 @@ def decode_process_publish(mac, data):
                                     # elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) > 0.3:
                                     # print("In Bed, Subject Moving")
                                     vital_dict['bedOccupancy'] = 1
+                                    vital_dict['inBedMoving'] = 1
                                     # label_list.append(1)
                                     # count_subjectStationary = 0
                                     vitalStateParam[mac]['periodStationary'] = 0
@@ -1769,7 +1770,7 @@ def decode_process_publish(mac, data):
                 
                 if vitalStateParam[mac]['pandasDF'].empty:
                     # Append data frame
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving'])
                     vitalStateParam[mac]['pandasDF'] = pd.concat([vitalStateParam[mac]['pandasDF'], pd.DataFrame([vital_dict])], ignore_index=True)
 
                 elif (vital_dict['timeStamp'] - vitalStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
@@ -1800,9 +1801,13 @@ def decode_process_publish(mac, data):
                     aggregate_dict['bedOccupancy'] = vitalStateParam[mac]['pandasDF']['bedOccupancy'].mean(skipna=True)
                     aggregate_dict['breathRate'] = vitalStateParam[mac]['pandasDF']['breathRate'].mean(skipna=True)
                     aggregate_dict['heartRate'] = vitalStateParam[mac]['pandasDF']['heartRate'].mean(skipna=True)
+                    aggregate_dict['inBedMoving'] = vitalStateParam[mac]['pandasDF']['inBedMoving'].mean(skipna=True)
 
                     if not math.isnan(aggregate_dict['bedOccupancy']):
                         aggregate_dict['bedOccupancy'] = bool(round(aggregate_dict['bedOccupancy']))
+                    if not math.isnan(aggregate_dict['inBedMoving']):
+                        aggregate_dict['inBedMoving'] = bool(round(aggregate_dict['inBedMoving']))
+
                     for key, value in aggregate_dict.items():
                         if str(value)[0:3] == 'nan':
                             aggregate_dict[key] = None

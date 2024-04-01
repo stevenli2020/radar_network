@@ -129,13 +129,14 @@ def on_message(client, obj, msg):
         elif Type == "3":
             # print(D)
             IN_BED = 0 if D['bedOccupancy']==None else D['bedOccupancy']
+            IN_BED_MOVING = "NULL" if D['inBedMoving']==None else str(D['inBedMoving'])
             if D['bedOccupancy']:
                 STATE = 2
                 OBJECT_LOCATION = 1
                 ROOM_STATUS = 2
             HEART_RATE = "NULL" if D['heartRate']==None else str(round(D['heartRate'],1))
             BREATH_RATE = "NULL" if D['breathRate']==None else str(round(D['breathRate'],1))
-            sql = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE)
+            sql = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING)
         # print(sql)
         cursor.execute(sql)  
     sql="UPDATE `ROOMS_DETAILS` SET `STATUS`="+str(ROOM_STATUS)+",`OCCUPANCY`="+str(OBJECT_COUNT)+",`LAST_DATA_TS`=NOW() WHERE ROOM_UUID='"+devicesTbl[MAC]['ROOM_UUID']+"';"

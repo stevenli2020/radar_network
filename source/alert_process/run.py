@@ -95,6 +95,8 @@ def subscribe(client: paho):
             if any_bed_occupied:
                 BED_ANALYSIS["IN_BED"] = True
                 print("At least one bed is occupied.")
+                real_topic = pub_topic2.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+                result = client.publish(real_topic, json.dumps(BED_ANALYSIS))
             else:
                 print("No beds are occupied.")
 
@@ -137,8 +139,6 @@ def subscribe(client: paho):
                         "data":[]
                     }
 
-            real_topic = pub_topic2.replace("ROOM_UUID",room_detail["ROOM_UUID"])
-            result = client.publish(real_topic, json.dumps(BED_ANALYSIS))
 
     client.subscribe(sub_topic1)
     client.subscribe(sub_topic2)

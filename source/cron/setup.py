@@ -237,10 +237,7 @@ def check_sleeping_intervals(data):
                         disruptions[-1] += 1
                         disrupt_durations[-1] += int(diff.total_seconds())
 
-            if (len(analysis[curr_timeslot])>1):
-                analysis[curr_timeslot][-1] = row
-            else:
-                analysis[curr_timeslot].append(row)
+            analysis[curr_timeslot].append(row)
         else:
             if (sleeping):
                 cache.append(row)
@@ -268,7 +265,7 @@ def check_sleeping_intervals(data):
         if (len(interval)>=2):
 
             diff = interval[-1]["MINUTE"] - interval[0]["MINUTE"]
-            if (diff.total_seconds() > sleeping_threshold):
+            if (diff.total_seconds() > sleeping_threshold and len(interval) > 45):
                 print("From",interval[0]["MINUTE"],"to",interval[-1]["MINUTE"])
                 sleep_intervals.append(interval)
                 sleeping_disruptions.append(disruptions[index])
@@ -1159,8 +1156,8 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-start_date = "2024-03-01"
-end_date = "2024-03-05"
+start_date = "2024-03-24"
+end_date = "2024-03-26"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")

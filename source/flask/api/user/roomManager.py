@@ -175,9 +175,9 @@ def getRoomAlertsData(room_uuid,unread = True,set=True):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = defaultdict(list)
-    option = ';'
+    option = ' ORDER BY a.`TIMESTAMP` DESC;'
     if (unread):
-        option = ' AND a.`NOTIFY`=0;'
+        option = ' AND a.`NOTIFY`=0 ORDER BY a.`TIMESTAMP` DESC;'
     sql = f"SELECT a.`ID`,a.`TIMESTAMP`,a.`URGENCY`,a.`TYPE`,a.`DETAILS`,a.`NOTIFY` ,a.`NOTIFY_TIMESTAMP` FROM `ALERT` a LEFT JOIN `ROOMS_DETAILS` r ON a.`ROOM_ID`=r.`ID` WHERE r.`ROOM_UUID`='{room_uuid}'" + option
     cursor.execute(sql)   
     result["DATA"] = [{"ID": ID, "TIMESTAMP": TIMESTAMP, "URGENCY":URGENCY, "TYPE":TYPE, "DETAILS":DETAILS, "NOTIFY":NOTIFY, "NOTIFY_TIMESTAMP": NOTIFY_TIMESTAMP} for (ID, TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP) in cursor]

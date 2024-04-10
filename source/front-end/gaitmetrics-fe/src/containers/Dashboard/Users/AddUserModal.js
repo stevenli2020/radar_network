@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Form, Input, Modal, Row, Col, Select } from 'antd';
+import _ from 'lodash';
 
 const AddDeviceModal = (props) => {
   const [form] = Form.useForm();
+
+  const [selectedValues, setSelectedValues] = useState([]);
   const [userType, setUserType] = useState(null);
 
   const onFinish = (values) => {
     // Handle the form submission logic (e.g., send data to the server)
+    values.rooms = _.join(selectedValues, ',');
     props.action(values);
     form.resetFields();
     props.close();
@@ -82,12 +86,13 @@ const AddDeviceModal = (props) => {
             <Col span={24}>
               <Form.Item
                 label="Assign Room"
-                name="assignroom"
                 rules={[{ message: 'Please select the assign room' }]}
               >
                 <Select
                   mode="multiple"
                   placeholder="Please select"
+                  value={selectedValues}
+                  onChange={setSelectedValues}
                   options={props.suggestions}
                 />
               </Form.Item>

@@ -27,6 +27,21 @@ const viewportHeightInPixels = window.innerHeight;
 const backgroundImageUrl = getDomainURL() + `/static/uploads/prison.jpg`
 
 const Home = (props) => {
+
+	const [isActive, setIsActive] = useState(true);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsActive(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   const doFail = (e) => {
     console.error("Connection failed:", e);
   };
@@ -98,8 +113,32 @@ const Home = (props) => {
 
 		if (getItem("LOGIN_TOKEN") && !connected && props.rooms.length > 0){
     	connectToBroker();
+
+			let intervalId;
+
+      const startInterval = () => {
+        intervalId = setInterval(() => {
+          // Your interval function here
+          console.log('Interval function running');
+          connectToBroker();
+        }, 1000 * 60 * 10); // Adjust the interval time as needed
+      };
+
+      const stopInterval = () => {
+        clearInterval(intervalId);
+      };
+
+      if (isActive) {
+        startInterval();
+      } else {
+        stopInterval();
+      }
+
+      return () => {
+        stopInterval();
+      };
 		}
-  }, [props.rooms,connected]); // Include dependencies if needed
+  }, [props.rooms,connected, isActive]); // Include dependencies if needed
   
 
 	const [addVisible, setAddVisible] = useState(false);

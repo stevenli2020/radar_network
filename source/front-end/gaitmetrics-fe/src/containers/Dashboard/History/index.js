@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import WithHOC from './actions'
 import { Typography, Row, Col } from 'antd'
 import LoadingOverlay from 'components/LoadingOverlay'
@@ -31,6 +31,19 @@ let client = null
 const History = props => {
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isActive, setIsActive] = useState(true);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsActive(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const doFail = (e) => {
     console.error("Connection failed:", e);
@@ -39,127 +52,134 @@ const History = props => {
   const onMessageArrived = async (message) => {
     try {
       let mac = message.destinationName.split("/");
-      let data
-      if ("DATA" in JSON.parse(message.payloadString)) {
-        data = JSON.parse(message.payloadString).DATA;
-      } else {
-        data = JSON.parse(message.payloadString);
-      }
+      let destination = message.destinationName.split('/')
 
-      var num = 0;
-      
-      if (data.length > 0 && (props.macPos == mac[3] || props.macVital == mac[3])) {
-        let timer = 1000;
-        timer = parseInt(3000 / data.length);
-        
-        if("heartRate" in data[num]){
-          data.forEach(d => {
-            if("heartRate" in d)
-              if(d.heartRate != "-" && d.heartRate != null){
-                console.log("heart",d)
-                props.addVitalData(d.heartRate, d.breathRate)   
-              }
-          })
+      if (destination[destination.length-1] == "ALERT"){
+				props.getRoomAlerts(props.room_uuid)
+			}else{
+        let data
+        if ("DATA" in JSON.parse(message.payloadString)) {
+          data = JSON.parse(message.payloadString).DATA;
+        } else {
+          data = JSON.parse(message.payloadString);
         }
-        
-        if("numSubjects" in data[num]){
-          let index = 0;
-          let interval = setInterval(
-            function () {        
-              if (parseInt(data[index]["numSubjects"]) > 0) { 
-                let persons = []
-                let object_list = []
 
-                for (let i = 0 ; i < data.length ; i++){
-                  if (object_list.includes(data[i].trackIndex) || (data[i].trackIndex == null )){
-                    continue
-                  }
+        var num = 0;
 
-                  let defaultSymbol = dashCircleFill
-
-                  object_list.push(data[i].trackIndex)
-
-                  if(data[i].velX == 0 && data[i].velY == 0)
-                    defaultSymbol = dashCircleFill
-                  else if(data[i].velX == 0 && data[i].velY > 0)
-                    defaultSymbol = arrowUpCircleFill
-                  else if(data[i].velX == 0 && data[i].velY < 0)
-                    defaultSymbol = arrowDownCircleFill
-                  else if(data[i].velX > 0 && data[i].velY == 0)
-                    defaultSymbol = arrowRightCircleFill
-                  else if(data[i].velX > 0 && data[i].velY > 0)
-                    defaultSymbol = arrowUpRightCircleFill
-                  else if(data[i].velX > 0 && data[i].velY < 0)
-                    defaultSymbol = arrowDownRightCircleFill
-                  else if(data[i].velX < 0 && data[i].velY == 0)
-                    defaultSymbol = arrowLeftCircleFill
-                  else if(data[i].velX < 0 && data[i].velY > 0)
-                    defaultSymbol = arrowUpLeftCircleFill
-                  else if(data[i].velX < 0 && data[i].velY < 0)
-                    defaultSymbol = arrowDownLeftCircleFill
-                  
-                  persons.push({
-                    tooltip: {
-                      showDelay: 0,
-                      formatter: function (params) {
-                        if (params.value.length > 1) {
-                          return (
-                            params.seriesName +" :<br/>" +params.value[0] +"m " +params.value[1] +"m "
-                          );
-                        } else {
-                          return (
-                            params.seriesName +" :<br/>" +params.name +" : " +params.value +"m "
-                          );
-                        }
-                      },
-                      axisPointer: {
-                        show: true,
-                        type: "cross",
-                        lineStyle: {
-                          type: "dashed",
-                          width: 1,
+        if (data.length > 0 && (props.macPos == mac[3] || props.macVital == mac[3])) {
+          let timer = 1000;
+          timer = parseInt(3000 / data.length);
+          
+          if("heartRate" in data[num]){
+            data.forEach(d => {
+              if("heartRate" in d)
+                if(d.heartRate != "-" && d.heartRate != null){
+                  props.addVitalData(d.heartRate, d.breathRate)   
+                }
+            })
+          }
+          
+          if("numSubjects" in data[num]){
+            let index = 0;
+            let interval = setInterval(
+              function () {        
+                if (parseInt(data[index]["numSubjects"]) > 0) { 
+                  let persons = []
+                  let object_list = []
+  
+                  for (let i = 0 ; i < data.length ; i++){
+                    if (object_list.includes(data[i].trackIndex) || (data[i].trackIndex == null )){
+                      continue
+                    }
+  
+                    let defaultSymbol = dashCircleFill
+  
+                    object_list.push(data[i].trackIndex)
+  
+                    if(data[i].velX == 0 && data[i].velY == 0)
+                      defaultSymbol = dashCircleFill
+                    else if(data[i].velX == 0 && data[i].velY > 0)
+                      defaultSymbol = arrowUpCircleFill
+                    else if(data[i].velX == 0 && data[i].velY < 0)
+                      defaultSymbol = arrowDownCircleFill
+                    else if(data[i].velX > 0 && data[i].velY == 0)
+                      defaultSymbol = arrowRightCircleFill
+                    else if(data[i].velX > 0 && data[i].velY > 0)
+                      defaultSymbol = arrowUpRightCircleFill
+                    else if(data[i].velX > 0 && data[i].velY < 0)
+                      defaultSymbol = arrowDownRightCircleFill
+                    else if(data[i].velX < 0 && data[i].velY == 0)
+                      defaultSymbol = arrowLeftCircleFill
+                    else if(data[i].velX < 0 && data[i].velY > 0)
+                      defaultSymbol = arrowUpLeftCircleFill
+                    else if(data[i].velX < 0 && data[i].velY < 0)
+                      defaultSymbol = arrowDownLeftCircleFill
+                    
+                    persons.push({
+                      tooltip: {
+                        showDelay: 0,
+                        formatter: function (params) {
+                          if (params.value.length > 1) {
+                            return (
+                              params.seriesName +" :<br/>" +params.value[0] +"m " +params.value[1] +"m "
+                            );
+                          } else {
+                            return (
+                              params.seriesName +" :<br/>" +params.name +" : " +params.value +"m "
+                            );
+                          }
+                        },
+                        axisPointer: {
+                          show: true,
+                          type: "cross",
+                          lineStyle: {
+                            type: "dashed",
+                            width: 1,
+                          },
                         },
                       },
-                    },
-                    name: "Person ID:" + String(data[i].trackIndex),
-                    type: "scatter",
-                    symbol: defaultSymbol,
-                    symbolSize: 30,
-                    data: [
-                      [
-                        Math.abs((data[i].posX??0).toFixed(2)),
-                        Math.abs((data[i].posY??0).toFixed(2)),
+                      name: "Person ID:" + String(data[i].trackIndex),
+                      type: "scatter",
+                      symbol: defaultSymbol,
+                      symbolSize: 30,
+                      data: [
+                        [
+                          Math.abs((data[i].posX??0).toFixed(2)),
+                          Math.abs((data[i].posY??0).toFixed(2)),
+                        ],
                       ],
-                    ],
-                    itemStyle: {
-                      color: function () {
-                        if (!("state" in data[i]) || data[i].state == null || data[i].state == "None") {
-                          return '#080808';
-                        } else if (data[i].state == "Moving") {
-                          return '#f8fc03'; 
-                        } else if (data[i].state == "Upright") {
-                          return '#0918e3'; 
-                        } else if (data[i].state == "Laying") {
-                          return '#8d61be'; 
-                        } else if (data[i].state == "Fall") {
-                          return '#fc0303'; 
-                        } else if (data[i].state == "Social") {
-                          return '#20fc03'; 
-                        } 
-                      },
-                    },        
-                  });
+                      itemStyle: {
+                        color: function () {
+                          if (!("state" in data[i]) || data[i].state == null || data[i].state == "None") {
+                            return '#080808';
+                          } else if (data[i].state == "Moving") {
+                            return '#f8fc03'; 
+                          } else if (data[i].state == "Upright") {
+                            return '#0918e3'; 
+                          } else if (data[i].state == "Laying") {
+                            return '#8d61be'; 
+                          } else if (data[i].state == "Fall") {
+                            return '#fc0303'; 
+                          } else if (data[i].state == "Social") {
+                            return '#20fc03'; 
+                          } 
+                        },
+                      },        
+                    });
+                  }
+                  
+                  props.updatePersonsLocation(persons)
                 }
-                
-                props.updatePersonsLocation(persons)
+              index++;
+              if (index == data.length) {
+                clearInterval(interval);
               }
-            index++;
-            if (index == data.length) {
-              clearInterval(interval);
-            }
-          }, timer);
+            }, timer);
+          }
         }
       }
+      
+      
     } catch (error) {
       console.error("Error processing MQTT message:", error);
     }
@@ -168,7 +188,8 @@ const History = props => {
   useEffect(() => {
     const connectToBroker = async () => {
       try {
-        const clientId = JSON.parse(getItem("LOGIN_TOKEN")).ID;
+        const userId = JSON.parse(getItem("LOGIN_TOKEN")).ID;
+        const clientId = `${userId}`;
         const brokerUrl = "wss://aswelfarehome.gaitmetrics.org/mqtt";  // Include the path if required
         client = new Paho.Client(brokerUrl, clientId);
         
@@ -178,6 +199,7 @@ const History = props => {
             console.log("Connected");
             client.subscribe("/GMT/DEV/+/DATA/+/JSON");
             client.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF");
+            client.subscribe("/GMT/DEV/ROOM/"+searchParams.get("roomId")+"/ALERT");
 
             client.onMessageArrived = onMessageArrived;
           },
@@ -192,8 +214,34 @@ const History = props => {
 
     if (getItem("LOGIN_TOKEN")){
       connectToBroker();
+      
+      let intervalId;
+
+      const startInterval = () => {
+        intervalId = setInterval(() => {
+          // Your interval function here
+          console.log('Interval function running');
+          connectToBroker();
+        }, 1000 * 60 * 10); // Adjust the interval time as needed
+      };
+
+      const stopInterval = () => {
+        clearInterval(intervalId);
+      };
+
+      if (isActive) {
+        startInterval();
+      } else {
+        stopInterval();
+      }
+
+      return () => {
+        stopInterval();
+      };
     }
-  }, [props.sensors]); // Include dependencies if needed
+
+    
+  }, [props.sensors,isActive]); // Include dependencies if needed
 
 	useEffect(() => {
     if (getItem("LOGIN_TOKEN")){

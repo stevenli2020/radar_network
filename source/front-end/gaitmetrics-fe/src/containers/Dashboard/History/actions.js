@@ -5,6 +5,7 @@ import { requestError } from "utils/requestHandler";
 import { Get, Post, Put, Delete } from "utils/axios";
 import { getItem } from 'utils/tokenStore'
 import getDomainURL from 'utils/api'
+import alertSound from "../../../assets/alert.wav"
 
 const HOC = (WrappedComponent) => {
   class WithHOC extends Component {
@@ -61,6 +62,49 @@ const HOC = (WrappedComponent) => {
           },
         ]
       }})
+    }
+
+    getRoomAlerts = (room_id,unread=true) => {
+      let payload = {
+        room_id: room_id,
+        unread: unread,
+        set: true
+      }
+      if (unread){
+        this.setState({receivedAlert:this.props.receivedAlert+1})
+      }
+      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
+      Post(
+        `/api/getRoomAlerts`,
+        payload,
+        this.getRoomAlertsSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+    
+    getRoomAlertsSuccess = payload => {
+      if (payload.DATA.length > 0){
+        this.setState({ alerts: payload.DATA })
+
+        const hasUrgency3 = payload.DATA.some(alert => alert.URGENCY === 3 && alert.NOTIFY === 0);
+        if (hasUrgency3) {
+          try{
+            const sound = new Audio(alertSound)
+            sound.play().then(() => {
+              // If playback is successful, sound permission is likely granted
+              console.log("Permission granted")
+            }).catch((error) => {
+              // If playback fails, sound permission is likely denied
+              console.log(error)
+            });
+          } catch (error) {
+            // If an exception occurs, sound permission status is uncertain
+          }
+        }
+      }
+      
+
     }
 
     getRoomSensors = (room_uuid) => {
@@ -140,7 +184,7 @@ const HOC = (WrappedComponent) => {
         payload.CUSTOM = 0
       }
       payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
-      console.log(payload)
+      // console.log(payload)
       Post(
         `/api/getSummaryPositionData`,
         payload,
@@ -234,6 +278,7 @@ const HOC = (WrappedComponent) => {
           getVitalHistory={this.getVitalHistory}
           updatePersonsLocation={this.updatePersonsLocation}
           addVitalData={this.addVitalData}
+          getRoomAlerts={this.getRoomAlerts}
           initView={this.initView}
         />
       );

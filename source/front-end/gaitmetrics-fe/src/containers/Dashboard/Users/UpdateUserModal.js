@@ -20,6 +20,8 @@ const UpdateUserModal = (props) => {
     // Handle the form submission logic (e.g., send data to the server)
     values.rooms = _.join(selectedValues, ',');
     props.action(values);
+    form.resetFields();
+    props.close();
   };
 
   const handleUserTypeChange = (value) => {

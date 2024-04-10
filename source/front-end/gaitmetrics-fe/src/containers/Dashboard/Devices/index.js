@@ -19,6 +19,19 @@ let client = null
 const Devices = props => {
 
   const [deviceConfMac,setDeviceMac] = useState(null)
+  const [isActive, setIsActive] = useState(true);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsActive(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const doFail = (e) => {
     console.error("Connection failed:", e);
@@ -82,8 +95,32 @@ const Devices = props => {
 
     if (getItem("LOGIN_TOKEN")){
       connectToBroker();
+
+      let intervalId;
+
+      const startInterval = () => {
+        intervalId = setInterval(() => {
+          // Your interval function here
+          console.log('Interval function running');
+          connectToBroker();
+        }, 1000 * 60 * 10); // Adjust the interval time as needed
+      };
+
+      const stopInterval = () => {
+        clearInterval(intervalId);
+      };
+
+      if (isActive) {
+        startInterval();
+      } else {
+        stopInterval();
+      }
+
+      return () => {
+        stopInterval();
+      };
     }
-  }, [deviceConfMac]); // Include dependencies if needed
+  }, [deviceConfMac,isActive]); // Include dependencies if needed
 
   const [addVisible, setAddVisible] = useState(false);
   const [updateVisible, setUpdateVisible] = useState(false);

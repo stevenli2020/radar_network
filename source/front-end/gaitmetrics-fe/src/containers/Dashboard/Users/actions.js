@@ -70,7 +70,7 @@ const HOC = (WrappedComponent) => {
         EMAIL: values.email,
         PHONE: values.phone,
         USER_TYPE: values.usertype,
-        ROOM: values.assignroom,
+        ROOM: values.rooms,
       }
       payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
@@ -78,8 +78,9 @@ const HOC = (WrappedComponent) => {
         payload,
         this.registerUserSuccess,
         error => requestError(error),
-        this.load
-      )}
+        this.load  
+      )
+    }
     registerUserSuccess = payload => {
       this.getUsers()
       requestSuccess("User added successfully!")

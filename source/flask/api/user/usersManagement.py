@@ -84,7 +84,7 @@ def addNewUser(data):
     connection.commit()
     body = emailTemplate(data['LOGIN_NAME'], "http://143.198.199.16:5000/api/updatePassword?"+str(data['LOGIN_NAME'])+"&"+str(code)+"&add", "add")
     sentMail(data['EMAIL'], 'Account Created Successfully', body)
-    if data['USER_TYPE'] == '0':
+    if str(data['USER_TYPE']) == '0':
         sql = "SELECT * FROM Gaitmetrics.USERS WHERE LOGIN_NAME='%s'"%(data['LOGIN_NAME'])
         cursor.execute(sql)
         dbresult = cursor.fetchone()

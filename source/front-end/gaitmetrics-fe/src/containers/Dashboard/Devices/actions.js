@@ -10,15 +10,18 @@ const HOC = (WrappedComponent) => {
   class WithHOC extends Component {
     state = {
       loading: false,
+      temp:false,
       devices: [],
       selectedDevice: null,
       roomSuggestions: [],
-      rooms: []
+      rooms: [],
+      client_id: null
     };
 
     onChangeHOC = (key, val) => this.setState({ [key]: val });
 
     load = (param) => this.setState({ loading: param });
+    temp = (param) => this.setState({ temp: param });
 
     getDevices = () => {
       Post(
@@ -170,6 +173,38 @@ const HOC = (WrappedComponent) => {
       requestSuccess("Device deleted successfully!")
     }
 
+    getMQTTClientID = async() => {
+      await Post(
+        `/api/getMQTTClientID`,
+        JSON.parse(getItem("LOGIN_TOKEN")),
+        this.getMQTTClientIDSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getMQTTClientIDSuccess = payload => {
+      this.setState({client_id:payload.DATA.client_id})
+    }
+
+    setClientConnection = async(client_id) => {
+      let payload = {
+        client_id: client_id,
+      }
+      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
+      await Post(
+        `/api/setClientConnection`,
+        payload,
+        this.setClientConnectionSuccess,
+        error => requestError(error),
+        this.temp
+      )
+    }
+
+    setClientConnectionSuccess = payload => {
+      this.setState({client_id:payload.DATA.client_id})
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -183,6 +218,8 @@ const HOC = (WrappedComponent) => {
           deleteDevice={this.deleteDevice}
           onChangeHOC={this.onChangeHOC}
           suggestRoom={this.getRoomSuggestion}
+          getMQTTClientID={this.getMQTTClientID}
+          setClientConnection={this.setClientConnection}
         />
       );
     };

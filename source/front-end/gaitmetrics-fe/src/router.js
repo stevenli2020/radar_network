@@ -14,11 +14,16 @@ import History from './containers/Dashboard/History';
 import Profile from './containers/Dashboard/Profile';
 import LoginPage from 'containers/Login'
 import FilterLocation from 'containers/Dashboard/FilterLocation';
+import ResetPasswordPage from 'containers/ResetPassword';
 
 export const router = [
   {
     path: "/",
     element: <LoginPage/>,
+  },
+  {
+    path: "/resetPassword",
+    element: <ResetPasswordPage/>,
   },
   {
     path: "/dashboard/",

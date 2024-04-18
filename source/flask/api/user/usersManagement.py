@@ -1,5 +1,5 @@
 import mysql.connector
-from user.config import config
+from user.config import config, vernemq
 from datetime import datetime, timedelta
 
 from collections import defaultdict
@@ -13,6 +13,7 @@ regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
 # SELECT ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS, CODE, LAST_UPDATE, CREATED, MAC FROM USERS JOIN RL_USER_MAC ON USERS.ID=RL_USER_MAC.USER_ID;
 
 config = config()
+vernemq_db = vernemq()
 
 def requestAllUsers():
     result = defaultdict(list)
@@ -82,7 +83,7 @@ def addNewUser(data):
     now = datetime.now()
     cursor.execute("INSERT INTO Gaitmetrics.USERS (LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS, CODE, CREATED) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)", (data['LOGIN_NAME'], data['FULL_NAME'], data['EMAIL'], data['PHONE'], data['USER_TYPE'], 0, code, now))
     connection.commit()
-    body = emailTemplate(data['LOGIN_NAME'], "http://143.198.199.16:5000/api/updatePassword?"+str(data['LOGIN_NAME'])+"&"+str(code)+"&add", "add")
+    body = emailTemplate(data['LOGIN_NAME'], "https://aswelfarehome.gaitmetrics.org/resetPassword?user="+str(data['LOGIN_NAME'])+"&code="+str(code)+"&mode=add", "add")
     sentMail(data['EMAIL'], 'Account Created Successfully', body)
     if str(data['USER_TYPE']) == '0':
         sql = "SELECT * FROM Gaitmetrics.USERS WHERE LOGIN_NAME='%s'"%(data['LOGIN_NAME'])
@@ -114,6 +115,19 @@ def addNewUser(data):
             # for x in MAC:
             #     cursor.execute("INSERT INTO RL_USER_MAC (USER_ID, MAC) VALUES(%s, %s)", (id, x))
             #     connection.commit()
+    
+    vernemq_db_connection = mysql.connector.connect(**vernemq_db)
+    vernemq_db_cursor = vernemq_db_connection.cursor()
+    acl_data = []
+    for i in range(1, 51):
+        client_id = data['LOGIN_NAME'] + str(i)
+        acl_data.append(("", client_id, data['LOGIN_NAME'], "c764eb2b5fa2d259dc667e2b9e195218", '[{"pattern":"/GMT/#"}]', '[{"pattern":"/GMT/#"}]'))
+
+    # Inserting multiple rows into vmq_auth_acl
+    sql = "INSERT INTO vmq_auth_acl (mountpoint, client_id, username, password, publish_acl, subscribe_acl) VALUES (%s, %s, %s, md5(%s), %s, %s)"
+    vernemq_db_cursor.executemany(sql, acl_data)
+    vernemq_db_connection.commit()
+
     cursor.close()
     connection.close()
     result['DATA'].append({"CODE": 0})
@@ -137,54 +151,72 @@ def updateUserDetails(data):
         return result
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
-    sql = "SELECT * FROM Gaitmetrics.USERS WHERE ID='%s'"%(data['USER_ID'])
-    cursor.execute(sql)
+    vernemq_db_connection = mysql.connector.connect(**vernemq_db)
+    vernemq_db_cursor = vernemq_db_connection.cursor()
+
+    sql = "SELECT * FROM Gaitmetrics.USERS WHERE ID=%s"
+    cursor.execute(sql, (data['USER_ID'],))
     dbresult = cursor.fetchone()
-    print(dbresult)
-    if dbresult:
-        if dbresult[1] != data['LOGIN_NAME']:
-            sql = "SELECT * FROM Gaitmetrics.USERS WHERE LOGIN_NAME='%s'"%(data['LOGIN_NAME'])
-            cursor.execute(sql)
-            userresult = cursor.fetchone()
-            if userresult:
-                result['ERROR'].append({'Username': 'Username is taken'})
-                return result     
-        if dbresult[3] != data['EMAIL']:
-            sql = "SELECT * FROM Gaitmetrics.USERS WHERE EMAIL='%s'"%(data['EMAIL'])
-            cursor.execute(sql)
-            emailresult = cursor.fetchone()
-            if emailresult:
-                result['ERROR'].append({'Email': 'Email is taken'})
-                return result   
-    sql = "UPDATE Gaitmetrics.USERS SET LOGIN_NAME='%s', FULL_NAME='%s', EMAIL='%s',PHONE='%s', TYPE='%s' WHERE ID='%s'"%(data['LOGIN_NAME'], data['FULL_NAME'], data['EMAIL'], data['PHONE'], data['USER_TYPE'], data['USER_ID'])
-    cursor.execute(sql)
+    if not dbresult:
+        result['ERROR'].append({'User_ID': 'User ID not found!'})
+        return result
+
+    if dbresult[1] != data['LOGIN_NAME']:
+        sql = "SELECT * FROM Gaitmetrics.USERS WHERE LOGIN_NAME=%s"
+        cursor.execute(sql, (data['LOGIN_NAME'],))
+        userresult = cursor.fetchone()
+        if userresult:
+            result['ERROR'].append({'Username': 'Username is taken'})
+            return result
+
+        # Delete existing ACL entries for the old username
+        sql = "DELETE FROM vmq_auth_acl WHERE username=%s"
+        vernemq_db_cursor.execute(sql, (dbresult[1],))
+        vernemq_db_connection.commit()
+
+        # Insert new ACL entries for the new username
+        acl_data = []
+        for i in range(1, 51):
+            client_id = data['LOGIN_NAME'] + str(i)
+            acl_data.append(("", client_id, data['LOGIN_NAME'], "c764eb2b5fa2d259dc667e2b9e195218", '[{"pattern":"/GMT/#"}]', '[{"pattern":"/GMT/#"}]'))
+
+        sql = "INSERT INTO vmq_auth_acl (mountpoint, client_id, username, password, publish_acl, subscribe_acl) VALUES (%s, %s, %s, md5(%s), %s, %s)"
+        vernemq_db_cursor.executemany(sql, acl_data)
+        vernemq_db_connection.commit()
+
+    if dbresult[3] != data['EMAIL']:
+        sql = "SELECT * FROM Gaitmetrics.USERS WHERE EMAIL=%s"
+        cursor.execute(sql, (data['EMAIL'],))
+        emailresult = cursor.fetchone()
+        if emailresult:
+            result['ERROR'].append({'Email': 'Email is taken'})
+            return result   
+
+    sql = "UPDATE Gaitmetrics.USERS SET LOGIN_NAME=%s, FULL_NAME=%s, EMAIL=%s,PHONE=%s, TYPE=%s WHERE ID=%s"
+    cursor.execute(sql, (data['LOGIN_NAME'], data['FULL_NAME'], data['EMAIL'], data['PHONE'], data['USER_TYPE'], data['USER_ID']))
     connection.commit()
-    sql = "DELETE FROM Gaitmetrics.RL_USER_ROOM WHERE USER_ID='%s'"%(data['USER_ID'])
-    cursor.execute(sql)
+
+    sql = "DELETE FROM Gaitmetrics.RL_USER_ROOM WHERE USER_ID=%s"
+    cursor.execute(sql, (data['USER_ID'],))
     connection.commit()
     RoomList = str(data['ROOM']).split(',')
     for Room in RoomList:
-        if (not Room):
+        if not Room:
             continue
-        RoomName = Room.replace("'", "")
-        RoomName = RoomName.replace("]", "")
-        RoomName = RoomName.replace("[", "")
-        # RoomName = RoomName.replace(" ", "")
-        
-        if RoomName[0] == " ":
-            RoomName = RoomName[1:]
-        if RoomName[-1] == " ":
-            RoomName = RoomName[:-1]
-        # print(RoomName)
-        sql = "SELECT * FROM Gaitmetrics.ROOMS_DETAILS WHERE ROOM_NAME='%s'"%(RoomName)
-        cursor.execute(sql)
+        RoomName = Room.replace("'", "").strip()
+        sql = "SELECT * FROM Gaitmetrics.ROOMS_DETAILS WHERE ROOM_NAME=%s"
+        cursor.execute(sql, (RoomName,))
         dbresult = cursor.fetchone()
-        # print(dbresult)
         if dbresult:
-            cursor.execute("INSERT INTO Gaitmetrics.RL_USER_ROOM (USER_ID, ROOM_ID) VALUES(%s, %s)", (data['USER_ID'], dbresult[0]))
+            sql = "INSERT INTO Gaitmetrics.RL_USER_ROOM (USER_ID, ROOM_ID) VALUES(%s, %s)"
+            cursor.execute(sql, (data['USER_ID'], dbresult[0]))
             connection.commit()
+
     cursor.close()
     connection.close()
+    vernemq_db_cursor.close()
+    vernemq_db_connection.close()
+
     result['DATA'].append({"CODE": 0})
     return result
     
@@ -211,6 +243,44 @@ def deleteUserDetails(data):
     connection.commit()
     cursor.close()
     connection.close()
+
+    vernemq_db_connection = mysql.connector.connect(**vernemq_db)
+    vernemq_db_cursor = vernemq_db_connection.cursor()
+    sql = "DELETE FROM vmq_auth_acl WHERE username='%s'" % (dbresult[1])  # Assuming dbresult[1] contains the username
+    vernemq_db_cursor.execute(sql)
+    vernemq_db_connection.commit()
+
     result['DATA'].append({"CODE": 0})
     return result
 
+def getMQTTClientID(username):
+    client_id = None
+    try:
+        vernemq_db_connection = mysql.connector.connect(**vernemq_db)
+        vernemq_db_cursor = vernemq_db_connection.cursor(dictionary=True)
+        sql = "SELECT client_id FROM vmq_auth_acl WHERE username='%s' AND connected=0 ORDER BY last_connect_time LIMIT 1" % (username)  # Assuming dbresult[1] contains the username
+        vernemq_db_cursor.execute(sql)
+        result = vernemq_db_cursor.fetchall()
+        if (len(result) == 0):
+            sql = "SELECT client_id FROM vmq_auth_acl WHERE username='%s' AND connected=1 ORDER BY last_connect_time LIMIT 1" % (username)  # Assuming dbresult[1] contains the username
+            vernemq_db_cursor.execute(sql)
+            result = vernemq_db_cursor.fetchall()
+        client_id = result[0].get("client_id")
+    except Exception as error:
+        print("An exception occurred:", error)
+        client_id = None
+
+    return client_id
+
+def setClientConnection(client_id):
+    status = True
+    try:
+        vernemq_db_connection = mysql.connector.connect(**vernemq_db)
+        vernemq_db_cursor = vernemq_db_connection.cursor()
+        sql = "UPDATE vmq_auth_acl SET connected=1,last_connect_time=NOW() WHERE client_id='%s'" % (client_id)  # Assuming dbresult[1] contains the username
+        vernemq_db_cursor.execute(sql)
+        vernemq_db_connection.commit()
+    except:
+        status = False
+
+    return status

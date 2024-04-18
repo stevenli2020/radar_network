@@ -22,6 +22,13 @@ config = {
     # 'database': 'Gaitmetrics'
 }
 
+vernemq = {
+    'user': 'flask',
+    'password': 'CrbI1q)KUV1CsOj-',
+    'host': 'db',
+    'port': '3306',
+    'database': 'vernemq_db'
+}
 
 def get_rooms():
     global config
@@ -1267,6 +1274,16 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
+def remove_connection():
+    global config
+    vernemq_connection = mysql.connector.connect(**vernemq)
+    vernemq_cursor = vernemq_connection.cursor(dictionary=True)
+    sql = "UPDATE vmq_auth_acl SET connected=0,last_connect_time=NOW() WHERE connected=1 AND TIMESTAMPDIFF(MINUTE, last_connect_time, NOW()) > 5;"
+    vernemq_cursor.execute(sql)
+    vernemq_connection.commit()
+    vernemq_cursor.close()
+    vernemq_connection.close()  
+
 #previous
 schedule.every().monday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
 schedule.every().tuesday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
@@ -1287,7 +1304,7 @@ for i in ["04:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00
     schedule.every().saturday.at(i, timezone("Asia/Singapore")).do(current_layman)
     schedule.every().sunday.at(i, timezone("Asia/Singapore")).do(current_layman)
     
-
+schedule.every(5).minutes.do(remove_connection)
 
 while True:
     print(datetime.datetime.now(timezone("Asia/Singapore")))

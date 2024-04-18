@@ -10,6 +10,7 @@ from collections import defaultdict
 import numpy as np
 import json
 import time
+import pandas as pd
 
 config = config()
 now = datetime.now()
@@ -80,11 +81,9 @@ def getHistOfVitalData(data):
     cursor = connection.cursor()
     result = defaultdict(list)    
     sql = "SELECT GROUP_CONCAT(MAC) FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID WHERE ROOMS_DETAILS.ROOM_UUID ='%s'" % (data["ROOM_UUID"])
-    # print(sql)
     cursor.execute(sql)
     dbresult = cursor.fetchone() 
     
-    # print(dbresult)
     try:
         db = dbresult[0].split(',')
         MAC_LIST = ""
@@ -94,54 +93,49 @@ def getHistOfVitalData(data):
             MAC_LIST += f"""'{MAC}'"""
         List = f"IN ({MAC_LIST})"
     except:
-        # print("No data related to room name")
         result["ERROR"].append({'Message': 'No data related to room name!'})
         return result
     if data['CUSTOM'] != 1:
-        sql = "SELECT DATE_FORMAT(TIMESTAMP, \'%%Y-%%m-%%d %%H:%%i\') AS T, ROUND(AVG(HEART_RATE),1) AS HR, ROUND(AVG(BREATH_RATE),1) AS BR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s) AND HEART_RATE IS NOT NULL AND HEART_RATE !=0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE !=0 GROUP BY T ORDER BY `T` ASC;" %(List, data['TIME'])
+        sql = "SELECT `TIMESTAMP`, `HEART_RATE`, `BREATH_RATE` FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s) AND HEART_RATE IS NOT NULL AND HEART_RATE >0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE >0;" %(List, data['TIME'])
     else: 
-        sql = "SELECT DATE_FORMAT(TIMESTAMP, \'%%Y-%%m-%%d %%H:%%i\') AS T, ROUND(AVG(HEART_RATE),1) AS HR, ROUND(AVG(BREATH_RATE),1) AS BR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP BETWEEN '%s' AND '%s' AND HEART_RATE IS NOT NULL AND HEART_RATE !=0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE !=0 GROUP BY T ORDER BY `T` ASC;" %(List, data['TIMESTART'], data['TIMEEND'])
-    print(sql)
+        sql = "SELECT `TIMESTAMP`, `HEART_RATE`, `BREATH_RATE` FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND TIMESTAMP BETWEEN '%s' AND '%s' AND HEART_RATE IS NOT NULL AND HEART_RATE >0 AND BREATH_RATE IS NOT NULL AND BREATH_RATE >0;" %(List, data['TIMESTART'], data['TIMEEND'])
+
     cursor.execute(sql)
     dbresult = cursor.fetchall() 
     if not dbresult:
-        # print("No data")
         result["ERROR"].append({'Message': 'No data!'})
         return result 
-    query_data = dbresult
-    time_start = 0
-    time_end = 0
-    time_format = "%Y-%m-%d %H:%M"
-    if data['CUSTOM'] != 1:
-        time_start = int(time.mktime(time.strptime(query_data[0][0], time_format)))
-        time_end   = int(time.mktime(time.strptime(query_data[-1][0], time_format)))
-    else:
-        time_start = int(time.mktime(time.strptime(data['TIMESTART'], time_format)))
-        time_end   = int(time.mktime(time.strptime(data['TIMEEND'], time_format)))
-    result["TIME_START"].append(time_start)
-    # print(time_start,time_end)
+    
+    df = pd.DataFrame(dbresult, columns=['TIMESTAMP', 'HEART_RATE', 'BREATH_RATE'])
+
+    df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'])
+
+    average_heart_rate = round(df['HEART_RATE'].mean(), 1)
+    average_breath_rate = round(df['BREATH_RATE'].mean(), 1)
+
+    print(df['HEART_RATE'].min(),df['HEART_RATE'].max())
+
+    df.set_index('TIMESTAMP', inplace=True)
+
+    df_resampled = df.resample('1Min').mean()
+
+    df_resampled.fillna(0, inplace=True)
+
     data_obj = {}
-    for T in range(time_start, time_end, 60):
-        data_obj[T] = [0,0]
-    # print(data_obj)
-    for d in query_data:
-        t = int(time.mktime(time.strptime(d[0], time_format)))
-        data_obj[t] = [d[1],d[2]]
+    for index, row in df_resampled.iterrows():
+        t = int(index.timestamp())
+        if (not result.get("TIME_START")):
+            result["TIME_START"].append(t)
+        data_obj[t] = [round(row['HEART_RATE'],1), round(row['BREATH_RATE'],1)]
+
     new_query_data = []
-    # new_query_data_str = ""
     for t, d in data_obj.items():
-        # new_query_data.append([datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M"), d[0], d[1]])
-        # new_query_data_str = new_query_data_str + str(d[0]) + ',' + str(d[1])+';'
         new_query_data.append(str(d[0]) + ',' + str(d[1]))
-    result['DATA'].append(';'.join(new_query_data))
-    # result['DATA'].append(new_query_data_str)
-    if data['CUSTOM'] != 1: 
-        sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL %s);" %(List, data['TIME'])
-    else:
-        sql = "SELECT ROUND(AVG(HEART_RATE), 1) as AHR, ROUND(AVG(BREATH_RATE), 1) as ABR FROM Gaitmetrics.PROCESSED_DATA WHERE MAC %s AND HEART_RATE > 0 AND BREATH_RATE > 0 AND TIMESTAMP BETWEEN '%s' AND '%s';" %(List, data['TIMESTART'], data['TIMEEND'])
-    cursor.execute(sql)
-    dbresult = cursor.fetchone() 
-    result["AVG"].append(dbresult)
+
+    result_data = ';'.join(new_query_data)
+    result['DATA'].append(result_data)
+
+    result["AVG"].append([average_heart_rate,average_breath_rate])
     cursor.close()
     connection.close()
     return result

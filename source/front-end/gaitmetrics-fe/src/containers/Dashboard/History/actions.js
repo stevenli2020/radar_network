@@ -12,6 +12,7 @@ const HOC = (WrappedComponent) => {
 
     state = {
       loading: false,
+      temp:false,
       room_uuid:null,
       room:null,
       room_name:'-',
@@ -25,7 +26,8 @@ const HOC = (WrappedComponent) => {
       occupancyHistoryData:null,
       room_empty:true,
       vital_data:null,
-      is_admin:false
+      is_admin:false,
+      client_id: null
     };
 
     getRoomDetail = (room_uuid) => {
@@ -258,6 +260,7 @@ const HOC = (WrappedComponent) => {
 
     onChangeHOC = (key, val) => this.setState({ [key]: val });
     load = (param) => this.setState({ loading: param });
+    temp = (param) => this.setState({ temp: param });
 
     initView = (room_id) =>{
       this.setState({room_uuid:room_id})
@@ -265,6 +268,38 @@ const HOC = (WrappedComponent) => {
       this.getRoomSensors(room_id)
       this.getOccupancyHistory(room_id)
       this.getVitalHistory(room_id,"1 WEEK")
+    }
+
+    getMQTTClientID = async() => {
+      await Post(
+        `/api/getMQTTClientID`,
+        JSON.parse(getItem("LOGIN_TOKEN")),
+        this.getMQTTClientIDSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getMQTTClientIDSuccess = payload => {
+      this.setState({client_id:payload.DATA.client_id})
+    }
+
+    setClientConnection = async(client_id) => {
+      let payload = {
+        client_id: client_id,
+      }
+      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
+      await Post(
+        `/api/setClientConnection`,
+        payload,
+        this.setClientConnectionSuccess,
+        error => requestError(error),
+        this.temp
+      )
+    }
+
+    setClientConnectionSuccess = payload => {
+      this.setState({client_id:payload.DATA.client_id})
     }
 
     render = () => {
@@ -280,6 +315,8 @@ const HOC = (WrappedComponent) => {
           addVitalData={this.addVitalData}
           getRoomAlerts={this.getRoomAlerts}
           initView={this.initView}
+          getMQTTClientID={this.getMQTTClientID}
+          setClientConnection={this.setClientConnection}
         />
       );
     };

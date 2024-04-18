@@ -14,24 +14,25 @@ def resetPasswordLink(data):
     result = defaultdict(list)
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
-    if not re.fullmatch(regex, data):        
-        sql = "SELECT * FROM USERS WHERE ID='%s'"%(data)
+    print(data)
+    if not re.fullmatch(regex, str(data)):        
+        sql = "SELECT LOGIN_NAME,CODE,EMAIL FROM USERS WHERE ID='%s'"%(data)
         cursor.execute(sql)
         dbresult = cursor.fetchone()
         if not dbresult:
             result['ERROR'].append({'ID': 'User not found'})
             return result
-        body = emailTemplate(dbresult[1], "https://aswelfarehome.gaitmetrics.org/api/updatePassword?"+str(dbresult[1])+"&"+str(dbresult[8])+"&update", "update")
-        sentMail(dbresult[3], 'Request to change password', body)        
+        body = emailTemplate(dbresult[0], "https://aswelfarehome.gaitmetrics.org/resetPassword?user="+str(dbresult[0])+"&code="+str(dbresult[1])+"&mode=reset", "reset")
+        sentMail(dbresult[2], 'Request to change password', body)        
     else:
-        sql = "SELECT * FROM USERS WHERE EMAIL='%s'"%(data)
+        sql = "SELECT LOGIN_NAME,CODE,EMAIL FROM USERS WHERE EMAIL='%s'"%(data)
         cursor.execute(sql)
         dbresult = cursor.fetchone()
         if not dbresult:
             result['ERROR'].append({'EMAIL': 'Email not found'})
             return result
-        body = emailTemplate(dbresult[1], "https://aswelfarehome.gaitmetrics.org/api/updatePassword?"+str(dbresult[1])+"&"+str(dbresult[8])+"&update", "update")
-        sentMail(dbresult[3], 'Request to change password', body)
+        body = emailTemplate(dbresult[0], "https://aswelfarehome.gaitmetrics.org/resetPassword?user="+str(dbresult[0])+"&code="+str(dbresult[1])+"&mode=reset", "reset")
+        sentMail(dbresult[2], 'Request to change password', body)
     cursor.close()
     connection.close()
     result['DATA'].append({"CODE": 0})    

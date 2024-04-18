@@ -22,6 +22,11 @@ const Devices = props => {
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
+
+    if (props.client_id == null){
+			props.getMQTTClientID()
+		}
+    
     const handleVisibilityChange = () => {
       setIsActive(!document.hidden);
     };
@@ -71,7 +76,7 @@ const Devices = props => {
   useEffect(() => {
     const connectToBroker = async () => {
       try {
-        const clientId = JSON.parse(getItem("LOGIN_TOKEN")).ID;
+        const clientId = props.client_id;
         const brokerUrl = "wss://aswelfarehome.gaitmetrics.org/mqtt";  // Include the path if required
         client = new Paho.Client(brokerUrl, clientId);
         
@@ -93,7 +98,7 @@ const Devices = props => {
       }
     };
 
-    if (getItem("LOGIN_TOKEN")){
+    if (getItem("LOGIN_TOKEN" && props.client_id != null)){
       connectToBroker();
 
       let intervalId;
@@ -120,7 +125,7 @@ const Devices = props => {
         stopInterval();
       };
     }
-  }, [deviceConfMac,isActive]); // Include dependencies if needed
+  }, [deviceConfMac,isActive, props.client_id]); // Include dependencies if needed
 
   const [addVisible, setAddVisible] = useState(false);
   const [updateVisible, setUpdateVisible] = useState(false);
@@ -265,6 +270,19 @@ const Devices = props => {
     }
     
 	}, [])
+
+  useEffect(() => {
+		if (props.client_id){
+			props.setClientConnection(props.client_id)
+			let intervalId;
+      const startInterval = () => {
+        intervalId = setInterval(() => {
+          props.setClientConnection(props.client_id)
+        }, 1000 * 60 * 2); // Adjust the interval time as needed
+      };
+      startInterval();
+		}
+  }, [props.client_id]);
 
 	return (
 		<Container>

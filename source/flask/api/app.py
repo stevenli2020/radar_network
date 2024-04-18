@@ -35,6 +35,9 @@ from user.usersManagement import updateUserDetails
 from user.usersManagement import deleteUserDetails
 from user.usersManagement import requestAllUsers
 from user.usersManagement import requestSpecificUser
+from user.usersManagement import getMQTTClientID
+from user.usersManagement import setClientConnection
+
 # update Password
 from user.passwordManager import addPassword
 # login
@@ -833,6 +836,42 @@ def updateRoomLocationOnMap():
                 return {"ERROR": 'Not authorized!'}
         else:
             return {"ERROR": 'Empty json!'}
+
+@app.route('/api/getMQTTClientID', methods=['POST'])
+def getMQTTClientIDAPI():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                client_id = getMQTTClientID(data.get("Username"))
+                if (client_id):
+                    return {"DATA":{
+                        "client_id":client_id
+                    }}
+                else:
+                    return {"ERROR": 'Cannot retrieve client ID'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Cannot retrieve client ID'}
+        
+@app.route('/api/setClientConnection', methods=['POST'])
+def setClientConnectionAPI():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                result = setClientConnection(data.get("client_id"))
+                if result:
+                    return {"DATA": 'Connected'}
+                else:
+                    return {"ERROR": 'Cannot set connect'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Cannot set connect'}
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

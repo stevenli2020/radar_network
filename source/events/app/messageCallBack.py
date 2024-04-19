@@ -129,7 +129,7 @@ def on_message(client, obj, msg):
         elif Type == "3":
             # print(D)
             IN_BED = 0 if D['bedOccupancy']==None else D['bedOccupancy']
-            IN_BED_MOVING = "NULL" if D['inBedMoving']==None else str(D['inBedMoving'])
+            IN_BED_MOVING = "NULL" if D.get('inBedMoving')==None else str(D.get('inBedMoving'))
             if D['bedOccupancy']:
                 STATE = 2
                 OBJECT_LOCATION = 1

@@ -217,7 +217,7 @@ const History = props => {
       }
     };
 
-    if (getItem("LOGIN_TOKEN" && props.client_id != null)){
+    if (getItem("LOGIN_TOKEN") && props.client_id != null){
       connectToBroker();
       
       let intervalId;

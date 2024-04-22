@@ -35,7 +35,7 @@ const History = props => {
 
   useEffect(() => {
 
-    if (props.client_id == null){
+    if (getItem("LOGIN_TOKEN") && props.client_id == null){
 			props.getMQTTClientID()
 		}
     
@@ -258,12 +258,14 @@ const History = props => {
 	}, [])
 
   useEffect(() => {
-		if (props.client_id){
+		if (getItem("LOGIN_TOKEN") && props.client_id){
 			props.setClientConnection(props.client_id)
 			let intervalId;
       const startInterval = () => {
         intervalId = setInterval(() => {
-          props.setClientConnection(props.client_id)
+          if (getItem("LOGIN_TOKEN")){
+						props.setClientConnection(props.client_id)
+					}
         }, 1000 * 60 * 2); // Adjust the interval time as needed
       };
       startInterval();
@@ -274,25 +276,34 @@ const History = props => {
 
 	return (
 		<Container>
-			<Title>History ({props.room_name})</Title>
-      <Row gutter={[16, 16]} style={{justifyContent:'center'}}>
-        {
-          props.is_admin?(<Col span={24} lg={12}>
-            <RealtimeLocation is_admin={props.is_admin} room={props.room} room_empty={props.room_empty} sensors={props.sensors} persons={props.persons} data={props.realtimeLocationData}/>
-          </Col>):null
-        }
-				<Col span={24} lg={12}>
-          <LocationHistory is_admin={props.is_admin} action={props.getLocationHistory} macPos={props.macPos} macVital={props.macVital} room={props.room} data={props.locationHistoryData}/>
-				</Col>
-      </Row>
-      <Row gutter={[16, 16]} className='mt-2'>
-        <Col span={24} lg={12}>
-					<VitalSign action={props.getVitalHistory} macPos={props.macPos} macVital={props.macVital} vital_data={props.vital_data} room_uuid={props.room_uuid} data={props.vitalHistoryData}/>
-				</Col>
-				<Col span={24} lg={12}>
-          <OccupancyHistory data={props.occupancyHistoryData}/>
-				</Col>
-			</Row>
+    {
+      !props.init? 
+      <h1 style={{textAlign:'center'}}>Retrieving data ...</h1>:
+      props.sensors.length===0?
+      <h1 style={{textAlign:'center'}}>No sensor for this room!</h1>:
+      <div>
+        <Title>History ({props.room_name})</Title>
+        <Row gutter={[16, 16]} style={{justifyContent:'center'}}>
+          {
+            props.is_admin?(<Col span={24} lg={12}>
+              <RealtimeLocation is_admin={props.is_admin} room={props.room} room_empty={props.room_empty} sensors={props.sensors} persons={props.persons} data={props.realtimeLocationData}/>
+            </Col>):null
+          }
+          <Col span={24} lg={12}>
+            <LocationHistory is_admin={props.is_admin} action={props.getLocationHistory} macPos={props.macPos} macVital={props.macVital} room={props.room} data={props.locationHistoryData}/>
+          </Col>
+        </Row>
+        <Row gutter={[16, 16]} className='mt-2'>
+          <Col span={24} lg={12}>
+            <VitalSign action={props.getVitalHistory} macPos={props.macPos} macVital={props.macVital} vital_data={props.vital_data} room_uuid={props.room_uuid} data={props.vitalHistoryData}/>
+          </Col>
+          <Col span={24} lg={12}>
+            <OccupancyHistory data={props.occupancyHistoryData}/>
+          </Col>
+        </Row>
+      </div>
+    }
+			
 			{
 				props.onLoading && <LoadingOverlay/>
 			}

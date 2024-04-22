@@ -32,7 +32,7 @@ const Home = (props) => {
 
   useEffect(() => {
 
-		if (props.client_id == null){
+		if (getItem("LOGIN_TOKEN") && props.client_id == null){
 			props.getMQTTClientID()
 		}
 
@@ -146,12 +146,14 @@ const Home = (props) => {
   }, [props.rooms,connected, isActive, props.client_id]); // Include dependencies if needed
 
 	useEffect(() => {
-		if (props.client_id){
+		if (getItem("LOGIN_TOKEN") && props.client_id){
 			props.setClientConnection(props.client_id)
 			let intervalId;
       const startInterval = () => {
         intervalId = setInterval(() => {
-          props.setClientConnection(props.client_id)
+          if (getItem("LOGIN_TOKEN")){
+						props.setClientConnection(props.client_id)
+					}
         }, 1000 * 60 * 2); // Adjust the interval time as needed
       };
       startInterval();
@@ -490,6 +492,7 @@ const Home = (props) => {
 								>
 									<p>{room.INFO?room.INFO:'-'}</p>
 									<p>Status: <Tag>{
+										room.MAC.length === 0? 'No sensor':
 										room.STATUS === 0? 'Room is empty':
 										room.STATUS === 1? 'Room is occupied':
 										room.STATUS === 2? 'Sleeping':
@@ -498,6 +501,7 @@ const Home = (props) => {
 									}</Tag></p>
 									<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
 									<p>Last data: <Tag>{
+										room.MAC.length === 0? '-':
 										moment(room.LAST_DATA_RECEIVED).add(timezoneOffset, 'minutes').fromNow()
 										}</Tag></p>
 								</div>

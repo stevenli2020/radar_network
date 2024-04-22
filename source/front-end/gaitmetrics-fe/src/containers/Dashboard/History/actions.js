@@ -11,6 +11,7 @@ const HOC = (WrappedComponent) => {
   class WithHOC extends Component {
 
     state = {
+      init:false,
       loading: false,
       temp:false,
       room_uuid:null,
@@ -172,6 +173,7 @@ const HOC = (WrappedComponent) => {
         console.log("macvital",macVital)
       }
       this.setState({sensors:radars})
+      this.setState({init:true})
     }
 
     getLocationHistory = (macPos, type, start=null, end=null) => {

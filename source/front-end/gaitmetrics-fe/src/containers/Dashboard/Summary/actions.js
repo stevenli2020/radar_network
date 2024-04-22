@@ -11,8 +11,10 @@ const HOC = (WrappedComponent) => {
   
   class WithHOC extends Component {
     state = {
+      init:false,
       loading: false,
       temp:false,
+      sensors:[],
       bed_time:{min:"-",max:"-",average:"-",previous_average:"-"},
       wake_up_time:{min:"-",max:"-",average:"-",previous_average:"-"},
       sleeping_hour:{min:"-",max:"-",average:"-",previous_average:"-"},
@@ -307,6 +309,9 @@ const HOC = (WrappedComponent) => {
     }
     
     getRoomSummarySuccess = payload => {
+      console.log(payload)
+      this.setState({ sensors: payload.data.sensors })
+      this.setState({ init: true })
       this.setState({ bed_time: payload.data.bed_time })
       this.setState({ wake_up_time: payload.data.wake_up_time })
       this.setState({ sleeping_hour: payload.data.sleeping_hour })

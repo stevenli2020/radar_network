@@ -23,7 +23,7 @@ const Devices = props => {
 
   useEffect(() => {
 
-    if (props.client_id == null){
+    if (getItem("LOGIN_TOKEN") && props.client_id == null){
 			props.getMQTTClientID()
 		}
     
@@ -272,12 +272,14 @@ const Devices = props => {
 	}, [])
 
   useEffect(() => {
-		if (props.client_id){
+		if (getItem("LOGIN_TOKEN") && props.client_id){
 			props.setClientConnection(props.client_id)
 			let intervalId;
       const startInterval = () => {
         intervalId = setInterval(() => {
-          props.setClientConnection(props.client_id)
+          if (getItem("LOGIN_TOKEN")){
+						props.setClientConnection(props.client_id)
+					}
         }, 1000 * 60 * 2); // Adjust the interval time as needed
       };
       startInterval();

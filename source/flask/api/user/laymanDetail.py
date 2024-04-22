@@ -11,6 +11,7 @@ def getLaymanData(date,room_uuid):
         "data":{
             "room_id":room_uuid,
             "room_name":None,
+            "sensors":[],
             "sleeping_hour":{
                 "average":"-",
                 "max":"-",
@@ -67,11 +68,12 @@ def getLaymanData(date,room_uuid):
             }
         }
     }
-    sql = "SELECT CONCAT(ROOM_NAME,'@',ROOM_LOC) AS room_name, ID FROM Gaitmetrics.ROOMS_DETAILS WHERE ROOM_UUID='%s';"%(room_uuid)
+    sql = "SELECT CONCAT(ROOMS_DETAILS.ROOM_NAME,'@',ROOMS_DETAILS.ROOM_LOC) AS room_name, ROOMS_DETAILS.ID, GROUP_CONCAT(RL_ROOM_MAC.MAC) AS MAC FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE ROOMS_DETAILS.ROOM_UUID='%s';"%(room_uuid)
     cursor.execute(sql)
     room_name = cursor.fetchone()
     if (room_name):
         result["data"]["room_name"] = room_name["room_name"]
+        result["data"]["sensors"] = room_name["MAC"].split(",") if room_name["MAC"] else []
         room_id = room_name["ID"]
 
         eow_datetime = datetime.strptime(date, "%Y-%m-%d")

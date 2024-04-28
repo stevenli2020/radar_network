@@ -109,6 +109,7 @@ def getHistOfVitalData(data):
     df = pd.DataFrame(dbresult, columns=['TIMESTAMP', 'HEART_RATE', 'BREATH_RATE'])
 
     df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'])
+    df['TIMESTAMP'] -= timedelta(hours=8)
 
     average_heart_rate = round(df['HEART_RATE'].mean(), 1)
     average_breath_rate = round(df['BREATH_RATE'].mean(), 1)

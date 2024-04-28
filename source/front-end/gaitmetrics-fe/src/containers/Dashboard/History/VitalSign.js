@@ -393,8 +393,8 @@ const VitalSign = (props) => {
         if ("DATA" in props.data) {       
           if (props.data.DATA.length > 0) {
             const localDate = new Date()
-            // const localGMTVal = Math.abs(localDate.getTimezoneOffset() * 60 * 1000)
-            const localGMTVal = 0
+            const localGMTVal = Math.abs(localDate.getTimezoneOffset() * 60 * 1000)
+            // const localGMTVal = 0
             let idx = 0;
             let _idx = 0;
             let data_str = props.data.DATA[0];
@@ -427,7 +427,6 @@ const VitalSign = (props) => {
           histVitalData2 = randR()
           histVitalTime = gen2STime()
         }
-        
         chartInstance.setOption({
           xAxis: [
             {

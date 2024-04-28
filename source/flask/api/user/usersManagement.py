@@ -92,29 +92,29 @@ def addNewUser(data):
         # print(dbresult)
         if dbresult:
             id = dbresult[0]
-            RoomList = str(data['ROOM']).split(',')
-            # print(RoomList)
-            for Room in RoomList:
-                RoomName = Room.replace("'", "")
-                RoomName = RoomName.replace("]", "")
-                RoomName = RoomName.replace("[", "")
-                # RoomName = RoomName.replace(" ", "")
-                
-                if RoomName[0] == " ":
-                    RoomName = RoomName[1:]
-                if RoomName[-1] == " ":
-                    RoomName = RoomName[:-1]
-                print(RoomName)
-                sql = "SELECT * FROM Gaitmetrics.ROOMS_DETAILS WHERE ROOM_NAME='%s'"%(RoomName)
-                cursor.execute(sql)
-                dbresult = cursor.fetchone()
-                print(dbresult)
-                if dbresult:
-                    cursor.execute("INSERT INTO Gaitmetrics.RL_USER_ROOM (USER_ID, ROOM_ID) VALUES(%s, %s)", (id, dbresult[0]))
-                    connection.commit()
-            # for x in MAC:
-            #     cursor.execute("INSERT INTO RL_USER_MAC (USER_ID, MAC) VALUES(%s, %s)", (id, x))
-            #     connection.commit()
+            if (data['ROOM']):
+                RoomList = str(data['ROOM']).split(',')
+                for Room in RoomList:
+                    RoomName = Room.replace("'", "")
+                    RoomName = RoomName.replace("]", "")
+                    RoomName = RoomName.replace("[", "")
+                    # RoomName = RoomName.replace(" ", "")
+                    
+                    if RoomName[0] == " ":
+                        RoomName = RoomName[1:]
+                    if RoomName[-1] == " ":
+                        RoomName = RoomName[:-1]
+                    print(RoomName)
+                    sql = "SELECT * FROM Gaitmetrics.ROOMS_DETAILS WHERE ROOM_NAME='%s'"%(RoomName)
+                    cursor.execute(sql)
+                    dbresult = cursor.fetchone()
+                    print(dbresult)
+                    if dbresult:
+                        cursor.execute("INSERT INTO Gaitmetrics.RL_USER_ROOM (USER_ID, ROOM_ID) VALUES(%s, %s)", (id, dbresult[0]))
+                        connection.commit()
+                # for x in MAC:
+                #     cursor.execute("INSERT INTO RL_USER_MAC (USER_ID, MAC) VALUES(%s, %s)", (id, x))
+                #     connection.commit()
     
     vernemq_db_connection = mysql.connector.connect(**vernemq_db)
     vernemq_db_cursor = vernemq_db_connection.cursor()

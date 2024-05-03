@@ -1517,7 +1517,7 @@ def decode_process_publish(mac, data):
                      if numTracks > 0 and len(vitalStateParam[mac]['previous_pointClouds']) > 0 and \
                             len(vitalStateParam[mac]['previous_pointClouds']) == len(trackIndices):
 
-                      if ('vitals' in outputDict) and vitalStateParam[mac]['periodStationary'] > 15:  # and count_subjectStationary > 100:
+                      if ('vitals' in outputDict) and vitalStateParam[mac]['periodStationary'] > 5:  # and count_subjectStationary > 100:
                         vitalsDict = outputDict['vitals']
                         # if count_vitalSign == 0:
                         #     Breathsignal = np.array(vitalsDict['breathWaveform'])
@@ -1573,7 +1573,7 @@ def decode_process_publish(mac, data):
                         vitalStateParam[mac]['prevBreathRate'] = curBreathRate
                         # print("\n*******************\nvital_dict: ", vital_dict)
 
-                      elif vitalStateParam[mac]['periodStationary'] <= 15:  # count_subjectStationary <= 100:
+                      elif vitalStateParam[mac]['periodStationary'] <= 5:  # count_subjectStationary <= 100:
                         # print("\n*******************\nvital_dict: X", )
                         # count_vitalSign = 0
                         vitalStateParam[mac]['prevBreathRate'] = 0

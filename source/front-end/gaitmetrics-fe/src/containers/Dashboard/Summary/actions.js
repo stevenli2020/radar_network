@@ -309,7 +309,6 @@ const HOC = (WrappedComponent) => {
     }
     
     getRoomSummarySuccess = payload => {
-      console.log(payload)
       this.setState({ sensors: payload.data.sensors })
       this.setState({ init: true })
       this.setState({ bed_time: payload.data.bed_time })
@@ -349,7 +348,6 @@ const HOC = (WrappedComponent) => {
         if (payload.data.disrupt_duration.average != "-"){
           let disrupt_mins = 0
           disrupt_mins = this.timeStringToMinutes(payload.data.disrupt_duration.average)
-          console.log(disrupt_mins,sleeping_mins)
           let disruptOptions =  this.generatePieOptions("Disrupt Disruption","Not Disrupted",disrupt_mins,sleeping_mins)
 
           this.setState({ disrupt_duration_options: disruptOptions })
@@ -414,7 +412,7 @@ const HOC = (WrappedComponent) => {
         set: true
       }
       if (unread){
-        this.setState({receivedAlert:this.props.receivedAlert+1})
+        this.setState({receivedAlert:this.state.receivedAlert+1})
       }
       payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(

@@ -19,6 +19,7 @@ const HOC = (WrappedComponent) => {
       room_name:'-',
       sensors:[],
       persons:[],
+      alerts:[],
       macPos:null,
       macVital:null,
       realtimeLocationData:null,
@@ -28,7 +29,8 @@ const HOC = (WrappedComponent) => {
       room_empty:true,
       vital_data:null,
       is_admin:false,
-      client_id: null
+      client_id: null,
+      receivedAlert:0
     };
 
     getRoomDetail = (room_uuid) => {
@@ -74,7 +76,7 @@ const HOC = (WrappedComponent) => {
         set: true
       }
       if (unread){
-        this.setState({receivedAlert:this.props.receivedAlert+1})
+        this.setState({receivedAlert:this.state.receivedAlert+1})
       }
       payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
@@ -164,13 +166,11 @@ const HOC = (WrappedComponent) => {
 
       if (macPos){
         this.getLocationHistory(macPos,"HOUR")
-        console.log("macpos",macPos)
         this.setState({macPos:macPos})
       }
 
       if (macVital){
         this.setState({macVital:macVital})
-        console.log("macvital",macVital)
       }
       this.setState({sensors:radars})
       this.setState({init:true})
@@ -270,6 +270,7 @@ const HOC = (WrappedComponent) => {
       this.getRoomSensors(room_id)
       this.getOccupancyHistory(room_id)
       this.getVitalHistory(room_id,"1 WEEK")
+      this.getRoomAlerts(room_id)
     }
 
     getMQTTClientID = async() => {

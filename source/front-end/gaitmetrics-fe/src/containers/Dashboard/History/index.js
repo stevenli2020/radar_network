@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import WithHOC from './actions'
-import { Typography, Row, Col } from 'antd'
+import { Typography, Row, Col, Button } from 'antd'
 import LoadingOverlay from 'components/LoadingOverlay'
 import ReactECharts from 'echarts-for-react';
 import { Container } from 'react-bootstrap';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import LocationHistory from './LocationHistory';
 import RealtimeLocation from './RealtimeLocation';
 import VitalSign from './VitalSign';
 import OccupancyHistory from './OccupancyHistory';
 
 import { getItem } from 'utils/tokenStore'
-
+import getWebsocketServer from 'utils/websocket'
+import AlertsModal from '../Summary/AlertsModal';
 import Paho from 'paho-mqtt'
 
 
@@ -30,8 +31,10 @@ let client = null
 
 const History = props => {
 
+  const [alertVisible, setAlertVisible] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [isActive, setIsActive] = useState(true);
+  const navigate = useNavigate()
 
   useEffect(() => {
 
@@ -190,12 +193,22 @@ const History = props => {
     }
   };
 
+  const closeAlertModal = () =>{
+		setAlertVisible(false)
+	}
+
+  useEffect(() => {
+		if (props.receivedAlert == 1 && props.alerts.length > 0 && getItem("LOGIN_TOKEN")){
+			setAlertVisible(true)
+		}
+	},[props.receivedAlert,props.alerts])
+
   useEffect(() => {
     const connectToBroker = async () => {
       try {
         const userId = props.client_id;
         const clientId = `${userId}`;
-        const brokerUrl = "wss://aswelfarehome.gaitmetrics.org/mqtt";  // Include the path if required
+        const brokerUrl = getWebsocketServer();  // Include the path if required
         client = new Paho.Client(brokerUrl, clientId);
         
         await client.connect({
@@ -248,6 +261,10 @@ const History = props => {
     
   }, [props.sensors,isActive, props.client_id]); // Include dependencies if needed
 
+  const navigateTo = () =>{
+		navigate('/dashboard/summary?roomId='+props.room_uuid)
+	}
+
 	useEffect(() => {
     if (getItem("LOGIN_TOKEN")){
       if (JSON.parse(getItem("LOGIN_TOKEN")).TYPE == "1"){
@@ -282,7 +299,36 @@ const History = props => {
       props.sensors.length===0?
       <h1 style={{textAlign:'center'}}>No sensor for this room!</h1>:
       <div>
-        <Title>History ({props.room_name})</Title>
+        <Row style={{alignItems: 'center' }}>
+					<Col sm={12}>
+						<Title>History ({props.room_name})</Title> 
+					</Col>
+					<Col sm={12}>
+						<Button
+							type="default"
+							size="large"
+							style={{ float:'right' }}
+							onClick={navigateTo}
+						>
+							Summary
+						</Button>
+						<Button
+							type="primary"
+							danger
+							size="large"
+							className='mx-2'
+							style={{ float:'right' }}
+							onClick={ ()=>
+								{
+									props.getRoomAlerts(props.room_uuid,false)
+									setAlertVisible(true)
+								}
+							}
+						>
+							Alert
+						</Button>
+					</Col>
+				</Row>
         <Row gutter={[16, 16]} style={{justifyContent:'center'}}>
           {
             props.is_admin?(<Col span={24} lg={12}>
@@ -303,7 +349,7 @@ const History = props => {
         </Row>
       </div>
     }
-			
+			{alertVisible && <AlertsModal visible={alertVisible} close={closeAlertModal} alerts={props.alerts}></AlertsModal>}
 			{
 				props.onLoading && <LoadingOverlay/>
 			}

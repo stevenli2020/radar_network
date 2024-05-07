@@ -27,7 +27,7 @@ const UpdateDeviceModal = (props) => {
         layout="vertical" // Set the form layout
       >
         <p>ID: <span style={{fontWeight:'bold'}}>{props.selectedDevice?props.selectedDevice.Id:''}</span></p>
-        <p>Last Modified Time: <span style={{fontWeight:'bold'}}>{props.selectedDevice?props.selectedDevice["LAST DATA"]:''}</span></p>
+        <p>Last Modified Time: <span style={{fontWeight:'bold'}}>{props.selectedDevice?new Date(props.selectedDevice["LAST DATA"]).toLocaleString():''}</span></p>
         <Row gutter={16}>
           <Col span={24} lg={8}>
             <Form.Item

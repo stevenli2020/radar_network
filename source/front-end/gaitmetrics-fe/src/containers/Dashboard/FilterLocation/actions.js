@@ -58,7 +58,7 @@ const HOC = (WrappedComponent) => {
 
     updateFilterArea = (areas) => {
       let payload = {
-        room_id:this.props.room.ID,
+        room_id:this.state.room.ID,
         data:areas
       }
       payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }

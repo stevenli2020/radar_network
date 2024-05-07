@@ -47,9 +47,25 @@ def insert_alert(room_id,msg):
     global config
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
-    sql = f"""INSERT INTO ALERT (ROOM_ID,URGENCY,TYPE,DETAILS) VALUES ('{room_id}','{msg["URGENCY"]}','{msg["TYPE"]}','{msg["DETAILS"]}');"""
-    cursor.execute(sql)
-    connection.commit()
+
+    check_sql = f"""
+        SELECT COUNT(*) AS count
+        FROM ALERT
+        WHERE ROOM_ID = '{room_id}'
+        AND URGENCY = '{msg["URGENCY"]}'
+        AND TYPE = '{msg["TYPE"]}'
+        AND DETAILS = '{msg["DETAILS"]}'
+        AND TIMESTAMP >= NOW() - INTERVAL 15 SECOND
+    """
+
+    cursor.execute(check_sql)
+    result = cursor.fetchone()
+
+    # If there are no matching entries within the last 15 seconds, proceed with insertion
+    if result['count'] == 0:
+        sql = f"""INSERT INTO ALERT (ROOM_ID,URGENCY,TYPE,DETAILS) VALUES ('{room_id}','{msg["URGENCY"]}','{msg["TYPE"]}','{msg["DETAILS"]}');"""
+        cursor.execute(sql)
+        connection.commit()
     cursor.close()
     connection.close()  
 

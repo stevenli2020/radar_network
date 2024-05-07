@@ -1,5 +1,5 @@
 import mysql.connector
-from user.config import config
+from user.config import config, domain_url
 
 from collections import defaultdict
 from user.email.gmail import sentMail
@@ -22,7 +22,7 @@ def resetPasswordLink(data):
         if not dbresult:
             result['ERROR'].append({'ID': 'User not found'})
             return result
-        body = emailTemplate(dbresult[0], "https://aswelfarehome.gaitmetrics.org/resetPassword?user="+str(dbresult[0])+"&code="+str(dbresult[1])+"&mode=reset", "reset")
+        body = emailTemplate(dbresult[0], domain_url + "/resetPassword?user="+str(dbresult[0])+"&code="+str(dbresult[1])+"&mode=reset", "reset")
         sentMail(dbresult[2], 'Request to change password', body)        
     else:
         sql = "SELECT LOGIN_NAME,CODE,EMAIL FROM USERS WHERE EMAIL='%s'"%(data)
@@ -31,7 +31,7 @@ def resetPasswordLink(data):
         if not dbresult:
             result['ERROR'].append({'EMAIL': 'Email not found'})
             return result
-        body = emailTemplate(dbresult[0], "https://aswelfarehome.gaitmetrics.org/resetPassword?user="+str(dbresult[0])+"&code="+str(dbresult[1])+"&mode=reset", "reset")
+        body = emailTemplate(dbresult[0], domain_url + "/resetPassword?user="+str(dbresult[0])+"&code="+str(dbresult[1])+"&mode=reset", "reset")
         sentMail(dbresult[2], 'Request to change password', body)
     cursor.close()
     connection.close()

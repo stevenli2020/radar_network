@@ -1,4 +1,4 @@
-import { DownOutlined, PoweroffOutlined, UserOutlined } from '@ant-design/icons'
+import { DownOutlined, PoweroffOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons'
 import { Dropdown, Avatar, Space } from 'antd'
 import React from 'react'
 import { useNavigate } from "react-router-dom"
@@ -14,6 +14,11 @@ const Userbox = () => {
 				label: "Profile"
       },
       {
+				key: "settings",
+				icon: <SettingOutlined />,
+				label: "Settings"
+      },
+      {
 				key: "logout",
 				icon: <PoweroffOutlined />,
 				label: "Log Out"
@@ -23,7 +28,9 @@ const Userbox = () => {
       switch(e.key){
         case "profile":
           navigate('/dashboard/profile')
-
+          break
+        case "settings":
+          navigate('/dashboard/settings')
           break
         case "logout":
           storeItem("LOGIN_TOKEN", "")

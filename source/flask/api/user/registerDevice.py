@@ -3,6 +3,8 @@ from user.config import config, vernemq
 from datetime import datetime, timedelta
 from collections import defaultdict
 import uuid
+import pytz
+from tzlocal import get_localzone
 
 config = config()
 vernemq_db = vernemq()
@@ -24,10 +26,11 @@ def getregisterDeviceLists(req, admin):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = {}
+    local_timezone = get_localzone()
     if admin:
         sql = "SELECT DEVICES.Id, DEVICES.MAC, NAME, TYPE, DEVICES.STATUS, DEPLOY_X, DEPLOY_Y, DEPLOY_Z, ROT_X, ROT_Y, ROT_Z, LAST_DATA_RECEIVED, DESCRIPTION, ROOMS_DETAILS.ROOM_NAME FROM Gaitmetrics.DEVICES LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON Gaitmetrics.DEVICES.MAC=Gaitmetrics.RL_ROOM_MAC.MAC LEFT JOIN Gaitmetrics.ROOMS_DETAILS ON Gaitmetrics.RL_ROOM_MAC.ROOM_UUID=Gaitmetrics.ROOMS_DETAILS.ROOM_UUID"
         cursor.execute(sql)
-        result["DATA"] = [{"Id": Id, "MAC": MAC, "NAME": NAME, "TYPE": TYPE, "STATUS":STATUS, "DEPLOY_X":DEPLOY_X, "DEPLOY_Y": DEPLOY_Y, "DEPLOY_Z":DEPLOY_Z, "ROT_X":ROT_X, "ROT_Y":ROT_Y, "ROT_Z":ROT_Z, "LAST DATA": LAST_DATA_RECEIVED, "DESCRIPTION": DESCRIPTION, "ROOM_NAME":ROOM_NAME} for (Id, MAC, NAME, TYPE, STATUS, DEPLOY_X, DEPLOY_Y, DEPLOY_Z, ROT_X, ROT_Y, ROT_Z, LAST_DATA_RECEIVED, DESCRIPTION, ROOM_NAME) in cursor]
+        result["DATA"] = [{"Id": Id, "MAC": MAC, "NAME": NAME, "TYPE": TYPE, "STATUS":STATUS, "DEPLOY_X":DEPLOY_X, "DEPLOY_Y": DEPLOY_Y, "DEPLOY_Z":DEPLOY_Z, "ROT_X":ROT_X, "ROT_Y":ROT_Y, "ROT_Z":ROT_Z, "LAST DATA": LAST_DATA_RECEIVED.astimezone(local_timezone).astimezone(pytz.utc) if LAST_DATA_RECEIVED else LAST_DATA_RECEIVED, "DESCRIPTION": DESCRIPTION, "ROOM_NAME":ROOM_NAME} for (Id, MAC, NAME, TYPE, STATUS, DEPLOY_X, DEPLOY_Y, DEPLOY_Z, ROT_X, ROT_Y, ROT_Z, LAST_DATA_RECEIVED, DESCRIPTION, ROOM_NAME) in cursor]
     else:
         sql = "SELECT * FROM RL_USER_MAC WHERE USER_ID='%s'"%(req['ID'])
         cursor.execute(sql)
@@ -276,6 +279,8 @@ def insertDeviceCredential(req):
         
         cursor.execute(sql)
         connection.commit()
+        cursor.close()
+        connection.close()
         return {
             "DATA": ["Device credential inserted!"]
         }

@@ -1,5 +1,5 @@
 import mysql.connector
-from user.config import config, vernemq
+from user.config import config, vernemq, domain_url
 from datetime import datetime, timedelta
 
 from collections import defaultdict
@@ -7,6 +7,8 @@ from user.email.gmail import sentMail
 from user.email.gmailTemplate import emailTemplate
 import re
 import hashlib
+import pytz
+from tzlocal import get_localzone
 
 regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
 
@@ -19,9 +21,10 @@ def requestAllUsers():
     result = defaultdict(list)
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
+    local_timezone = get_localzone()
     sql = "SELECT USERS.ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, USERS.STATUS, CODE, LAST_UPDATE, CREATED, GROUP_CONCAT(ROOMS_DETAILS.ROOM_NAME) AS ROOM_NAME FROM Gaitmetrics.USERS LEFT JOIN Gaitmetrics.RL_USER_ROOM ON USERS.ID=RL_USER_ROOM.USER_ID LEFT JOIN Gaitmetrics.ROOMS_DETAILS ON RL_USER_ROOM.ROOM_ID=ROOMS_DETAILS.ID GROUP BY USERS.ID"
     cursor.execute(sql)
-    result["DATA"] = [{"ID": ID, "LOGIN_NAME": LOGIN_NAME, "FULL_NAME": FULL_NAME, "EMAIL": EMAIL, "PHONE": PHONE, "TYPE": TYPE, "STATUS": STATUS, "CODE": CODE, "LAST_UPDATE": LAST_UPDATE, "CREATED": CREATED, "ROOM_NAME": ROOM_NAME} for (ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS,CODE, LAST_UPDATE, CREATED, ROOM_NAME) in cursor]
+    result["DATA"] = [{"ID": ID, "LOGIN_NAME": LOGIN_NAME, "FULL_NAME": FULL_NAME, "EMAIL": EMAIL, "PHONE": PHONE, "TYPE": TYPE, "STATUS": STATUS, "CODE": CODE, "LAST_UPDATE": LAST_UPDATE.astimezone(local_timezone).astimezone(pytz.utc) if LAST_UPDATE else LAST_UPDATE, "CREATED": CREATED.astimezone(local_timezone).astimezone(pytz.utc) if CREATED else CREATED, "ROOM_NAME": ROOM_NAME} for (ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS,CODE, LAST_UPDATE, CREATED, ROOM_NAME) in cursor]
     cursor.close()
     connection.close()
     return result
@@ -31,9 +34,10 @@ def requestSpecificUser(data):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     Id = data['USER_ID']
+    local_timezone = get_localzone()
     sql = "SELECT USERS.ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, USERS.STATUS, CODE, LAST_UPDATE, CREATED, GROUP_CONCAT(ROOMS_DETAILS.ROOM_NAME) AS ROOM_NAME FROM Gaitmetrics.USERS LEFT JOIN Gaitmetrics.RL_USER_ROOM ON USERS.ID=RL_USER_ROOM.USER_ID LEFT JOIN Gaitmetrics.ROOMS_DETAILS ON RL_USER_ROOM.ROOM_ID=ROOMS_DETAILS.ID WHERE USERS.ID='%s' GROUP BY USERS.ID"%(Id)
     cursor.execute(sql)
-    result["DATA"] = [{"ID": ID, "LOGIN_NAME": LOGIN_NAME, "FULL_NAME": FULL_NAME, "EMAIL": EMAIL, "PHONE": PHONE, "TYPE": TYPE, "STATUS": STATUS, "CODE": CODE, "LAST_UPDATE": LAST_UPDATE, "CREATED": CREATED, "ROOM_NAME": ROOM_NAME} for (ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS,CODE, LAST_UPDATE, CREATED, ROOM_NAME) in cursor]
+    result["DATA"] = [{"ID": ID, "LOGIN_NAME": LOGIN_NAME, "FULL_NAME": FULL_NAME, "EMAIL": EMAIL, "PHONE": PHONE, "TYPE": TYPE, "STATUS": STATUS, "CODE": CODE, "LAST_UPDATE": LAST_UPDATE.astimezone(local_timezone).astimezone(pytz.utc) if LAST_UPDATE else LAST_UPDATE, "CREATED": CREATED.astimezone(local_timezone).astimezone(pytz.utc) if CREATED else CREATED, "ROOM_NAME": ROOM_NAME} for (ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS,CODE, LAST_UPDATE, CREATED, ROOM_NAME) in cursor]
     # sql = "SELECT ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS, CODE, LAST_UPDATE, CREATED FROM USERS WHERE ID='%s'"%(data['USER_ID'])
     # cursor.execute(sql)
     # result["DATA"] = [{"ID": ID, "LOGIN_NAME": LOGIN_NAME, "FULL_NAME": FULL_NAME, "EMAIL": EMAIL, "PHONE": PHONE, "TYPE": TYPE, "STATUS": STATUS, "CODE": CODE, "LAST_UPDATE": LAST_UPDATE, "CREATED": CREATED} for (ID, LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS,CODE, LAST_UPDATE, CREATED) in cursor]
@@ -83,7 +87,7 @@ def addNewUser(data):
     now = datetime.now()
     cursor.execute("INSERT INTO Gaitmetrics.USERS (LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS, CODE, CREATED) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)", (data['LOGIN_NAME'], data['FULL_NAME'], data['EMAIL'], data['PHONE'], data['USER_TYPE'], 0, code, now))
     connection.commit()
-    body = emailTemplate(data['LOGIN_NAME'], "https://aswelfarehome.gaitmetrics.org/resetPassword?user="+str(data['LOGIN_NAME'])+"&code="+str(code)+"&mode=add", "add")
+    body = emailTemplate(data['LOGIN_NAME'], domain_url + "/resetPassword?user="+str(data['LOGIN_NAME'])+"&code="+str(code)+"&mode=add", "add")
     sentMail(data['EMAIL'], 'Account Created Successfully', body)
     if str(data['USER_TYPE']) == '0':
         sql = "SELECT * FROM Gaitmetrics.USERS WHERE LOGIN_NAME='%s'"%(data['LOGIN_NAME'])
@@ -127,7 +131,8 @@ def addNewUser(data):
     sql = "INSERT INTO vmq_auth_acl (mountpoint, client_id, username, password, publish_acl, subscribe_acl) VALUES (%s, %s, %s, md5(%s), %s, %s)"
     vernemq_db_cursor.executemany(sql, acl_data)
     vernemq_db_connection.commit()
-
+    vernemq_db_cursor.close()
+    vernemq_db_connection.close()
     cursor.close()
     connection.close()
     result['DATA'].append({"CODE": 0})
@@ -249,6 +254,8 @@ def deleteUserDetails(data):
     sql = "DELETE FROM vmq_auth_acl WHERE username='%s'" % (dbresult[1])  # Assuming dbresult[1] contains the username
     vernemq_db_cursor.execute(sql)
     vernemq_db_connection.commit()
+    vernemq_db_cursor.close()
+    vernemq_db_connection.close()
 
     result['DATA'].append({"CODE": 0})
     return result
@@ -265,6 +272,8 @@ def getMQTTClientID(username):
             sql = "SELECT client_id FROM vmq_auth_acl WHERE username='%s' AND connected=1 ORDER BY last_connect_time LIMIT 1" % (username)  # Assuming dbresult[1] contains the username
             vernemq_db_cursor.execute(sql)
             result = vernemq_db_cursor.fetchall()
+        vernemq_db_cursor.close()
+        vernemq_db_connection.close()
         client_id = result[0].get("client_id")
     except Exception as error:
         print("An exception occurred:", error)
@@ -280,6 +289,8 @@ def setClientConnection(client_id):
         sql = "UPDATE vmq_auth_acl SET connected=1,last_connect_time=NOW() WHERE client_id='%s'" % (client_id)  # Assuming dbresult[1] contains the username
         vernemq_db_cursor.execute(sql)
         vernemq_db_connection.commit()
+        vernemq_db_cursor.close()
+        vernemq_db_connection.close()
     except:
         status = False
 

@@ -11,6 +11,7 @@ import numpy as np
 import json
 import time
 import pandas as pd
+from tzlocal import get_localzone
 
 config = config()
 now = datetime.now()
@@ -109,7 +110,17 @@ def getHistOfVitalData(data):
     df = pd.DataFrame(dbresult, columns=['TIMESTAMP', 'HEART_RATE', 'BREATH_RATE'])
 
     df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'])
-    df['TIMESTAMP'] -= timedelta(hours=8)
+
+    # Get the local timezone
+    local_timezone = get_localzone()
+
+    # Localize timestamps to the local timezone
+    df['TIMESTAMP'] = df['TIMESTAMP'].dt.tz_localize(local_timezone)
+
+    # # Subtract 8 hours from each timestamp
+    df['TIMESTAMP'] = df['TIMESTAMP'].dt.tz_convert('UTC')
+
+    # df['TIMESTAMP'] -= timedelta(hours=8)
 
     average_heart_rate = round(df['HEART_RATE'].mean(), 1)
     average_breath_rate = round(df['BREATH_RATE'].mean(), 1)

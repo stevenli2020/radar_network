@@ -15,6 +15,7 @@ import Profile from './containers/Dashboard/Profile';
 import LoginPage from 'containers/Login'
 import FilterLocation from 'containers/Dashboard/FilterLocation';
 import ResetPasswordPage from 'containers/ResetPassword';
+import Settings from 'containers/Dashboard/Settings';
 
 export const router = [
   {
@@ -71,6 +72,12 @@ export const router = [
         path: "profile",
 				label: "Profile",
         element: <Profile/>,
+      },
+      {
+				key: "settings",
+        path: "settings",
+				label: "Settings",
+        element: <Settings/>,
       },
       {
 				key: "filterlocation",

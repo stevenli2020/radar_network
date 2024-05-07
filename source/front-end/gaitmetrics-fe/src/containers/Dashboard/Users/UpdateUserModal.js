@@ -42,8 +42,8 @@ const UpdateUserModal = (props) => {
         layout="vertical" // Set the form layout
       >
         <p>ID: <span style={{fontWeight:'bold'}}>{props.selectedUser ? props.selectedUser.ID : ''}</span></p>
-        <p>Created Time: <span style={{fontWeight:'bold'}}>{props.selectedUser ? props.selectedUser.CREATED : ''}</span></p>
-        <p>Last Modified Time: <span style={{fontWeight:'bold'}}>{props.selectedUser ? props.selectedUser.LAST_UPDATE : ''}</span></p>
+        <p>Created Time: <span style={{fontWeight:'bold'}}>{props.selectedUser ? new Date(props.selectedUser.CREATED).toLocaleString() : ''}</span></p>
+        <p>Last Modified Time: <span style={{fontWeight:'bold'}}>{props.selectedUser ? new Date(props.selectedUser.LAST_UPDATE).toLocaleString() : ''}</span></p>
         <Row gutter={16}>
           <Col span={24} lg={12}>
             <Form.Item

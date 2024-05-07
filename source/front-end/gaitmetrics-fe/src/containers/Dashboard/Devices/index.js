@@ -10,6 +10,7 @@ import { Container } from 'react-bootstrap'
 import ConfigureDeviceModal from './ConfigureDeviceModal'
 
 import { getItem } from 'utils/tokenStore'
+import getWebsocketServer from 'utils/websocket'
 
 import Paho from 'paho-mqtt'
 import { requestSuccess } from 'utils/requestHandler'
@@ -77,7 +78,7 @@ const Devices = props => {
     const connectToBroker = async () => {
       try {
         const clientId = props.client_id;
-        const brokerUrl = "wss://aswelfarehome.gaitmetrics.org/mqtt";  // Include the path if required
+        const brokerUrl = getWebsocketServer();  // Include the path if required
         client = new Paho.Client(brokerUrl, clientId);
         
         await client.connect({
@@ -191,7 +192,7 @@ const Devices = props => {
       key: "MOD", 
       title: "Last Modified", 
       render: (_, device) => (
-        <>{device["LAST DATA"]}</>
+        <>{new Date(device["LAST DATA"]).toLocaleString()}</>
       ),
     },
     { 

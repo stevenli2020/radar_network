@@ -11,6 +11,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import Paho from 'paho-mqtt'
 import { getItem } from 'utils/tokenStore'
+import getWebsocketServer from 'utils/websocket'
 
 let client = null
 
@@ -61,7 +62,6 @@ const Summary = props => {
 
 				// Parse the JSON string to a JavaScript object
 				const payloadJson = JSON.parse(payloadStr);
-				console.log(payloadJson)
 				
 				props.onChangeHOC('in_bed',payloadJson["IN_BED"])
 			}
@@ -75,7 +75,7 @@ const Summary = props => {
     const connectToBroker = async () => {
       try {
 				const clientId = props.client_id;
-        const brokerUrl = "wss://aswelfarehome.gaitmetrics.org/mqtt";  // Include the path if required
+        const brokerUrl = getWebsocketServer();  // Include the path if required
         client = new Paho.Client(brokerUrl, clientId);
 				
         await client.connect({

@@ -1,3 +1,3 @@
 export default () => {
-  return 'https://aswelfarehome.gaitmetrics.org'
+  return process.env.REACT_APP_API;
 }

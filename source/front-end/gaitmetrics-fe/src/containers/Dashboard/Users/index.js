@@ -57,7 +57,9 @@ const Users = props => {
 		{ 
 			key: "CREATED", 
 			title: "Created", 
-			dataIndex: "CREATED", 
+			render: (_, user) => (
+        <>{new Date(user["CREATED"]).toLocaleString()}</>
+      ),
 		}, 
 		{ 
 			key: "LAST_UPDATE", 
@@ -149,8 +151,7 @@ const Users = props => {
 			key: "CREATED", 
 			title: "Created", 
 			render: (_, user) => (
-				
-        <>{user["CREATED"]}</>
+        <>{new Date(user["CREATED"]).toLocaleString()}</>
       ),
 		}, 
 		{ 

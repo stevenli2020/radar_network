@@ -15,3 +15,6 @@ def vernemq():
     'port': '3306',
     'database': 'vernemq_db'
 }
+
+def domain_url():
+    return "https://aswelfarehome.gaitmetrics.org"

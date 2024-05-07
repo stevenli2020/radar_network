@@ -598,6 +598,14 @@ def getRoomDetail():
         else:
             return {"ERROR": 'Empty json!'}
         
+@app.route('/api/uploadLogo', methods=['POST'])
+def uploadLogo():
+    if request.method == 'POST':
+        file = request.files['logo']
+        filename = "logo.png"
+        file.save(os.path.join(app.config['UPLOAD'], filename))
+        return {"image_source": filename}
+    
 @app.route('/api/uploadImg', methods=['POST'])
 def uploadImg():
     if request.method == 'POST':

@@ -144,7 +144,6 @@ const RealtimeLocation = (props) => {
             },
           ],
         }
-        console.log(tempOption)
 
         tempOption.series = props.sensors.concat(props.persons)
         

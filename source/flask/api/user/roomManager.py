@@ -3,6 +3,8 @@ from user.config import config
 from collections import defaultdict
 import uuid
 import os
+import pytz
+from tzlocal import get_localzone
 
 config = config()
 
@@ -30,11 +32,15 @@ def getRoomData(req, admin):
         sql = "SELECT ROOMS_DETAILS.*, DEVICES.LAST_DATA_RECEIVED, ROOMS_ON_MAP.x, ROOMS_ON_MAP.y, ROOMS_ON_MAP.w, ROOMS_ON_MAP.h, GROUP_CONCAT(RL_ROOM_MAC.MAC) AS MAC FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID LEFT JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC LEFT JOIN Gaitmetrics.ROOMS_ON_MAP ON ROOMS_DETAILS.ID=ROOMS_ON_MAP.ID RIGHT JOIN Gaitmetrics.RL_USER_ROOM ON ROOMS_DETAILS.ID=RL_USER_ROOM.ROOM_ID WHERE RL_USER_ROOM.USER_ID='%s' GROUP BY ROOMS_DETAILS.ID"%(req['ID'])
     cursor.execute(sql)
     # one device one room
+    
+    # Get the local timezone
+    local_timezone = get_localzone()
     # result["DATA"] = [{"ID": ID, "ROOM_NAME": ROOM_NAME, "MAC": MAC, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "RADAR_X_LOC": RADAR_X_LOC, "RADAR_Y_LOC":RADAR_Y_LOC, "IMAGE_NAME": IMAGE_NAME} for (ID, ROOM_NAME, MAC, ROOM_X, ROOM_Y, RADAR_X_LOC, RADAR_Y_LOC, IMAGE_NAME) in cursor]
-    result["DATA"] = [{"ID": ID, "ROOM_LOC": ROOM_LOC, "ROOM_NAME": ROOM_NAME, "ROOM_UUID":ROOM_UUID, "IMAGE_NAME": IMAGE_NAME, "INFO": INFO, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "STATUS":STATUS, "OCCUPANCY":OCCUPANCY, "LAST_DATA_TS":LAST_DATA_TS, "LAST_DATA_RECEIVED": LAST_DATA_RECEIVED, "x":x, "y":y, "w":w, "h":h,"MAC":MAC.split(",") if MAC else []} for (ID, ROOM_LOC, ROOM_NAME, ROOM_UUID, IMAGE_NAME, INFO, ROOM_X, ROOM_Y, STATUS, OCCUPANCY, LAST_DATA_TS, LAST_DATA_RECEIVED,x,y,w,h,MAC) in cursor]
+    result["DATA"] = [{"ID": ID, "ROOM_LOC": ROOM_LOC, "ROOM_NAME": ROOM_NAME, "ROOM_UUID":ROOM_UUID, "IMAGE_NAME": IMAGE_NAME, "INFO": INFO, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "STATUS":STATUS, "OCCUPANCY":OCCUPANCY, "LAST_DATA_TS":LAST_DATA_TS.astimezone(local_timezone).astimezone(pytz.utc) if LAST_DATA_TS else LAST_DATA_TS, "LAST_DATA_RECEIVED": LAST_DATA_RECEIVED.astimezone(local_timezone).astimezone(pytz.utc) if LAST_DATA_RECEIVED else LAST_DATA_RECEIVED, "x":x, "y":y, "w":w, "h":h,"MAC":MAC.split(",") if MAC else []} for (ID, ROOM_LOC, ROOM_NAME, ROOM_UUID, IMAGE_NAME, INFO, ROOM_X, ROOM_Y, STATUS, OCCUPANCY, LAST_DATA_TS, LAST_DATA_RECEIVED,x,y,w,h,MAC) in cursor]
     for room in result["DATA"]:
         cursor.execute(f"""SELECT `ID`,`TIMESTAMP`,`URGENCY`,`TYPE`,`DETAILS`,`NOTIFY` ,`NOTIFY_TIMESTAMP` FROM `ALERT` WHERE `ROOM_ID`={room["ID"]} AND `NOTIFY`=0 GROUP BY `URGENCY` ORDER BY `URGENCY` DESC;""")
-        room["ALERTS"] = [{"ID":ID,"TIMESTAMP":TIMESTAMP,"URGENCY": URGENCY, "TYPE": TYPE,"DETAILS":DETAILS,"NOTIFY":NOTIFY,"NOTIFY_TIMESTAMP":NOTIFY_TIMESTAMP} for (ID,TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP ) in cursor]
+        room["ALERTS"] = [{"ID":ID,"TIMESTAMP":TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if TIMESTAMP else TIMESTAMP,"URGENCY": URGENCY, "TYPE": TYPE,"DETAILS":DETAILS,"NOTIFY":NOTIFY,"NOTIFY_TIMESTAMP":NOTIFY_TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if NOTIFY_TIMESTAMP else NOTIFY_TIMESTAMP} for (ID,TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP ) in cursor]
+        
     cursor.close()
     connection.close()
     return result
@@ -180,7 +186,8 @@ def getRoomAlertsData(room_uuid,unread = True,set=True):
         option = ' AND a.`NOTIFY`=0 ORDER BY a.`TIMESTAMP` DESC;'
     sql = f"SELECT a.`ID`,a.`TIMESTAMP`,a.`URGENCY`,a.`TYPE`,a.`DETAILS`,a.`NOTIFY` ,a.`NOTIFY_TIMESTAMP` FROM `ALERT` a LEFT JOIN `ROOMS_DETAILS` r ON a.`ROOM_ID`=r.`ID` WHERE r.`ROOM_UUID`='{room_uuid}'" + option
     cursor.execute(sql)   
-    result["DATA"] = [{"ID": ID, "TIMESTAMP": TIMESTAMP, "URGENCY":URGENCY, "TYPE":TYPE, "DETAILS":DETAILS, "NOTIFY":NOTIFY, "NOTIFY_TIMESTAMP": NOTIFY_TIMESTAMP} for (ID, TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP) in cursor]
+    local_timezone = get_localzone()
+    result["DATA"] = [{"ID": ID, "TIMESTAMP": TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if TIMESTAMP else TIMESTAMP, "URGENCY":URGENCY, "TYPE":TYPE, "DETAILS":DETAILS, "NOTIFY":NOTIFY, "NOTIFY_TIMESTAMP": NOTIFY_TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if NOTIFY_TIMESTAMP else NOTIFY_TIMESTAMP} for (ID, TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP) in cursor]
     
     if set:
         for d in result["DATA"]:

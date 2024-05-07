@@ -29,7 +29,9 @@ const AlertsModal = (props) => {
     { 
       key: "TIMESTAMP", 
       title: "Date", 
-      dataIndex: "TIMESTAMP"
+      render: (_, alert) => (
+				<span>{new Date(alert.TIMESTAMP).toLocaleString()}</span>
+			),
     }
 	]
   

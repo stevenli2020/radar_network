@@ -11,6 +11,7 @@ import AddRoomModal from './AddRoomModal'
 import UpdateRoomModal from './UpdateRoomModal'
 import { getItem } from 'utils/tokenStore'
 import getDomainURL from 'utils/api'
+import getWebsocketServer from 'utils/websocket'
 import _ from 'lodash';
 import Paho from 'paho-mqtt'
 
@@ -95,7 +96,7 @@ const Home = (props) => {
     const connectToBroker = async () => {
       try {
 				const clientId = props.client_id
-        const brokerUrl = "wss://aswelfarehome.gaitmetrics.org/mqtt";  // Include the path if required
+        const brokerUrl = getWebsocketServer();  // Include the path if required
         client = new Paho.Client(brokerUrl, clientId);
 				
         await client.connect({
@@ -275,7 +276,7 @@ const Home = (props) => {
 					}</Tag></p>
 					<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
 					<p>Last data: <Tag>{
-						moment(room.LAST_DATA_RECEIVED).add(timezoneOffset, 'minutes').fromNow()
+						moment(room.LAST_DATA_RECEIVED).fromNow()
 						}</Tag></p>
 				</div>
 				
@@ -322,7 +323,9 @@ const Home = (props) => {
     { 
       key: "TIMESTAMP", 
       title: "Date", 
-      dataIndex: "TIMESTAMP"
+			render: (_, alert) => (
+				<span>{new Date(alert.TIMESTAMP).toLocaleString()}</span>
+			),
     }
 	]
 
@@ -502,7 +505,7 @@ const Home = (props) => {
 									<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
 									<p>Last data: <Tag>{
 										room.MAC.length === 0? '-':
-										moment(room.LAST_DATA_RECEIVED).add(timezoneOffset, 'minutes').fromNow()
+										moment(room.LAST_DATA_RECEIVED).fromNow()
 										}</Tag></p>
 								</div>
 								

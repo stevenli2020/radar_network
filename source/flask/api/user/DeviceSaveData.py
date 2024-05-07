@@ -1,6 +1,8 @@
 import mysql.connector
 from user.config import config
 from datetime import datetime, timedelta
+import pytz
+from tzlocal import get_localzone
 
 config = config()
 
@@ -8,9 +10,10 @@ def getDeviceListsOfStatus():
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = {}
+    local_timezone = get_localzone()
     sql = "SELECT DEVICE_STATUS.MAC, STATUS, TIMESTAMP, NAME FROM DEVICE_STATUS JOIN DEVICES ON DEVICE_STATUS.MAC=DEVICES.MAC"
     cursor.execute(sql)
-    result["DATA"] = [{"MAC": MAC, "STATUS": STATUS, "TIMESTAMP": TIMESTAMP, "NAME": NAME} for (MAC, STATUS, TIMESTAMP, NAME) in cursor]
+    result["DATA"] = [{"MAC": MAC, "STATUS": STATUS, "TIMESTAMP": TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if TIMESTAMP else TIMESTAMP, "NAME": NAME} for (MAC, STATUS, TIMESTAMP, NAME) in cursor]
     cursor.close()
     connection.close()
     return result

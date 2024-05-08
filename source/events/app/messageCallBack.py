@@ -17,7 +17,6 @@ def on_message(client, obj, msg):
     global devicesTbl,config
     print(msg.topic)
     
-    table_name = get_table_name()
     # print(msg.payload.decode('utf-8'))
     TOPIC = msg.topic.split("/")
     if TOPIC[-1] == "UPDATE_DEV_CONF":
@@ -59,6 +58,7 @@ def on_message(client, obj, msg):
     MAC = TOPIC[3]
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)  
+    table_name = get_table_name(connection,cursor)
     check_table_exist(connection,cursor,table_name)
     sql="UPDATE `DEVICES` SET `LAST_DATA_RECEIVED`=NOW(),`STATUS`='CONNECTED' WHERE MAC='"+MAC+"';"
     cursor.execute(sql)      
@@ -155,9 +155,10 @@ def on_message(client, obj, msg):
     cursor.close()
     connection.close()   
 
-def get_table_name():
-    today_date = datetime.now().strftime("%Y_%m_%d")
-    table_name = f'PROCESSED_DATA_{today_date}'
+def get_table_name(connection,cursor):
+    cursor.execute("SELECT DATE_FORMAT(CURRENT_DATE(), '%Y_%m_%d') AS format_date")
+    formatted_date = cursor.fetchall()[0]["format_date"]
+    table_name = f'PROCESSED_DATA_{formatted_date}'
     return table_name
 
 def check_table_exist(connection,cursor,table_name):

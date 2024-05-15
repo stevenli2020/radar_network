@@ -16,7 +16,7 @@ from user.DeviceSaveData import getDeviceListsOfStatus
 from user.DeviceSaveData import getSaveDeviceDetail
 from user.DeviceSaveData import updateSaveDeviceDataTime
 from user.DeviceSaveData import deleteSaveDeviceDataTime
-from user.getSaveData import getHistOfVitalData, getHistOfVitalMovingAverageData
+from user.getSaveData import getHistOfVitalData
 from user.getSaveData import getAnalyticDataofPosture
 from user.getSaveData import getSummaryDataofPosition
 # from user.getSaveData import getSaveRawData
@@ -432,28 +432,6 @@ def getData():
                 cache_data(data, json.dumps(result))
                 return result
                 # return getHistOfVitalData(data)  
-                # return getSaveRawData(data)  
-            else:
-                return {"ERROR": 'Not authorized!'}
-        else:
-            return {"ERROR": 'Empty json!'}  
-        
-@app.route('/api/getHistOfVitalMovingAverage', methods=["POST"])
-def getMovingAverageData():
-    if request.method == 'POST':
-        data = request.json   
-        if data:                 
-            login, admin = auth(data)
-            if login:
-                data["API"] = "MA_VITAL_DATA"
-                cached_result = get_data_from_redis(data)
-                if cached_result:
-                    return cached_result
-                
-                result = getHistOfVitalMovingAverageData(data)  
-                cache_data(data, json.dumps(result))
-                return result
-                # return getHistOfVitalMovingAverageData(data)  
                 # return getSaveRawData(data)  
             else:
                 return {"ERROR": 'Not authorized!'}

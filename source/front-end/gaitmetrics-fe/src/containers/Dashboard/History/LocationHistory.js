@@ -48,14 +48,14 @@ const LocationHistory = (props) => {
         const frommonth = String(fromDate.getMonth() + 1).padStart(2, '0');
         const fromday = String(fromDate.getDate()).padStart(2, '0');
 
-        const fromFormattedDate = `${fromyear}-${frommonth}-${fromday} 0:00`;
+        const fromFormattedDate = `${fromyear}-${frommonth}-${fromday}`;
 
         const toDate = new Date(dateRange[1]);
         const toyear = toDate.getFullYear();
         const tomonth = String(toDate.getMonth() + 1).padStart(2, '0');
         const today = String(toDate.getDate()).padStart(2, '0');
 
-        const toFormattedDate = `${toyear}-${tomonth}-${today} 23:59`;
+        const toFormattedDate = `${toyear}-${tomonth}-${today}`;
         props.action(props.macPos,"CUSTOM",fromFormattedDate,toFormattedDate)
       }
     }

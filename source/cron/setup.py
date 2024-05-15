@@ -21,6 +21,37 @@ config = {
     # 'database': 'Gaitmetrics'
 }
 
+def get_interval_tables(cursor,date):
+    end_date = dt.strptime(date, "%Y-%m-%d")
+    start_date = end_date - timedelta(days=7)
+
+    return get_table_dates_between(cursor,start_date.strftime("%Y-%m-%d"),end_date.strftime("%Y-%m-%d"))
+
+def get_table_dates_between(cursor,start_date_str, end_date_str):
+    print(start_date_str,end_date_str)
+    start_date = dt.strptime(start_date_str, "%Y-%m-%d")
+    end_date = dt.strptime(end_date_str, "%Y-%m-%d")
+    
+    tables = []
+    current_date = start_date
+    
+    while current_date <= end_date:
+        table_name = "PROCESSED_DATA_"+current_date.strftime("%Y_%m_%d")
+        if (check_table_exist(cursor,table_name)):
+            tables.append("PROCESSED_DATA_"+current_date.strftime("%Y_%m_%d"))
+        current_date += timedelta(days=1)
+    
+    return tables
+
+def check_table_exist(cursor,table_name):
+    table_exists_query = f"SHOW TABLES LIKE '{table_name}'"
+    cursor.execute(table_exists_query)
+    table_exists = cursor.fetchone()
+
+    if not table_exists:
+        return False
+    return True
+
 def get_rooms():
     global config
     connection = mysql.connector.connect(**config)
@@ -51,48 +82,52 @@ def getLaymanData(date,room_uuid):
     current_sleep_disruption = None
     current_disrupt_duration = None
 
-    # sql = "SELECT pd.`TIMESTAMP`, pd.`STATE`, pd.`IN_BED`, pd.`BREATH_RATE`, pd.`HEART_RATE`, pd.`OBJECT_LOCATION`,pd.`TYPE` FROM `RL_ROOM_MAC` rrm LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB('%s', INTERVAL 6 DAY) AND DATE_ADD('%s', INTERVAL 1 DAY) AND rrm.ROOM_UUID = '%s' ORDER BY pd.`TIMESTAMP`;"%(date,date,room_uuid)
-    sql = """
-        SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,
-            MAX(CASE WHEN pd.`STATE` = 2 THEN 1 ELSE 0 END) AS `IS_LAYING`,
-            (SUM(OBJECT_LOCATION)) > 0 AS 'IN_ROOM',
-            (SUM(IN_BED)) > 0 AS 'IN_BED',
-            MAX(CASE WHEN pd.`HEART_RATE` IS NOT NULL THEN 1 ELSE 0 END) AS `HAS_HEART_RATE`,
-            MAX(CASE WHEN pd.`BREATH_RATE` IS NOT NULL THEN 1 ELSE 0 END) AS `HAS_BREATH_RATE`,
-            pd.`TYPE`
-        FROM `RL_ROOM_MAC` rrm
-        LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC
-        WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB(%s, INTERVAL 6 DAY) AND DATE_ADD(%s, INTERVAL 1 DAY)
-        AND rrm.ROOM_UUID = %s
-        GROUP BY `MINUTE`
-        ORDER BY pd.`TIMESTAMP`;
-    """
+    tables = get_interval_tables(cursor,date)
+    if (len(tables)>0):
+        combine_table = []
+        for table in tables:
+            combine_table.append(f"SELECT tb.* FROM {table} tb LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}'")
+        combine_table_query = " UNION ".join(combine_table)
+            
+        sql = f"""
+            SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,
+                MAX(CASE WHEN pd.`STATE` = 2 THEN 1 ELSE 0 END) AS `IS_LAYING`,
+                (SUM(OBJECT_LOCATION)) > 0 AS 'IN_ROOM',
+                (SUM(IN_BED)) > 0 AS 'IN_BED',
+                MAX(CASE WHEN pd.`HEART_RATE` IS NOT NULL THEN 1 ELSE 0 END) AS `HAS_HEART_RATE`,
+                MAX(CASE WHEN pd.`BREATH_RATE` IS NOT NULL THEN 1 ELSE 0 END) AS `HAS_BREATH_RATE`,
+                pd.`TYPE`
+            FROM ({combine_table_query}) pd
+            LEFT JOIN `RL_ROOM_MAC` rrm ON rrm.MAC = pd.MAC
+            WHERE rrm.ROOM_UUID = '{room_uuid}'
+            GROUP BY `MINUTE`
+            ORDER BY pd.`TIMESTAMP`;
+        """
 
-    # Execute the query with parameters
-    cursor.execute(sql, (date, date, room_uuid))
-    processed_data = cursor.fetchall()
-    if (processed_data):
-        # sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseLaymanData(processed_data,date)
-        in_room, time_in_bed, sleeping_hour, bed_time, wake_up_time, sleep_disruption,disrupt_duration,current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseData(processed_data,date)
+        # Execute the query with parameters
+        cursor.execute(sql)
+        processed_data = cursor.fetchall()
+        if (processed_data):
+            # sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseLaymanData(processed_data,date)
+            in_room, time_in_bed, sleeping_hour, bed_time, wake_up_time, sleep_disruption,disrupt_duration,current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseData(processed_data,date)
 
-    sql = """
-        SELECT pd.`HEART_RATE`,pd.`BREATH_RATE`
-        FROM `RL_ROOM_MAC` rrm
-        LEFT JOIN `PROCESSED_DATA` pd ON rrm.MAC = pd.MAC
-        WHERE pd.`TIMESTAMP` BETWEEN DATE_SUB(%s, INTERVAL 6 DAY) AND DATE_ADD(%s, INTERVAL 1 DAY)
-        AND (pd.`HEART_RATE` IS NOT NULL OR pd.`BREATH_RATE` IS NOT NULL)
-        AND rrm.ROOM_UUID = %s
-        ORDER BY pd.`TIMESTAMP`;
-    """
+        sql = f"""
+            SELECT pd.`HEART_RATE`,pd.`BREATH_RATE`
+            FROM `RL_ROOM_MAC` rrm
+            LEFT JOIN ({combine_table_query}) pd ON rrm.MAC = pd.MAC
+            WHERE (pd.`HEART_RATE` IS NOT NULL OR pd.`BREATH_RATE` IS NOT NULL)
+            AND rrm.ROOM_UUID = '{room_uuid}'
+            ORDER BY pd.`TIMESTAMP`;
+        """
 
-    # Execute the query with parameters
-    cursor.execute(sql, (date, date, room_uuid))
-    vital_data = cursor.fetchall()
-    if (vital_data):
-        breath_rate,heart_rate = analyseVitalData(vital_data)
-    
-    cursor.close()
-    connection.close()
+        # Execute the query with parameters
+        cursor.execute(sql)
+        vital_data = cursor.fetchall()
+        if (vital_data):
+            breath_rate,heart_rate = analyseVitalData(vital_data)
+        
+        cursor.close()
+        connection.close()
     return sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration
 
 def get_week_start_end(date):
@@ -1156,8 +1191,8 @@ def waketime_processing(arr):
 
     return average_waketime,earliest_waketime,latest_waketime
 
-start_date = "2024-03-24"
-end_date = "2024-03-26"
+start_date = "2024-05-14"
+end_date = "2024-05-14"
 
 def get_dates_between(start_date_str, end_date_str):
     start_date = dt.strptime(start_date_str, "%Y-%m-%d")

@@ -1,9 +1,11 @@
 import { Card, Menu } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
+import ChartLoader from 'components/ChartLoader';
 
 const OccupancyHistory = (props) => {
 
+  const [chartLoading, setChartLoading] = useState(true)
   const chartRef = useRef(null);
   const [option,setOption] = useState({
     xAxis: {
@@ -57,7 +59,6 @@ const OccupancyHistory = (props) => {
         let inRoomPctWeek = parseFloat(props.data.DATA[0]['IN_ROOM_PCT_WEEK']) >= 90 ? 90 : parseFloat(props.data.DATA[0]['IN_ROOM_PCT_WEEK'])
         let inBedPctMonth = parseFloat(props.data.DATA[0]['IN_BED_PCT_MONTH']) >= 90 ? 90 : parseFloat(props.data.DATA[0]['IN_BED_PCT_MONTH'])
         let inRoomPctMonth = parseFloat(props.data.DATA[0]['IN_ROOM_PCT_MONTH']) >= 90 ? 90 : parseFloat(props.data.DATA[0]['IN_ROOM_PCT_MONTH'])
-        
         chartInstance.setOption({
           series: [
             {
@@ -83,6 +84,7 @@ const OccupancyHistory = (props) => {
           ],
         });
       }
+      setChartLoading(false)
     };
 
     setGraphicImageSize();
@@ -103,6 +105,9 @@ const OccupancyHistory = (props) => {
         props.option?<ReactECharts option={props.option}/>:<div style={{minHeight:'200px'}}/>
       } */}
       <ReactECharts style={{minHeight:400}} option={option} ref={chartRef} />
+      {
+        chartLoading && <ChartLoader/>
+      }
     </Card>
   );
 };

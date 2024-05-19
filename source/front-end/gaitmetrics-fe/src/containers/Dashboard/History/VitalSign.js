@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import ChartLoader from 'components/ChartLoader';
 
 const brightGreen = "#32d616"
 const brightOrange = "#fa9302"
@@ -34,6 +35,7 @@ const VitalSign = (props) => {
   const [currHeartRate, setCurrHeartRate] = useState("-")
   const [avgBreathRate, setAvgBreathRate] = useState("-")
   const [currBreathRate, setCurrBreathRate] = useState("-")
+  const [chartLoading, setChartLoading] = useState(true)
 
   const handleOption = (item) => {
 
@@ -44,6 +46,7 @@ const VitalSign = (props) => {
       setAvgBreathRate("-")
       setAvgHeartRate("-")
       if (item.key == "REALTIME"){
+        setChartLoading(true)
         setRealtimeHeart(randR())
         setRealtimeBreath(randR())
         setRealtimeTime(gen2STime())
@@ -54,12 +57,18 @@ const VitalSign = (props) => {
 
     if (item.key){
       if (props.room_uuid && item.key != "REALTIME"){
+        if (props.data){
+          setChartLoading(true)
+        }
         props.action(props.room_uuid,item.key)
       }
     }else{
       if (dateRange[0] == null || dateRange[1] == null){
         message.error('Please select date range!!');
       }else{
+        if (props.data){
+          setChartLoading(true)
+        }
         const fromDate = new Date(dateRange[0]);
         const fromyear = fromDate.getFullYear();
         const frommonth = String(fromDate.getMonth() + 1).padStart(2, '0');
@@ -237,9 +246,10 @@ const VitalSign = (props) => {
 
   useEffect(()=>{
     if (mode == "REALTIME" && props.vital_data){
+      setChartLoading(false)
       let now = new Date();
-      let heartRate = props.vital_data[0]
-      let breathRate = props.vital_data[1]
+      let heartRate = parseFloat(props.vital_data[0].toFixed(1))
+      let breathRate = parseFloat(props.vital_data[1].toFixed(1))
       let hearthRates = [...realtimeHeart, heartRate];
       let breathRates = [...realtimeBreath, breathRate];
       let timeRange = [...realtimeTime, now.toLocaleTimeString().replace(/^\D*/, "")];
@@ -348,7 +358,6 @@ const VitalSign = (props) => {
 
     setCurrBreathRate("-")
     setCurrHeartRate("-")
-
     const setGraphicImageSize = () => {
       if (props.data) {
         let avgHeart = 60
@@ -358,7 +367,6 @@ const VitalSign = (props) => {
         let heartUpperAvg = avgHeart + (avgHeart*0.2)
         let breathLowerAvg = avgBreath - (avgBreath*0.2)
         let breathUpperAvg = avgBreath + (avgBreath*0.2)
-
 
         if ("AVG" in props.data){
           avgHeart = props.data.AVG[0][0]
@@ -476,7 +484,65 @@ const VitalSign = (props) => {
             }    
           ],
         });
+      }else{
+        let histVitalData = []
+        let histVitalData2 = []
+        let histVitalTime = []
+        histVitalData = randR()
+        histVitalData2 = randR()
+        histVitalTime = gen2STime()
+        chartInstance.setOption({
+          xAxis: [
+            {
+              axisLine: {
+                show: false,
+              },
+              type: "category",
+              boundaryGap: true,
+              data: histVitalTime,
+              splitLine: {
+                show: false,
+              },
+            },
+            {
+              axisLine: {
+                show: false,
+              },
+              type: "category",
+              boundaryGap: true,
+              data: histVitalTime,
+              gridIndex: 1,
+              splitLine: {
+                show: false,
+              },
+            },
+          ],
+          series: [
+            {
+              name: "Heart Waveform",
+              type: "bar",
+              smooth: true,
+              emphasis: {
+                focus: "series",
+              },
+              data: histVitalData,
+            },
+            {
+              name: "Breath Waveform",
+              type: "bar",
+              smooth: true,
+              emphasis: {
+                focus: "series",
+              },
+              data: histVitalData2,
+              xAxisIndex: 1,
+              yAxisIndex: 1,
+            }    
+          ],
+        });
       }
+
+      setChartLoading(false)
     };
 
     setGraphicImageSize();
@@ -540,6 +606,9 @@ const VitalSign = (props) => {
           <ReactECharts style={{minHeight:400}} option={option} ref={chartRef} />
         </Col>
       </Row>
+      {
+        chartLoading && <ChartLoader/>
+      }
     </Card>
   );
 };

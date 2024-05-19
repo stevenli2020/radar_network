@@ -193,8 +193,11 @@ const HOC = (WrappedComponent) => {
         `/api/getSummaryPositionData`,
         payload,
         this.getLocationHistorySuccess,
-        error => console.log(error),
-        this.load
+        error => {
+          console.log(error)
+          this.setState({locationHistoryData:null})
+        },
+        this.temp
       )
     }
 
@@ -212,8 +215,11 @@ const HOC = (WrappedComponent) => {
         `/api/getAnalyticData`,
         payload,
         this.getOccupancyHistorySuccess,
-        error => console.log(error),
-        this.load
+        error => {
+          console.log(error)
+          this.setState({occupancyHistoryData:null})
+        },
+        this.temp
       )
     }
 
@@ -238,8 +244,11 @@ const HOC = (WrappedComponent) => {
         `/api/getHistOfVital`,
         payload,
         this.getVitalHistorySuccess,
-        error => console.log(error),
-        this.load
+        error => {
+          console.log(error)
+          this.setState({vitalHistoryData:null})
+        },
+        this.temp
       )
     }
 

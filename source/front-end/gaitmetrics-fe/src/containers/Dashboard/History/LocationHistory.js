@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import getDomainURL from 'utils/api'
 import { useNavigate } from 'react-router-dom';
+import ChartLoader from 'components/ChartLoader';
 
 const mockX = (roomX=10) => {
   let X = [];
@@ -33,16 +34,23 @@ const mockY = (roomY=10) => {
 const LocationHistory = (props) => {
 
   const navigate = useNavigate()
+  const [chartLoading, setChartLoading] = useState(true)
 
   const handleOption = (item) => {
     if (item.key){
       if (props.macPos){
+        if (props.data){
+          setChartLoading(true)
+        }
         props.action(props.macPos,item.key)
       }
     }else{
       if (dateRange[0] == null || dateRange[1] == null){
         message.error('Please select date range!!');
       }else{
+        if (props.data){
+          setChartLoading(true)
+        }
         const fromDate = new Date(dateRange[0]);
         const fromyear = fromDate.getFullYear();
         const frommonth = String(fromDate.getMonth() + 1).padStart(2, '0');
@@ -136,8 +144,32 @@ const LocationHistory = (props) => {
               },
             ],
           })
+        }else{
+          chartInstance.setOption({
+            visualMap: {
+              min: 0,
+              max: 1,
+              inRange : {   
+                color: ['rgba(235, 209, 12, 0.5)', 'rgba(235, 12, 12, 0.5)' ] //From smaller to bigger value ->
+              }
+            },
+            series: [
+              {
+                name: "Person most spend time",
+                type: "heatmap",
+                data: [],
+                itemStyle: {
+                  color: function (value) {
+                    // Set transparent color
+                    return 'rgba(255, 0, 0, 0.5)'; // RGBA format with the fourth parameter (alpha) controlling transparency
+                  }
+                },
+              },
+            ],
+          })
         }
       }
+      setChartLoading(false)
     };
 
     setGraphicImageSize();
@@ -204,7 +236,9 @@ const LocationHistory = (props) => {
       >
         
         <ReactECharts option={option} ref={chartRef} />
-        
+        {
+          chartLoading && <ChartLoader/>
+        }
       </Card>
     </Popover>
   );

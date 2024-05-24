@@ -83,8 +83,8 @@ const OccupancyHistory = (props) => {
             }
           ],
         });
+        setChartLoading(false)
       }
-      setChartLoading(false)
     };
 
     setGraphicImageSize();

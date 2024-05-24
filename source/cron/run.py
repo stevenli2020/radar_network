@@ -30,6 +30,28 @@ vernemq = {
     'database': 'vernemq_db'
 }
 
+def weighted_moving_average(data, weights):
+    return np.average(data, weights=weights)
+
+def weighted_std(data, weights):
+    average = np.average(data, weights=weights)
+    variance = np.average((data - average)**2, weights=weights)
+    return np.sqrt(variance)
+
+def is_abnormal(value, data, threshold=2):
+    # Generate weights: more recent data has higher weights
+    weights = np.arange(1, len(data)*5 + 1,step=5)
+    
+    # Calculate the weighted moving average and weighted standard deviation
+    wma = weighted_moving_average(data, weights)
+    wstd = weighted_std(data, weights)
+    
+    # Determine if the value is abnormal
+    if abs(value - wma) > threshold * wstd:
+        return True
+    else:
+        return False
+
 def get_interval_tables(cursor,date):
     end_date = dt.strptime(date, "%Y-%m-%d")
     start_date = end_date - timedelta(days=7)
@@ -301,10 +323,10 @@ def check_anomaly(date,room_id,type,data,data_type,threshold=2.5,mode="week"):
         min_count = 15
     if (len(avgs) > min_count):
 
-        if len(avgs) > 30:
-            avgs = avgs[-30:]
+        if len(avgs) > 60:
+            avgs = avgs[-60:]
 
-        if is_anomaly(avgs,data,threshold):
+        if is_abnormal(data,avgs,threshold):
             flag = True
         #     print("########################################",date,data,avgs, message)
         # elif (mode == "weekday"):

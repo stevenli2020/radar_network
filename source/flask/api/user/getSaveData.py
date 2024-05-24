@@ -92,7 +92,6 @@ def get_interval_tables(cursor,mode):
     return get_table_dates_between(cursor,start_date.strftime("%Y-%m-%d"),end_date.strftime("%Y-%m-%d"))
 
 def get_table_dates_between(cursor,start_date_str, end_date_str):
-    print(start_date_str,end_date_str)
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
     end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
     
@@ -178,8 +177,6 @@ def getHistOfVitalData(data):
     average_heart_rate = round(df['HEART_RATE'].mean(), 1)
     average_breath_rate = round(df['BREATH_RATE'].mean(), 1)
 
-    print(df['HEART_RATE'].min(),df['HEART_RATE'].max())
-
     df.set_index('TIMESTAMP', inplace=True)
 
     df_resampled = df.resample('1Min').mean()
@@ -210,70 +207,76 @@ def getAnalyticDataofPosture(data):
     cursor = connection.cursor()
     result = defaultdict(list)
 
-    IN_ROOM_SECONDS_HOUR = 0
-    IN_BED_SECONDS_HOUR = 0
-    IN_ROOM_SECONDS_DAY = 0
-    IN_BED_SECONDS_DAY = 0   
-    IN_ROOM_SECONDS_WEEK = 0
-    IN_BED_SECONDS_WEEK = 0
-    IN_ROOM_SECONDS_MONTH = 0
-    IN_BED_SECONDS_MONTH = 0   
-    
-    sql = "SELECT GROUP_CONCAT(MAC) FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID WHERE ROOMS_DETAILS.ROOM_UUID = '%s';" % (data['ROOM_UUID'])
-    # print(sql)
-    cursor.execute(sql)
-    dbresult = cursor.fetchone() 
-    # print(dbresult)
-    try:
-        db = dbresult[0].split(',')
-        # print(db)
-        if len(db) > 1:
-            List = "IN ('"+db[0]+"','"+db[1]+"')"
-        else:
-            List = "IN ('"+db[0]+"')"
-    except: 
-        # print("No data related to room name")
+    # Initialize counters
+    IN_ROOM_SECONDS = {'HOUR': 0, 'DAY': 0, 'WEEK': 0, 'MONTH': 0}
+    IN_BED_SECONDS = {'HOUR': 0, 'DAY': 0, 'WEEK': 0, 'MONTH': 0}
+    TIME_CONVERSION = {'HOUR': 60, 'DAY': 1440, 'WEEK': 10080, 'MONTH': 43200}  # Minutes in respective time periods
+
+    # Fetch MAC addresses for the specified ROOM_UUID
+    sql = """
+        SELECT GROUP_CONCAT(MAC) 
+        FROM Gaitmetrics.ROOMS_DETAILS 
+        LEFT JOIN Gaitmetrics.RL_ROOM_MAC 
+        ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID 
+        WHERE ROOMS_DETAILS.ROOM_UUID = %s
+    """
+    cursor.execute(sql, (data['ROOM_UUID'],))
+    dbresult = cursor.fetchone()
+
+    if not dbresult or not dbresult[0]:
         result["ERROR"].append({'Message': 'No data related to room name!'})
         return result
-    
-    TIME_RANGE = ['HOUR','DAY','WEEK','MONTH']
-    for T in TIME_RANGE: 
-        tables = get_interval_tables(cursor,f"1 {T}")
-        if (len(tables) > 0):
-            combine_table = []
-            for table in tables:
-                combine_table.append(f"SELECT * FROM Gaitmetrics.{table} WHERE MAC {List} AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 {T}) AND OBJECT_LOCATION IS NOT NULL")
-            combine_table_query = " UNION ".join(combine_table)
-            sql = f"SELECT COUNT(CASE WHEN IR>0 THEN 1 END) AS IR_COUNT,COUNT(CASE WHEN IB>0 THEN 1 END) AS IB_COUNT FROM (SELECT DATE_FORMAT(TIMESTAMP, '%Y-%m-%d %H:%i') AS T, (SUM(OBJECT_LOCATION))>0 AS IR, (SUM(IN_BED))>0 AS IB FROM ({combine_table_query}) AS PROCESSED_DATA GROUP BY T) AS T1;"
+
+    mac_list = dbresult[0].split(',')
+    mac_list_str = "IN (%s)" % ','.join("'" + mac + "'" for mac in mac_list)
+
+    TIME_RANGE = ['HOUR', 'DAY', 'WEEK', 'MONTH']
+    for T in TIME_RANGE:
+        print(T)
+        tables = get_interval_tables(cursor, f"1 {T}")
+        
+        if tables:
+            combine_table_query = " UNION ".join(
+                f"SELECT * FROM Gaitmetrics.{table} WHERE MAC {mac_list_str} AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 {T}) AND OBJECT_LOCATION IS NOT NULL"
+                for table in tables
+            )
+            sql = f"""
+                SELECT 
+                    COUNT(CASE WHEN IR>0 THEN 1 END) AS IR_COUNT,
+                    COUNT(CASE WHEN IB>0 THEN 1 END) AS IB_COUNT 
+                FROM (
+                    SELECT 
+                        DATE_FORMAT(TIMESTAMP, '%Y-%m-%d %H:%i') AS T, 
+                        SUM(OBJECT_LOCATION) > 0 AS IR, 
+                        SUM(IN_BED) > 0 AS IB 
+                    FROM ({combine_table_query}) AS PROCESSED_DATA 
+                    GROUP BY T
+                ) AS T1
+            """
             cursor.execute(sql)
-            dbresult = cursor.fetchall() 
-            IR,IB=dbresult[0]
-            
-            print("done")
+            dbresult = cursor.fetchone()
+            IR, IB = dbresult if dbresult else (0, 0)
         else:
-            IR = 0
-            IB = 0
-        if T == 'HOUR':
-            IN_ROOM_SECONDS_HOUR = IR*60
-            IN_BED_SECONDS_HOUR  = IB*60
-            IN_ROOM_PCT_HOUR = round(IR*100/60, 2)
-            IN_BED_PCT_HOUR  = round(IB*100/60, 2)
-        elif T == "DAY":
-            IN_ROOM_SECONDS_DAY = IR*60
-            IN_BED_SECONDS_DAY  = IB*60
-            IN_ROOM_PCT_DAY = round(IR*100/1440, 2)
-            IN_BED_PCT_DAY  = round(IB*100/1440, 2)
-        elif T == "WEEK":
-            IN_ROOM_SECONDS_WEEK = IR*60
-            IN_BED_SECONDS_WEEK  = IB*60
-            IN_ROOM_PCT_WEEK = round(IR*100/10080,2)
-            IN_BED_PCT_WEEK  = round(IB*100/10080,2)           
-        elif T == "MONTH":
-            IN_ROOM_SECONDS_MONTH = IR*60
-            IN_BED_SECONDS_MONTH  = IB*60
-            IN_ROOM_PCT_MONTH = round(IR/432, 2)
-            IN_BED_PCT_MONTH  = round(IB/432, 2)  
-    result['DATA'].append({"IN_ROOM_SECONDS_HOUR": IN_ROOM_SECONDS_HOUR, "IN_BED_SECONDS_HOUR": IN_BED_SECONDS_HOUR, "IN_ROOM_PCT_HOUR": IN_ROOM_PCT_HOUR, "IN_BED_PCT_HOUR": IN_BED_PCT_HOUR, "IN_ROOM_SECONDS_DAY": IN_ROOM_SECONDS_DAY, "IN_BED_SECONDS_DAY": IN_BED_SECONDS_DAY, "IN_ROOM_PCT_DAY": IN_ROOM_PCT_DAY, "IN_BED_PCT_DAY": IN_BED_PCT_DAY, "IN_ROOM_SECONDS_WEEK": IN_ROOM_SECONDS_WEEK, "IN_BED_SECONDS_WEEK": IN_BED_SECONDS_WEEK, "IN_ROOM_PCT_WEEK": IN_ROOM_PCT_WEEK, "IN_BED_PCT_WEEK": IN_BED_PCT_WEEK, "IN_ROOM_SECONDS_MONTH": IN_ROOM_SECONDS_MONTH, "IN_BED_SECONDS_MONTH": IN_BED_SECONDS_MONTH, "IN_ROOM_PCT_MONTH": IN_ROOM_PCT_MONTH, "IN_BED_PCT_MONTH": IN_BED_PCT_MONTH})
+            IR, IB = 0, 0
+
+        IN_ROOM_SECONDS[T] = IR * 60
+        IN_BED_SECONDS[T] = IB * 60
+
+        conversion_factor = TIME_CONVERSION[T]
+        if (not result.get('DATA')):
+            result['DATA'].append({
+                f"IN_ROOM_SECONDS_{T}": IN_ROOM_SECONDS[T],
+                f"IN_BED_SECONDS_{T}": IN_BED_SECONDS[T],
+                f"IN_ROOM_PCT_{T}": round(IR * 100 / conversion_factor, 2),
+                f"IN_BED_PCT_{T}": round(IB * 100 / conversion_factor, 2)
+            })
+        else:
+            result['DATA'][0][f"IN_ROOM_SECONDS_{T}"] = IN_ROOM_SECONDS[T]
+            result['DATA'][0][f"IN_BED_SECONDS_{T}"] = IN_BED_SECONDS[T]
+            result['DATA'][0][f"IN_ROOM_PCT_{T}"] = round(IR * 100 / conversion_factor, 2)
+            result['DATA'][0][f"IN_BED_PCT_{T}"] = round(IB * 100 / conversion_factor, 2)
+        print(IR,IB)
+
     cursor.close()
     connection.close()
     return result

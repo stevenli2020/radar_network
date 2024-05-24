@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import WithHOC from './actions'
 import { Typography, Row, Col, Button } from 'antd'
 import LoadingOverlay from 'components/LoadingOverlay'
@@ -35,6 +35,8 @@ const History = props => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isActive, setIsActive] = useState(true);
   const navigate = useNavigate()
+
+  const hasFetchedData = useRef(false);
 
   useEffect(() => {
 
@@ -270,6 +272,10 @@ const History = props => {
       if (JSON.parse(getItem("LOGIN_TOKEN")).TYPE == "1"){
         props.onChangeHOC("is_admin",true)
       }
+
+      if (hasFetchedData.current) return;
+      hasFetchedData.current = true;
+
       props.initView(searchParams.get("roomId"))
     }
 	}, [])

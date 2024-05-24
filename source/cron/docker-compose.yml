@@ -8,10 +8,14 @@ services:
     restart: always
     volumes:
       - ./run.py:/app/run.py
+      - backup:/backup
     environment:
       - PYTHONUNBUFFERED=1
     networks:
-      - net01    
+      - net01 
+
+volumes:
+  backup:  
   
 networks:
   net01:

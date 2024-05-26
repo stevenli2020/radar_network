@@ -56,7 +56,7 @@ def get_interval_tables(cursor,date):
     end_date = dt.strptime(date, "%Y-%m-%d")
     start_date = end_date - timedelta(days=7)
 
-    return get_table_dates_between(cursor,start_date.strftime("%Y-%m-%d"),end_date.strftime("%Y-%m-%d"))
+    return get_table_dates_between(cursor,start_date.strftime("%Y-%m-%d"),end_date.strftime("%Y-%m-%d")), start_date
 
 def get_table_dates_between(cursor,start_date_str, end_date_str):
     print(start_date_str,end_date_str)
@@ -113,11 +113,11 @@ def getLaymanData(date,room_uuid):
     current_sleep_disruption = None
     current_disrupt_duration = None
 
-    tables = get_interval_tables(cursor,date)
+    tables, start_date = get_interval_tables(cursor,date)
     if (len(tables)>0):
         combine_table = []
         for table in tables:
-            combine_table.append(f"SELECT tb.* FROM {table} tb LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}'")
+            combine_table.append(f"SELECT tb.* FROM {table} tb LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}' AND TIMESTAMP >= '{start_date}'")
         combine_table_query = " UNION ".join(combine_table)
             
         sql = f"""

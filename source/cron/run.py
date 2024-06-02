@@ -15,11 +15,6 @@ config = {
     'host': 'db',
     'port': '3306',
     'database': 'Gaitmetrics'
-    # 'user': 'root',
-    # 'password': '14102022',
-    # 'host': 'localhost',
-    # 'port': '2203',
-    # 'database': 'Gaitmetrics'
 }
 
 vernemq = {
@@ -29,6 +24,58 @@ vernemq = {
     'port': '3306',
     'database': 'vernemq_db'
 }
+
+class ALERT:
+    message = {
+            "in_room":{
+                "day":"Duration in room abnormal - [DATA]",
+                "weekday":"Duration in room abnormal (Weekday) - [DATA]"
+            },
+            "time_in_bed":{
+                "day":"Duration in bed abnormal - [DATA]",
+                "weekday":"Duration in bed abnormal (Weekday) - [DATA]"
+            },
+            "heart_rate":{
+                "day":"Heart rate abnormal - [DATA]",
+                "weekday":"Heart rate abnormal (Weekday) - [DATA]"
+            },
+            "breath_rate":{
+                "day":"Breath rate abnormal - [DATA]",
+                "weekday":"Breath rate abnormal (Weekday) - [DATA]"
+            },
+            "sleeping_hour":{
+                "day":"Sleeping hour abnormal - [DATA]",
+                "weekday":"Sleeping hour abnormal (Weekday) - [DATA]"
+            },
+            "sleep_disruption":{
+                "day":"Sleeping disruption abnormal - [DATA]",
+                "weekday":"Sleeping disruption abnormal (Weekday) - [DATA]"
+            },
+            "disrupt_duration":{
+                "day":"Sleep disrupt duration abnormal - [DATA]",
+                "weekday":"Sleep disrupt duration abnormal (Weekday) - [DATA]"
+            },
+            "wake_up_time":{
+                "day":"Wake up time abnormal - [DATA]",
+                "weekday":"Wake up time abnormal (Weekday) - [DATA]"
+            },
+            "bed_time":{
+                "day":"Bed time abnormal - [DATA]",
+                "weekday":"Bed time abnormal (Weekday) - [DATA]"
+            }
+        }
+
+    data_type = {
+            "in_room":"text",
+            "time_in_bed":"text",
+            "heart_rate":"float",
+            "breath_rate":"flaot",
+            "sleeping_hour":"text",
+            "sleep_disruption":"float",
+            "disrupt_duration":"text",
+            "wake_up_time":"time",
+            "bed_time":"time",
+        }
 
 def weighted_moving_average(data, weights):
     return np.average(data, weights=weights)
@@ -54,7 +101,7 @@ def is_abnormal(value, data, threshold=2):
 
 def get_interval_tables(cursor,date):
     end_date = dt.strptime(date, "%Y-%m-%d")
-    start_date = end_date - timedelta(days=7)
+    start_date = end_date - timedelta(days=6)
 
     return get_table_dates_between(cursor,start_date.strftime("%Y-%m-%d"),end_date.strftime("%Y-%m-%d")), start_date
 
@@ -82,6 +129,23 @@ def check_table_exist(cursor,table_name):
     if not table_exists:
         return False
     return True
+
+def get_data_by_date_and_key(date,key,room_id):
+    global config
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+    sql = f"SELECT `VALUE` FROM ANALYSIS_DAY WHERE `DATE`='{date}' AND `ROOM_ID`='{room_id}' AND `TYPE`='{key}' LIMIT 1;"
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    cursor.close()
+    connection.close()  
+
+    if result and len(result) > 0:
+        data = result[0]["VALUE"]
+    else:
+        data = None
+
+    return data 
 
 def get_rooms():
     global config
@@ -113,6 +177,14 @@ def getLaymanData(date,room_uuid):
     current_sleep_disruption = None
     current_disrupt_duration = None
 
+    current_inbed_seconds = None
+    current_inroom_seconds = None
+    current_wake_time = None
+    current_bed_time = None
+
+    current_heart_rate = None
+    current_breath_rate = None
+
     tables, start_date = get_interval_tables(cursor,date)
     if (len(tables)>0):
         combine_table = []
@@ -140,10 +212,13 @@ def getLaymanData(date,room_uuid):
         processed_data = cursor.fetchall()
         if (processed_data):
             # sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseLaymanData(processed_data,date)
-            in_room, time_in_bed, sleeping_hour, bed_time, wake_up_time, sleep_disruption,disrupt_duration,current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration = analyseData(processed_data,date)
+            in_room, time_in_bed, sleeping_hour, bed_time, wake_up_time, sleep_disruption,disrupt_duration,\
+                current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration,\
+                     current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time\
+                          = analyseData(processed_data,date)
 
         sql = f"""
-            SELECT pd.`HEART_RATE`,pd.`BREATH_RATE`
+            SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,pd.`HEART_RATE`,pd.`BREATH_RATE`
             FROM `RL_ROOM_MAC` rrm
             LEFT JOIN ({combine_table_query}) pd ON rrm.MAC = pd.MAC
             WHERE (pd.`HEART_RATE` IS NOT NULL OR pd.`BREATH_RATE` IS NOT NULL)
@@ -155,11 +230,15 @@ def getLaymanData(date,room_uuid):
         cursor.execute(sql)
         vital_data = cursor.fetchall()
         if (vital_data):
-            breath_rate,heart_rate = analyseVitalData(vital_data)
+            breath_rate,heart_rate, current_breath_rate, current_heart_rate = analyseVitalData(vital_data,date)
     
     cursor.close()
     connection.close()
-    return sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration
+    return sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,\
+        breath_rate,heart_rate,disrupt_duration, current_sleeping_seconds, \
+            current_sleep_disruption, current_disrupt_duration, \
+            current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time, \
+            current_heart_rate, current_breath_rate
 
 def get_week_start_end(date):
     # Find the start (Monday) of the week
@@ -226,7 +305,10 @@ def current_layman():
     rooms = get_rooms()
     for room in rooms:
         print(curr,room["ID"],room["ROOM_UUID"])
-        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(curr,room["ROOM_UUID"])
+        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
+            current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
+                 current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time,\
+                     current_heart_rate, current_breath_rate = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -243,7 +325,10 @@ def previous_week():
     rooms = get_rooms()
     for room in rooms:
         print(curr,room["ID"],room["ROOM_UUID"])
-        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, current_sleeping_hour, current_sleep_disruption, current_disrupt_duration = getLaymanData(curr,room["ROOM_UUID"])
+        sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
+            current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
+                 current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time,\
+                     current_heart_rate, current_breath_rate = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -254,23 +339,43 @@ def previous_week():
         insert_data(curr,room["ID"],"heart_rate",heart_rate)
         insert_data(curr,room["ID"],"disrupt_duration",disrupt_duration)
 
-        if (current_sleeping_hour):
-            if (check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",threshold=3.5) and check_anomaly(curr,room["ID"],"sleeping_hour",current_sleeping_hour,"text",mode="weekday",threshold=1.5)):
-                print(curr,"Sleeping hour abnormal",current_sleeping_hour)
-                insert_alert(room["ID"],1,1,"Sleeping hour abnormal - " + curr)
-            insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
-        
-            if (current_sleep_disruption):
-                # if (check_anomaly(curr,room["ID"],"sleep_disruption",current_sleep_disruption,"float")):
-                #     insert_alert(room["ID"],1,1,"Sleep disruption abnormal (last 30 days) - " + curr)
-                
-                insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
+        alert_configs = get_alert_configs()
 
-            if (current_disrupt_duration):
-                if (check_anomaly(curr,room["ID"],"disrupt_duration",current_disrupt_duration,"text")):
-                    insert_alert(room["ID"],1,1,"Sleep disrupt duration abnormal (last 30 days) - " + curr)
-                
-                insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")
+        insert_data(curr,room["ID"],"in_room",current_inroom_seconds,mode="day")
+        insert_data(curr,room["ID"],"time_in_bed",current_inbed_seconds,mode="day")
+        insert_data(curr,room["ID"],"wake_up_time",current_wake_time,mode="day")
+        insert_data(curr,room["ID"],"bed_time",current_bed_time,mode="day")
+        insert_data(curr,room["ID"],"heart_rate",current_heart_rate,mode="day")
+        insert_data(curr,room["ID"],"breath_rate",current_breath_rate,mode="day")
+
+        if current_sleeping_hour:
+            insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")
+            insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
+            insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")
+        
+        for alert_config in alert_configs:
+            key = alert_config["DATA_TYPE"]
+            mode = "day" if alert_config["MODE"] == 1 else "weekday"
+            threshold = alert_config["THRESHOLD"]
+            min_dp = alert_config["MIN_DATA_POINT"]
+            max_dp = alert_config["MAX_DATA_POINT"]
+
+            curr_key_data = get_data_by_date_and_key(curr,key,room["ID"])
+
+            if (curr_key_data):
+                if (key in ALERT.data_type and key in ALERT.message and check_anomaly(curr,room["ID"],key,curr_key_data,ALERT.data_type[key],threshold=threshold,min_dp=min_dp,max_dp=max_dp)):
+                    print(curr,ALERT.message[key][mode].replace("[DATA]",str(curr_key_data)))
+                    insert_alert(room["ID"],1,1,ALERT.message[key][mode].replace("[DATA]",str(curr_key_data)))
+def get_alert_configs():
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+    sql = f"SELECT `ID`, `DATA_TYPE`,`MODE`,`MIN_DATA_POINT`,`MAX_DATA_POINT`,`THRESHOLD` FROM Gaitmetrics.ALERT_CONFIGS"
+    cursor.execute(sql)
+    all_data = cursor.fetchall()
+    if (all_data):
+        return all_data
+    else:
+        return []
 
 def is_anomaly(series,last_data,threshold):
     df = pd.DataFrame({'value': series})
@@ -289,7 +394,8 @@ def insert_alert(room_id,urgency,type,details):
     cursor.execute(insert_query)
     connection.commit()
 
-def check_anomaly(date,room_id,type,data,data_type,threshold=2.5,mode="week"):
+def check_anomaly(date,room_id,type,data,data_type,threshold=2.5,mode="day",min_dp=15,max_dp=60):
+    print("Checking anomaly for",type,"with mode",mode)
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
     if (mode == "weekday"):
@@ -302,6 +408,8 @@ def check_anomaly(date,room_id,type,data,data_type,threshold=2.5,mode="week"):
     temp_data = data
     if (data_type == "text"):
         data = text_to_seconds(data)
+    elif (data_type == "time"):
+        data = text_to_minutes(data)
     else:
         data = float(data)
     for d in all_data:
@@ -312,26 +420,22 @@ def check_anomaly(date,room_id,type,data,data_type,threshold=2.5,mode="week"):
                 continue
         if (data_type == "text"):
             average = text_to_seconds(average)
+        elif (data_type == "time"):
+            average = text_to_minutes(average)
         else:
             average = float(average)
         
         avgs.append(average)
     flag = False
-    if (mode == "weekday"):
-        min_count = 5
-    else:
-        min_count = 15
-    if (len(avgs) > min_count):
-
-        if len(avgs) > 60:
-            avgs = avgs[-60:]
+    if (len(avgs) > min_dp):
+        if len(avgs) > max_dp:
+            avgs = avgs[-max_dp:]
 
         if is_abnormal(data,avgs,threshold):
             flag = True
-        #     print("########################################",date,data,avgs, message)
-        # elif (mode == "weekday"):
-        #     print("########################################",date,data,avgs)
-
+        print("Abnormal" if flag else "Normal")
+    else:
+        print("Not enough data")
     cursor.close()
     connection.close()
     return flag
@@ -485,6 +589,11 @@ def analyseData(data,current_date):
     current_sleeping_seconds = None
     current_sleep_disruption = None 
     current_disrupt_duration = None
+    
+    current_inbed_seconds = None
+    current_inroom_seconds = None
+    current_wake_time = None
+    current_bed_time = None
 
     for row in data:
         date_str = str(row["MINUTE"].date())
@@ -509,9 +618,17 @@ def analyseData(data,current_date):
         print("#########",date,"#########")
         print("In room ",seconds_to_text(inroom_minutes[date]*60))
         inroom_seconds.append(inroom_minutes[date]*60)
+
+        if date == current_date:
+            current_inroom_seconds = seconds_to_text(inroom_minutes[date]*60)
+
         if (date in inbed_minutes):
             onbed_seconds.append(inbed_minutes[date]*60)
             print("On bed ",seconds_to_text(inbed_minutes[date]*60))
+
+            if date == current_date:
+                current_inbed_seconds = seconds_to_text(inbed_minutes[date]*60)
+
         if (date in sleeping_minutes):
             sleeping_seconds.append(sleeping_minutes[date]*60)
             print("Sleeping ",seconds_to_text(sleeping_minutes[date]*60))
@@ -526,7 +643,15 @@ def analyseData(data,current_date):
 
     for interval in sleeping_intervals:
         start_sleep_time.append(interval[0]["MINUTE"])
+
+        if (str(interval[0]["MINUTE"].date()) == current_date):
+            current_bed_time = to_bedtime(interval[0]["MINUTE"])
+
         wake_up_time.append(interval[-1]["MINUTE"])
+
+        if (str(interval[-1]["MINUTE"].date()) == current_date):
+            if not current_wake_time:
+                current_wake_time = to_waketime(interval[-1]["MINUTE"])
 
     try:
         sleeping_longest = int(max(sleeping_seconds))
@@ -662,17 +787,32 @@ def analyseData(data,current_date):
     except Exception as e:
         disrupt_duration_result = None
 
-    return in_room_result, time_in_bed_result, sleeping_hour_result, bed_time_result, wake_up_time_result, sleep_disruption_result, disrupt_duration_result, current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration
+    return in_room_result, time_in_bed_result, sleeping_hour_result, bed_time_result, \
+        wake_up_time_result, sleep_disruption_result, disrupt_duration_result, \
+            current_sleeping_seconds, current_sleep_disruption, current_disrupt_duration, \
+            current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time
 
-def analyseVitalData(data):
+def analyseVitalData(data,current_date):
+    current_breath_rate = None
+    current_heart_rate = None
+    curr_b = []
+    curr_r = []
     breath_rate = []
     heart_rate = []
+
+    date_format = "%Y-%m-%d %H:%M"
+    
     for row in data:
+        row["MINUTE"] = dt.strptime(row["MINUTE"], date_format)
         if (row["BREATH_RATE"] is not None and row["BREATH_RATE"] >= 8):
             breath_rate.append(row["BREATH_RATE"])
+            if (str(row["MINUTE"].date()) == current_date):
+                curr_b.append(row["BREATH_RATE"])
 
         if (row["HEART_RATE"] is not None and row["HEART_RATE"] >= 40):
             heart_rate.append(row["HEART_RATE"])
+            if (str(row["MINUTE"].date()) == current_date):
+                curr_r.append(row["HEART_RATE"])
     
     try:
         breath_rate = remove_outliers_iqr(breath_rate)
@@ -701,7 +841,15 @@ def analyseVitalData(data):
     except Exception as e:
         heart_rate_result = None
 
-    return breath_rate_result,heart_rate_result
+    if curr_b:
+        curr_breath_rate = remove_outliers_iqr(curr_b)
+        current_breath_rate = sum(curr_b) / len(curr_b)
+
+    if curr_r:
+        curr_heart_rate = remove_outliers_iqr(curr_r)
+        current_heart_rate = sum(curr_r) / len(curr_r)
+
+    return breath_rate_result,heart_rate_result, current_breath_rate, current_heart_rate
 
 def analyseLaymanData(data,current_date):
 
@@ -1230,6 +1378,49 @@ def seconds_to_text(seconds):
 
     return result
 
+def datetime_to_minutes(dt):
+    return dt.hour * 60 + dt.minute
+
+def minutes_to_am_pm_time(minutes):
+    if (minutes > 24*60):
+        minutes -= 24*60
+    hours, minutes = divmod(minutes, 60)
+    period = "AM" if hours < 12 else "PM"
+    if hours == 0:
+        hours = 12  # Adjust 0 to 12 AM
+    elif hours > 12:
+        hours -= 12  # Convert to 12-hour format
+    return f"{hours:02}:{minutes:02} {period}"
+
+def text_to_minutes(text):
+    minutes = 0
+
+    try:
+        time = text.split(" ")
+        time1 = time[0]
+        am_pm = time[1]
+        if am_pm == "PM":
+            minutes += 12*60
+
+        time1 = time1.split(":")
+        hour = time1[0]
+        minute = time1[1]
+
+        minutes = minutes + (int(hour) * 60) + int(minute)
+
+    except:
+        print("Error to convert time")
+
+    return minutes
+
+def to_waketime(time):
+    min = datetime_to_minutes(time)
+    return minutes_to_am_pm_time(min)
+
+def to_bedtime(time):
+    min = datetime_to_minutes(time)
+    return minutes_to_am_pm_time(min)
+
 def bedtime_processing(arr):
     # Function to convert datetime to minutes since midnight
     def datetime_to_minutes(dt):
@@ -1341,29 +1532,30 @@ def remove_connection():
     vernemq_cursor.close()
     vernemq_connection.close()  
 
-#previous
-schedule.every().monday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
-schedule.every().tuesday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
-schedule.every().wednesday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
-schedule.every().thursday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
-schedule.every().friday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
-schedule.every().saturday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
-schedule.every().sunday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+if __name__ == "__main__":
+    #previous
+    schedule.every().monday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+    schedule.every().tuesday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+    schedule.every().wednesday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+    schedule.every().thursday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+    schedule.every().friday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+    schedule.every().saturday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
+    schedule.every().sunday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
 
-#current week
-for i in ["04:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"]:
-    
-    schedule.every().monday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().tuesday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().wednesday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().thursday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().friday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().saturday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    schedule.every().sunday.at(i, timezone("Asia/Singapore")).do(current_layman)
-    
-schedule.every(5).minutes.do(remove_connection)
+    # #current week
+    # for i in ["04:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"]:
+        
+    #     schedule.every().monday.at(i, timezone("Asia/Singapore")).do(current_layman)
+    #     schedule.every().tuesday.at(i, timezone("Asia/Singapore")).do(current_layman)
+    #     schedule.every().wednesday.at(i, timezone("Asia/Singapore")).do(current_layman)
+    #     schedule.every().thursday.at(i, timezone("Asia/Singapore")).do(current_layman)
+    #     schedule.every().friday.at(i, timezone("Asia/Singapore")).do(current_layman)
+    #     schedule.every().saturday.at(i, timezone("Asia/Singapore")).do(current_layman)
+    #     schedule.every().sunday.at(i, timezone("Asia/Singapore")).do(current_layman)
+        
+    schedule.every(5).minutes.do(remove_connection)
 
-while True:
-    print(datetime.datetime.now(timezone("Asia/Singapore")))
-    schedule.run_pending()
-    time.sleep(30)
+    while True:
+        print(datetime.datetime.now(timezone("Asia/Singapore")))
+        schedule.run_pending()
+        time.sleep(30)

@@ -69,6 +69,10 @@ from werkzeug.utils import secure_filename
 from user.searchDevManager import searchDevDetail
 from user.laymanDetail import getLaymanData
 
+from user.user_settings import get_data_types
+from user.user_settings import get_alert_configurations
+from user.user_settings import set_alert_configurations
+
 import os
 import json
 from redis import Redis
@@ -858,6 +862,53 @@ def setClientConnectionAPI():
                 return {"ERROR": 'Not authorized!'}
         else:
             return {"ERROR": 'Cannot set connect'}
+        
+@app.route('/api/getDataTypes', methods=['POST'])
+def get_data_types_API():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                data_types = get_data_types()
+                if (data_types):
+                    return data_types
+                else:
+                    return {"ERROR": 'Cannot retrieve data types'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Not authorized!'}
+        
+@app.route('/api/getAlertConfigurations', methods=['POST'])
+def get_alert_configurations_API():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login:              
+                alert_configurations = get_alert_configurations()
+                if (alert_configurations):
+                    return alert_configurations
+                else:
+                    return {"ERROR": 'Cannot retrieve alert configurations'}
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Not authorized!'}
+
+@app.route('/api/setAlertConfigurations', methods=['POST'])
+def set_alert_configurations_API():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            login, admin = auth(data)
+            if login and admin:              
+                return set_alert_configurations(data=data.get("data",[]))
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

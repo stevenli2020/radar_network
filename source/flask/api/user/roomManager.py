@@ -140,8 +140,11 @@ def updateRoomDetail(data, uploadsLoc):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     sql = "UPDATE Gaitmetrics.ROOMS_DETAILS SET ROOM_LOC='%s', ROOM_NAME='%s', IMAGE_NAME='%s', INFO='%s', ROOM_X='%s', ROOM_Y='%s' WHERE ROOM_UUID='%s'"%(data['ROOM_LOC'], data['ROOM_NAME'], data['IMAGE_NAME'], data['INFO'], data['ROOM_X'], data['ROOM_Y'], data['ROOM_UUID'])
-    if data['IMAGE_NAME'] != data['O_IMAGE_NAME']:
-        os.remove(os.path.join(str(uploadsLoc), str(data['O_IMAGE_NAME'])))        
+    try:
+        if data['IMAGE_NAME'] != data['O_IMAGE_NAME']:
+            os.remove(os.path.join(str(uploadsLoc), str(data['O_IMAGE_NAME'])))
+    except Exception as e:
+        print(e)    
     cursor.execute(sql)
     connection.commit()    
     cursor.close()

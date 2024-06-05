@@ -39,7 +39,7 @@ for curr in dates_between:
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
             current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
                  current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time,\
-                     current_heart_rate, current_breath_rate = getLaymanData(curr,room["ROOM_UUID"])
+                     current_heart_rate, current_breath_rate, moving_time, upright_time, laying_time = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -58,6 +58,10 @@ for curr in dates_between:
         insert_data(curr,room["ID"],"bed_time",current_bed_time,mode="day")
         insert_data(curr,room["ID"],"heart_rate",current_heart_rate,mode="day")
         insert_data(curr,room["ID"],"breath_rate",current_breath_rate,mode="day")
+
+        insert_data(curr,room["ID"],"in_room_moving_time",moving_time,mode="day")
+        insert_data(curr,room["ID"],"in_room_upright_time",upright_time,mode="day")
+        insert_data(curr,room["ID"],"in_room_laying_time",laying_time,mode="day")
 
         if current_sleeping_hour:
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")

@@ -159,31 +159,58 @@ def get_rooms():
 
     return rooms 
 
+def analyse_position_data(data):
+    date_format = "%Y-%m-%d %H:%M"
+    in_room_min = 0
+    laying_min = 0
+    upright_min = 0
+    moving_min = 0
+    unknown = 0
+    for row in data:
+        row["MINUTE"] = dt.strptime(row["MINUTE"], date_format)
+
+        if row["IN_ROOM"] == 1:
+            in_room_min += 1
+            if row["IS_MOVING"] == 1:
+                moving_min += 1
+            elif row["IS_UPRIGHT"] == 1:
+                upright_min += 1
+            elif row["IS_LAYING"] == 1:
+                laying_min += 1
+            else:
+                unknown += 1
+                
+    return seconds_to_text(moving_min*60),seconds_to_text(upright_min*60),seconds_to_text(laying_min*60)
+
 def getLaymanData(date,room_uuid):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
-    sleeping_hour = None
-    bed_time = None
-    wake_up_time = None
-    time_in_bed = None
-    in_room = None
-    sleep_disruption = None
-    breath_rate = None
-    heart_rate = None
+    sleeping_hour               = None
+    bed_time                    = None
+    wake_up_time                = None
+    time_in_bed                 = None
+    in_room                     = None
+    sleep_disruption            = None
+    breath_rate                 = None
+    heart_rate                  = None
 
-    disrupt_duration = None
+    disrupt_duration            = None
 
-    current_sleeping_seconds = None
-    current_sleep_disruption = None
-    current_disrupt_duration = None
+    current_sleeping_seconds    = None
+    current_sleep_disruption    = None
+    current_disrupt_duration    = None
 
-    current_inbed_seconds = None
-    current_inroom_seconds = None
-    current_wake_time = None
-    current_bed_time = None
+    current_inbed_seconds       = None
+    current_inroom_seconds      = None
+    current_wake_time           = None
+    current_bed_time            = None
 
-    current_heart_rate = None
-    current_breath_rate = None
+    current_heart_rate          = None
+    current_breath_rate         = None
+
+    moving_time                 = None 
+    upright_time                = None 
+    laying_time                 = None
 
     tables, start_date = get_interval_tables(cursor,date)
     if (len(tables)>0):
@@ -231,6 +258,28 @@ def getLaymanData(date,room_uuid):
         vital_data = cursor.fetchall()
         if (vital_data):
             breath_rate,heart_rate, current_breath_rate, current_heart_rate = analyseVitalData(vital_data,date)
+
+        sql = f"""
+            SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,
+                MAX(CASE WHEN pd.`STATE` = 2 THEN 1 ELSE 0 END) AS `IS_LAYING`,
+                MAX(CASE WHEN pd.`STATE` = 0 THEN 1 ELSE 0 END) AS `IS_MOVING`,
+                MAX(CASE WHEN pd.`STATE` = 1 THEN 1 ELSE 0 END) AS `IS_UPRIGHT`,
+                (SUM(OBJECT_LOCATION)) > 0 AS 'IN_ROOM'
+            FROM (SELECT tb.* FROM {tables[-1]} tb LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}' AND TIMESTAMP >= '{date}') pd
+            LEFT JOIN `RL_ROOM_MAC` rrm ON rrm.MAC = pd.MAC
+            WHERE rrm.ROOM_UUID = '{room_uuid}'
+            GROUP BY `MINUTE`
+            ORDER BY pd.`TIMESTAMP`;
+        """
+
+        # Execute the query with parameters
+        cursor.execute(sql)
+        position_data = cursor.fetchall()
+        if (position_data):
+            moving_time, upright_time, laying_time = analyse_position_data(position_data)
+            print("Moving time:",moving_time)
+            print("Upright time:",upright_time)
+            print("Laying time:",laying_time)
     
     cursor.close()
     connection.close()
@@ -238,7 +287,7 @@ def getLaymanData(date,room_uuid):
         breath_rate,heart_rate,disrupt_duration, current_sleeping_seconds, \
             current_sleep_disruption, current_disrupt_duration, \
             current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time, \
-            current_heart_rate, current_breath_rate
+            current_heart_rate, current_breath_rate, moving_time, upright_time, laying_time
 
 def get_week_start_end(date):
     # Find the start (Monday) of the week
@@ -308,7 +357,7 @@ def current_layman():
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
             current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
                  current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time,\
-                     current_heart_rate, current_breath_rate = getLaymanData(curr,room["ROOM_UUID"])
+                     current_heart_rate, current_breath_rate, moving_time, upright_time, laying_time = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -328,7 +377,7 @@ def previous_week():
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
             current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
                  current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time,\
-                     current_heart_rate, current_breath_rate = getLaymanData(curr,room["ROOM_UUID"])
+                     current_heart_rate, current_breath_rate, moving_time, upright_time, laying_time = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -347,6 +396,10 @@ def previous_week():
         insert_data(curr,room["ID"],"bed_time",current_bed_time,mode="day")
         insert_data(curr,room["ID"],"heart_rate",current_heart_rate,mode="day")
         insert_data(curr,room["ID"],"breath_rate",current_breath_rate,mode="day")
+
+        insert_data(curr,room["ID"],"in_room_moving_time",moving_time,mode="day")
+        insert_data(curr,room["ID"],"in_room_upright_time",upright_time,mode="day")
+        insert_data(curr,room["ID"],"in_room_laying_time",laying_time,mode="day")
 
         if current_sleeping_hour:
             insert_data(curr,room["ID"],"sleeping_hour",current_sleeping_hour,mode="day")

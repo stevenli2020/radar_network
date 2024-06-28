@@ -63,6 +63,7 @@ def on_message(client, obj, msg):
     sql="UPDATE `DEVICES` SET `LAST_DATA_RECEIVED`=NOW(),`STATUS`='CONNECTED' WHERE MAC='"+MAC+"';"
     cursor.execute(sql)      
     # print(sql)
+    ROOM_UUID = None
     if MAC not in devicesTbl:
         print("New device ["+MAC+"]")
         devicesTbl[MAC]={}
@@ -76,6 +77,7 @@ def on_message(client, obj, msg):
             return     
         devicesTbl[MAC]=dbresult
         print(devicesTbl)
+    ROOM_UUID = devicesTbl[MAC]['ROOM_UUID']
     print("Update device info for "+ MAC)
     DATA = PAYLOAD["DATA"]
     TYPE = PAYLOAD["TYPE"]
@@ -127,7 +129,7 @@ def on_message(client, obj, msg):
             AY = "NULL" if D['accY']==None else str(round(D['accX'],3))
             AZ = "NULL" if D['accZ']==None else str(round(D['accX'],3))
             # print(STATE,OBJECT_COUNT,OBJECT_LOCATION)
-            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ)
+            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ)
             sql2 = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ)
             cursor.execute(sql2)  
             if OBJECT_COUNT > 0 and STATE ==4:
@@ -142,7 +144,7 @@ def on_message(client, obj, msg):
                 ROOM_STATUS = 2
             HEART_RATE = "NULL" if D['heartRate']==None else str(round(D['heartRate'],1))
             BREATH_RATE = "NULL" if D['breathRate']==None else str(round(D['breathRate'],1))
-            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING)
+            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING)
             sql2 = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING)
             cursor.execute(sql2)  
         # print(sql)
@@ -173,6 +175,7 @@ def check_table_exist(connection,cursor,table_name):
         CREATE TABLE {table_name} (
           `ID` int(11) NOT NULL AUTO_INCREMENT,
           `TIMESTAMP` timestamp NOT NULL DEFAULT current_timestamp(),
+          `ROOM_UUID` varchar(50) DEFAULT NULL,
           `MAC` varchar(12) NOT NULL,
           `TYPE` tinyint(4) DEFAULT 0 COMMENT '0: undefined; 1: wall; 2: ceil; 3: vital ',
           `STATE` tinyint(4) DEFAULT NULL COMMENT '0: Moving, 1: Upright, 2: Laying, 3: Fall, 4: None, 5: Social',

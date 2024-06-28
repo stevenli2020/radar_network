@@ -165,13 +165,16 @@ def analyse_position_data(data):
     laying_min = 0
     upright_min = 0
     moving_min = 0
+    social_min = 0
     unknown = 0
     for row in data:
         row["MINUTE"] = dt.strptime(row["MINUTE"], date_format)
 
         if row["IN_ROOM"] == 1:
             in_room_min += 1
-            if row["IS_MOVING"] == 1:
+            if row["IS_SOCIAL"] == 1:
+                social_min += 1
+            elif row["IS_MOVING"] == 1:
                 moving_min += 1
             elif row["IS_UPRIGHT"] == 1:
                 upright_min += 1
@@ -180,7 +183,7 @@ def analyse_position_data(data):
             else:
                 unknown += 1
                 
-    return seconds_to_text(moving_min*60),seconds_to_text(upright_min*60),seconds_to_text(laying_min*60)
+    return seconds_to_text(social_min*60),seconds_to_text(moving_min*60),seconds_to_text(upright_min*60),seconds_to_text(laying_min*60)
 
 def getLaymanData(date,room_uuid):
     connection = mysql.connector.connect(**config)
@@ -208,6 +211,7 @@ def getLaymanData(date,room_uuid):
     current_heart_rate          = None
     current_breath_rate         = None
 
+    social_time                 = None
     moving_time                 = None 
     upright_time                = None 
     laying_time                 = None
@@ -261,6 +265,7 @@ def getLaymanData(date,room_uuid):
 
         sql = f"""
             SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,
+                MAX(CASE WHEN pd.`OBJECT_COUNT` > 1 THEN 1 ELSE 0 END) AS `IS_SOCIAL`
                 MAX(CASE WHEN pd.`STATE` = 2 THEN 1 ELSE 0 END) AS `IS_LAYING`,
                 MAX(CASE WHEN pd.`STATE` = 0 THEN 1 ELSE 0 END) AS `IS_MOVING`,
                 MAX(CASE WHEN pd.`STATE` = 1 THEN 1 ELSE 0 END) AS `IS_UPRIGHT`,
@@ -276,7 +281,8 @@ def getLaymanData(date,room_uuid):
         cursor.execute(sql)
         position_data = cursor.fetchall()
         if (position_data):
-            moving_time, upright_time, laying_time = analyse_position_data(position_data)
+            social_time, moving_time, upright_time, laying_time = analyse_position_data(position_data)
+            print("Social time:",social_time)
             print("Moving time:",moving_time)
             print("Upright time:",upright_time)
             print("Laying time:",laying_time)
@@ -287,7 +293,7 @@ def getLaymanData(date,room_uuid):
         breath_rate,heart_rate,disrupt_duration, current_sleeping_seconds, \
             current_sleep_disruption, current_disrupt_duration, \
             current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time, \
-            current_heart_rate, current_breath_rate, moving_time, upright_time, laying_time
+            current_heart_rate, current_breath_rate, social_time, moving_time, upright_time, laying_time
 
 def get_week_start_end(date):
     # Find the start (Monday) of the week
@@ -357,7 +363,7 @@ def current_layman():
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
             current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
                  current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time,\
-                     current_heart_rate, current_breath_rate, moving_time, upright_time, laying_time = getLaymanData(curr,room["ROOM_UUID"])
+                     current_heart_rate, current_breath_rate, social_time, moving_time, upright_time, laying_time = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -377,7 +383,7 @@ def previous_week():
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
             current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
                  current_inbed_seconds,current_inroom_seconds,current_wake_time,current_bed_time,\
-                     current_heart_rate, current_breath_rate, moving_time, upright_time, laying_time = getLaymanData(curr,room["ROOM_UUID"])
+                     current_heart_rate, current_breath_rate, social_time, moving_time, upright_time, laying_time = getLaymanData(curr,room["ROOM_UUID"])
         insert_data(curr,room["ID"],"sleeping_hour",sleeping_hour)
         insert_data(curr,room["ID"],"time_in_bed",time_in_bed)
         insert_data(curr,room["ID"],"bed_time",bed_time)
@@ -397,6 +403,7 @@ def previous_week():
         insert_data(curr,room["ID"],"heart_rate",current_heart_rate,mode="day")
         insert_data(curr,room["ID"],"breath_rate",current_breath_rate,mode="day")
 
+        insert_data(curr,room["ID"],"in_room_social_time",social_time,mode="day")
         insert_data(curr,room["ID"],"in_room_moving_time",moving_time,mode="day")
         insert_data(curr,room["ID"],"in_room_upright_time",upright_time,mode="day")
         insert_data(curr,room["ID"],"in_room_laying_time",laying_time,mode="day")

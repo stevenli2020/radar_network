@@ -65,7 +65,9 @@ def getLaymanData(date,room_uuid):
                 "max":"-",
                 "min":"-",
                 "previous_average":"-"
-            }
+            },
+            "inroom_analysis":[
+            ]
         }
     }
     sql = "SELECT CONCAT(ROOMS_DETAILS.ROOM_NAME,'@',ROOMS_DETAILS.ROOM_LOC) AS room_name, ROOMS_DETAILS.ID, GROUP_CONCAT(RL_ROOM_MAC.MAC) AS MAC FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID=RL_ROOM_MAC.ROOM_UUID WHERE ROOMS_DETAILS.ROOM_UUID='%s';"%(room_uuid)
@@ -146,9 +148,86 @@ def getLaymanData(date,room_uuid):
         temp,temp,disrupt_duration_previous = get_data_from_analysis(previous_date,room_id,'disrupt_duration')
         result["data"]["disrupt_duration"]["previous_average"] = disrupt_duration_previous
 
+        result["data"]["inroom_analysis"] = weekly_inroom_analysis(date,room_id)
+
     cursor.close()
     connection.close()
     return result
+
+def weekly_inroom_analysis(date,room_id):
+    results = []
+    dates = []
+    eow_datetime = datetime.strptime(date, "%Y-%m-%d")
+
+    # Subtract 7 days
+    previous_eow = eow_datetime - timedelta(days=6)
+    previous_date = previous_eow.strftime("%Y-%m-%d")
+    dates.append(previous_date)
+
+    for i in range(6):
+        previous_eow = previous_eow + timedelta(days=1)
+        previous_date = previous_eow.strftime("%Y-%m-%d")
+        dates.append(previous_date)
+    
+    for date in dates:
+        results.append(daily_inroom_analysis(date,room_id))
+    return results
+
+def daily_inroom_analysis(date,room_id):
+    total = get_daily_data(date,room_id,'in_room')
+    social = get_daily_data(date,room_id,'in_room_social_time')
+    moving = get_daily_data(date,room_id,'in_room_moving_time')
+    upright = get_daily_data(date,room_id,'in_room_upright_time')
+    laying = get_daily_data(date,room_id,'in_room_laying_time')
+    unknown = total - moving - upright - laying - social
+    not_in_room = 24*60 - total
+    return {
+        "date":date,
+        "total":total,
+        "social":social,
+        "moving":moving,
+        "upright":upright,
+        "laying":laying,
+        "unknown":unknown,
+        "not_in_room":not_in_room
+    }
+
+def get_daily_data(date,room_id,type):
+    value = 0
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+    try:
+        sql = "SELECT `VALUE` FROM `ANALYSIS_DAY` WHERE `TYPE`='%s' AND `ROOM_ID`=%s AND `DATE`='%s' UNION ALL SELECT '-' AS `VALUE` LIMIT 1;"%(type,room_id,date)
+        cursor.execute(sql)
+        data = cursor.fetchone()
+        value = text_to_minutes(data["VALUE"])
+    except Exception as e:
+        print("No value",e)
+    cursor.close()
+    connection.close()
+
+    return value
+
+def text_to_minutes(time_string):
+    hours = 0
+    minutes = 0
+    
+    if (time_string != '-'):
+        # Check if the time string contains "h" (hours)
+        if 'h' in time_string:
+            index_of_hours = time_string.index('h')
+            hours = int(time_string[:index_of_hours])
+            # Extract the part after 'h' to find minutes
+            minutes_part = time_string[index_of_hours + 1:].replace('m', '')
+            if minutes_part:
+                minutes = int(minutes_part)
+        else:
+            # If no 'h' is found, assume the whole string represents minutes
+            minutes = int(time_string.replace('m', ''))
+        
+        # Convert hours to minutes and add to the minutes
+    total_minutes = hours * 60 + minutes
+    return total_minutes
 
 def get_data_from_analysis(date,room_id,type):
     connection = mysql.connector.connect(**config)

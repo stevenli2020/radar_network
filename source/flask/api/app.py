@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta
 # import redis
 from typing import List, Dict
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_cors import CORS
 import mysql.connector
 import json
@@ -52,6 +52,7 @@ from user.sentMailManager import resetPasswordLink
 from user.roomManager import getRoomData
 from user.roomManager import getSpecificRoomData
 from user.roomManager import getRoomAlertsData
+from user.roomManager import getRoomsAlerts
 from user.roomManager import readRoomAlertsData
 from user.roomManager import getFilterLocationHistoryData
 from user.roomManager import updateFilterLocationHistoryData
@@ -76,45 +77,20 @@ from user.user_settings import set_alert_configurations
 import os
 import json
 from redis import Redis
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 app = Flask(__name__)
 CORS(app)
 redis = Redis(host='redis', port=6379)
 app.register_blueprint(blueprint, url_prefix="")
-# app.config['MYSQL_HOST'] = "db"
-# app.config['MYSQL_USER'] = "root"
-# app.config['MYSQL_PASSWORD'] = "14102022"
-# app.config['MYSQL_DB'] = "Gaimetric"
-# config = {
-#     'user': 'flask',
-#     'password': 'CrbI1q)KUV1CsOj-',
-#     'host': 'db',
-#     'port': '3306',
-#     'database': 'Gaitmetric'
-# }
+
 config = config()
 upload_folder = os.path.join('static', 'uploads')
 
 app.config['UPLOAD'] = upload_folder
-def test_table() -> List[Dict]:
-    # config = {
-    #     'user': 'root',
-    #     'password': '220522',
-    #     'host': 'db',
-    #     'port': '3306',
-    #     'database': 'Gaimetric'
-    # }
-    connection = mysql.connector.connect(**config)
-    cursor = connection.cursor()
-    cursor.execute('SELECT * FROM test_table')
-    results = [{name: color} for (name, color) in cursor]
-    cursor.close()
-    connection.close()
-
-    return results
-
-# mysql = MySQL(app)
-# cache = redis.Redis(host='redis', port=6379)
+app.config['JWT_SECRET_KEY'] = 'gaitmetrics_jwt_12345'  # Change this to a random secret key
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
+jwt = JWTManager(app)
 
 # def get_hit_count():
 #     retries = 5
@@ -136,22 +112,24 @@ def test_table() -> List[Dict]:
 #     connection.close()
 
 # Home page
-@app.route('/api', methods=['GET', 'POST'])
-def hello():
-    return render_template('Home.html')
+# @app.route('/api', methods=['GET', 'POST'])
+# def hello():
+#     return render_template('Home.html')
 
 # Detail page
-@app.route('/api/Detail', methods=['GET', 'POST'])
-def Detail():
-    return render_template('Detail.html')
+# @app.route('/api/Detail', methods=['GET', 'POST'])
+# def Detail():
+#     return render_template('Detail.html')
 
 # get one register device details 
 @app.route('/api/getRegDevice', methods=['POST'])
+@jwt_required()
 def getRegDevice():
     # count = get_hit_count()
     if request.method == 'POST': 
         data = request.json  
-        login, admin = auth(data)
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
         if login:        
             return getregisterDevice(data)
         else:
@@ -159,11 +137,13 @@ def getRegDevice():
 
 # get all register device details
 @app.route('/api/getRegDevices', methods=['POST'])
+@jwt_required()
 def getRegDevices():
     # count = get_hit_count()
     if request.method == 'POST': 
         data = request.json 
-        login, admin = auth(data)
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
         print(f'login: {login}, admin: {admin}') 
         # with open("logs", "a+") as myfile:
         #     myfile.write("login: "+str(login)+", admin: "+str(admin)+"\n")
@@ -174,11 +154,13 @@ def getRegDevices():
 
 # register new device
 @app.route('/api/addNewDevice', methods=['POST'])
+@jwt_required()
 def addNewDevice():
     # count = get_hit_count()
     if request.method == 'POST':
         data = request.json 
-        login, admin = auth(data)
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
         if login:
             if admin:                   
                 return registerNewDevice(data)
@@ -189,10 +171,12 @@ def addNewDevice():
         
 # register new device
 @app.route('/api/addDeviceCredential', methods=['POST'])
+@jwt_required()
 def addDeviceCredential():
     if request.method == 'POST':
         data = request.json 
-        login, admin = auth(data)
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
         if login:
             if admin:                   
                 return insertDeviceCredential(data)
@@ -203,11 +187,13 @@ def addDeviceCredential():
 
 #update register device detail
 @app.route('/api/updateDevice', methods=['POST'])
+@jwt_required()
 def updateDevice():
     # count = get_hit_count()
     if request.method == 'POST':
         data = request.json   
-        login, admin = auth(data)   
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
         if login:
             if admin:             
                 return updateDeviceDetail(data)
@@ -218,11 +204,13 @@ def updateDevice():
 
 #delete register device
 @app.route('/api/deleteDevice', methods=['POST'])
+@jwt_required()
 def deleteDevice():
     # count = get_hit_count()
     if request.method == 'POST':
         data = request.json    
-        login, admin = auth(data)           
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)          
         if login:
             if admin:        
                 return deleteDeviceDetail(data)
@@ -234,22 +222,26 @@ def deleteDevice():
 
 # register device mac address and date/time to save raw data
 @app.route('/api/saveDevice', methods=['GET', 'POST'])
+@jwt_required()
 def registerDeviceData():
     # count = get_hit_count()
     if request.method == 'POST':
         data = request.json      
-        login, admin = auth(data)
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
         if login:            
             return registerDeviceSaveRaw(data)
     return render_template('SaveDevice.html')
 
 # users management page url
 @app.route('/api/usersManagement', methods=['GET', 'POST'])
+@jwt_required()
 def usersManagement():
     if request.method == 'POST':
         data = request.json        
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 if admin:
                     return addNewUser(data)
@@ -263,11 +255,13 @@ def usersManagement():
 
 # update user
 @app.route('/api/updateUser', methods=['POST'])
+@jwt_required()
 def updateUser():
     if request.method == 'POST':
         data = request.json        
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 if admin:
                     return updateUserDetails(data)
@@ -280,11 +274,13 @@ def updateUser():
 
 # delete user
 @app.route('/api/deleteUser', methods=['POST'])
+@jwt_required()
 def deleteUser():
     if request.method == 'POST':
         data = request.json        
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 if admin:
                     return deleteUserDetails(data)
@@ -297,28 +293,28 @@ def deleteUser():
 
 # get all users
 @app.route('/api/getAllUsers', methods=['POST'])
+@jwt_required()
 def getAllUsers():
     if request.method == 'POST':
-        data = request.json        
-        if data:                 
-            login, admin = auth(data)
-            if login:
-                if admin:
-                    return requestAllUsers()
-                else:
-                    return {"ERROR": 'Not authorized!'}
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:
+            if admin:
+                return requestAllUsers()
             else:
                 return {"ERROR": 'Not authorized!'}
         else:
-            return {"ERROR": 'Empty json!'}
+            return {"ERROR": 'Not authorized!'}
 
 # get specific user
 @app.route('/api/getSpecificUser', methods=['POST'])
+@jwt_required()
 def getSpecificUsers():
     if request.method == 'POST':
         data = request.json        
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 return requestSpecificUser(data)
             else:
@@ -328,39 +324,37 @@ def getSpecificUsers():
 
 # get list of device status
 @app.route('/api/getStatusDevice', methods=['POST'])
+@jwt_required()
 def getStatusDevice():
-    if request.method == 'POST':
-        data = request.json        
-        if data:                 
-            login, admin = auth(data)
-            if login:
-                return getDeviceListsOfStatus()
-            else:
-                return {"ERROR": 'Not authorized!'}
+    if request.method == 'POST':      
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:
+            return getDeviceListsOfStatus()
         else:
-            return {"ERROR": 'Empty json!'}
+            return {"ERROR": 'Not authorized!'}
 
 # get list of save device data
 @app.route('/api/getSaveDeviceRawData', methods=['POST'])
+@jwt_required()
 def getSaveDeviceRawData():
-    if request.method == 'POST':
-        data = request.json        
-        if data:                 
-            login, admin = auth(data)
-            if login:
-                return getDeviceListsOfSaveRawData()
-            else:
-                return {"ERROR": 'Not authorized!'}
+    if request.method == 'POST':              
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:
+            return getDeviceListsOfSaveRawData()
         else:
-            return {"ERROR": 'Empty json!'}
+            return {"ERROR": 'Not authorized!'}
 
 # get one list of save device data
 @app.route('/api/getSaveDevice', methods=['POST'])
+@jwt_required()
 def getSaveDevice():
     if request.method == 'POST':
         data = request.json        
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 return getSaveDeviceDetail(data)
             else:
@@ -370,11 +364,13 @@ def getSaveDevice():
 
 # update save device time
 @app.route('/api/updateSaveDeviceTime', methods=['POST'])
+@jwt_required()
 def updateSaveDeviceTime():
     if request.method == 'POST':
         data = request.json
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 return updateSaveDeviceDataTime(data)
             else:
@@ -384,11 +380,13 @@ def updateSaveDeviceTime():
 
 # delete save device time
 @app.route('/api/deleteSaveDeviceTime', methods=['POST'])
+@jwt_required()
 def deleteSaveDeviceTime():
     if request.method == 'POST':
         data = request.json
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 return deleteSaveDeviceDataTime(data)
             else:
@@ -421,11 +419,13 @@ def updateData():
 
 # retrieve saved data of trackdata and vitals
 @app.route('/api/getHistOfVital', methods=["POST"])
+@jwt_required()
 def getData():
     if request.method == 'POST':
         data = request.json   
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 data["API"] = "VITAL_DATA"
                 cached_result = get_data_from_redis(data)
@@ -444,11 +444,13 @@ def getData():
 
 # retrieve summary saved data of vitals
 @app.route('/api/getAnalyticData', methods=["POST"])
+@jwt_required()
 def getAnalyticData():
     if request.method == 'POST':
         data = request.json   
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 data["API"] = "ANALYTICS_DATA"
                 cached_result = get_data_from_redis(data)
@@ -467,10 +469,6 @@ def getAnalyticData():
 
 def get_data_from_redis(data):
     # Convert the JSON data to a string to use it as a key
-    del data["Username"]
-    del data["CODE"]
-    del data["TYPE"]
-    del data["ID"]
     key = str(data)
     cached_data = redis.get(key)
     if cached_data:
@@ -485,11 +483,13 @@ def cache_data(data, result):
 
 # retrieve summary saved data of trackdata
 @app.route('/api/getSummaryPositionData', methods=["POST"])
+@jwt_required()
 def getSummaryPositionData():
     if request.method == 'POST':
         data = request.json   
         if data:                 
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:
                 data["API"] = "SUMMARY_POSITION"
                 cached_result = get_data_from_redis(data)
@@ -522,31 +522,40 @@ def login():
     if request.method == 'POST':
         data = request.json  
         if data:                  
-            return signIn(data)
+            result = signIn(data)
+            if result.get("DATA") and len(result.get("DATA")) > 0:
+                access_token = create_access_token(identity=result.get("DATA")[0])
+                return jsonify(
+                            access_token=access_token,
+                            type=result.get("DATA")[0].get("TYPE"),
+                            username=result.get("DATA")[0].get("Username")
+                        ), 200
+            else:
+                return result
         else:
             return {"ERROR": 'Empty json!'}
     return render_template('login.html')
 
 @app.route('/api/logout', methods=['POST'])
+@jwt_required()
 def logout():
     if request.method == 'POST':
-        data = request.json  
-        if data:    
-            login, admin = auth(data)
-            if login:              
-                return signOut(data)
-            else:
-                return {"ERROR": 'Not authorized!'}
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:              
+            return signOut(current_user)
         else:
-            return {"ERROR": 'Empty json!'}
+            return {"ERROR": 'Not authorized!'}
 
 # sent email to user's email
 @app.route('/api/sentEmail', methods=['POST'])
+@jwt_required()
 def sentEmail():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if admin:              
                 return resetPasswordLink(data['USER_ID'])
             else:
@@ -555,24 +564,26 @@ def sentEmail():
             return {"ERROR": 'Empty json!'}
 
 @app.route('/api/getRoomDetails', methods=['POST'])
+@jwt_required()
 def getRoomDetails():
     if request.method == 'POST':
-        data = request.json  
-        if data:    
-            login, admin = auth(data)
-            if login:              
-                return getRoomData(data, admin)
-            else:
-                return {"ERROR": 'Not authorized!'}
+        data = request.json
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        print(login,admin)
+        if login:              
+            return getRoomData(current_user, admin)
         else:
-            return {"ERROR": 'Empty json!'}
+            return {"ERROR": 'Not authorized!'}
         
 @app.route('/api/getRoomDetail', methods=['POST'])
+@jwt_required()
 def getRoomDetail():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 return getSpecificRoomData(data, admin)
             else:
@@ -581,6 +592,7 @@ def getRoomDetail():
             return {"ERROR": 'Empty json!'}
         
 @app.route('/api/uploadLogo', methods=['POST'])
+@jwt_required()
 def uploadLogo():
     if request.method == 'POST':
         file = request.files['logo']
@@ -589,6 +601,7 @@ def uploadLogo():
         return {"image_source": filename}
     
 @app.route('/api/uploadImg', methods=['POST'])
+@jwt_required()
 def uploadImg():
     if request.method == 'POST':
         if 'add-room-img' in request.files:
@@ -614,11 +627,13 @@ def uploadImg():
         #     return {"ERROR": 'Empty json!'}
 
 @app.route('/api/getDevSuggestion', methods=['POST'])
+@jwt_required()
 def getDevSuggestion():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if admin:              
                 return searchDevDetail(data)
             else:
@@ -627,11 +642,13 @@ def getDevSuggestion():
             return {"ERROR": 'Empty json!'}
         
 @app.route('/api/getRoomSuggestion', methods=['POST'])
+@jwt_required()
 def getRoomSuggestion():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if admin:              
                 return searchRoomDetail(data)
             else:
@@ -640,11 +657,13 @@ def getRoomSuggestion():
             return {"ERROR": 'Empty json!'}
 
 @app.route('/api/addNewRoom', methods=['POST'])
+@jwt_required()
 def addNewRoom():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if admin:              
                 return addNewRoomDetail(data)
             else:
@@ -653,11 +672,13 @@ def addNewRoom():
             return {"ERROR": 'Empty json!'}
 
 @app.route('/api/updateRoom', methods=['POST'])
+@jwt_required()
 def updateRoom():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if admin:              
                 return updateRoomDetail(data, app.config['UPLOAD'])
             else:
@@ -666,11 +687,13 @@ def updateRoom():
             return {"ERROR": 'Empty json!'}
         
 @app.route('/api/deleteRoom', methods=['POST'])
+@jwt_required()
 def deleteRoom():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if admin:              
                 return deleteRoomDetail(data, app.config['UPLOAD'])
             else:
@@ -679,11 +702,13 @@ def deleteRoom():
             return {"ERROR": 'Empty json!'}
 
 @app.route('/api/getRLMacRoom', methods=['POST'])
+@jwt_required()
 def getRLMacRoom():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 return getRLMacRoomData(data)
             else:
@@ -735,11 +760,13 @@ def LocationHistory():
         return "Room ID not provided."
 
 @app.route('/api/getFilterLocationHistory', methods=['POST'])
+@jwt_required()
 def getFilterLocationHistory():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 if "room_id" in data:              
                     return getFilterLocationHistoryData(data.get("room_id"))
@@ -751,11 +778,13 @@ def getFilterLocationHistory():
             return {"ERROR": 'Empty json!'}
         
 @app.route('/api/updateFilterLocationHistory', methods=['POST'])
+@jwt_required()
 def updateFilterLocationHistory():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 if "room_id" in data:              
                     return updateFilterLocationHistoryData(data.get("room_id"),data=data.get("data",[]))
@@ -767,11 +796,13 @@ def updateFilterLocationHistory():
             return {"ERROR": 'Empty json!'}
 
 @app.route('/api/getRoomLaymanDetail', methods=['POST'])
+@jwt_required()
 def getRoomLaymanDetail():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = True ,True#auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 if "room_id" in data and "eow" in data:              
                     return getLaymanData(data.get("eow"),data.get("room_id"))
@@ -783,11 +814,13 @@ def getRoomLaymanDetail():
             return {"ERROR": 'Empty json!'}
         
 @app.route('/api/getRoomAlerts', methods=['POST'])
+@jwt_required()
 def getRoomAlerts():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 if "room_id" in data:              
                     return getRoomAlertsData(data.get("room_id"),unread=data.get("unread",False),set=data.get("set",False))
@@ -798,12 +831,26 @@ def getRoomAlerts():
         else:
             return {"ERROR": 'Empty json!'}
         
+@app.route('/api/getAlerts', methods=['POST'])
+def getAlerts():
+    if request.method == 'POST':
+        data = request.json  
+        if data:
+            if "room_id" in data:              
+                return getRoomsAlerts(data.get("MAC",[]),unread=data.get("unread",True))
+            else:
+                return {"ERROR": 'Please provide room id!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
 @app.route('/api/readRoomAlerts', methods=['POST'])
+@jwt_required()
 def readRoomAlerts():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 if "alerts" in data:              
                     return readRoomAlertsData(data.get("alerts"))
@@ -815,11 +862,13 @@ def readRoomAlerts():
             return {"ERROR": 'Empty json!'}
         
 @app.route('/api/updateRoomLocationOnMap', methods=['POST'])
+@jwt_required()
 def updateRoomLocationOnMap():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login and admin:              
                 return updateRoomLocationOnMapData(data=data.get("data",[]))
             else:
@@ -828,30 +877,30 @@ def updateRoomLocationOnMap():
             return {"ERROR": 'Empty json!'}
 
 @app.route('/api/getMQTTClientID', methods=['POST'])
+@jwt_required()
 def getMQTTClientIDAPI():
     if request.method == 'POST':
-        data = request.json  
-        if data:    
-            login, admin = auth(data)
-            if login:              
-                client_id = getMQTTClientID(data.get("Username"))
-                if (client_id):
-                    return {"DATA":{
-                        "client_id":client_id
-                    }}
-                else:
-                    return {"ERROR": 'Cannot retrieve client ID'}
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:              
+            client_id = getMQTTClientID(current_user.get("Username"))
+            if (client_id):
+                return {"DATA":{
+                    "client_id":client_id
+                }}
             else:
-                return {"ERROR": 'Not authorized!'}
+                return {"ERROR": 'Cannot retrieve client ID'}
         else:
-            return {"ERROR": 'Cannot retrieve client ID'}
+            return {"ERROR": 'Not authorized!'}
         
 @app.route('/api/setClientConnection', methods=['POST'])
+@jwt_required()
 def setClientConnectionAPI():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login:              
                 result = setClientConnection(data.get("client_id"))
                 if result:
@@ -864,45 +913,43 @@ def setClientConnectionAPI():
             return {"ERROR": 'Cannot set connect'}
         
 @app.route('/api/getDataTypes', methods=['POST'])
+@jwt_required()
 def get_data_types_API():
     if request.method == 'POST':
-        data = request.json  
-        if data:    
-            login, admin = auth(data)
-            if login:              
-                data_types = get_data_types()
-                if (data_types):
-                    return data_types
-                else:
-                    return {"ERROR": 'Cannot retrieve data types'}
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:              
+            data_types = get_data_types()
+            if (data_types):
+                return data_types
             else:
-                return {"ERROR": 'Not authorized!'}
+                return {"ERROR": 'Cannot retrieve data types'}
         else:
             return {"ERROR": 'Not authorized!'}
         
 @app.route('/api/getAlertConfigurations', methods=['POST'])
+@jwt_required()
 def get_alert_configurations_API():
-    if request.method == 'POST':
-        data = request.json  
-        if data:    
-            login, admin = auth(data)
-            if login:              
-                alert_configurations = get_alert_configurations()
-                if (alert_configurations):
-                    return alert_configurations
-                else:
-                    return {"ERROR": 'Cannot retrieve alert configurations'}
+    if request.method == 'POST':  
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:              
+            alert_configurations = get_alert_configurations()
+            if (alert_configurations):
+                return alert_configurations
             else:
-                return {"ERROR": 'Not authorized!'}
+                return {"ERROR": 'Cannot retrieve alert configurations'}
         else:
             return {"ERROR": 'Not authorized!'}
 
 @app.route('/api/setAlertConfigurations', methods=['POST'])
+@jwt_required()
 def set_alert_configurations_API():
     if request.method == 'POST':
         data = request.json  
         if data:    
-            login, admin = auth(data)
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
             if login and admin:              
                 return set_alert_configurations(data=data.get("data",[]))
             else:

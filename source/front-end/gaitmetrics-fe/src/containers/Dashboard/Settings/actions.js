@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Component } from "react";
-import { Get, Post, Put, Delete } from "utils/axios";
+import { Get, Post, Put, Delete, PostForm } from "utils/axios";
 import { requestError, requestSuccess } from "utils/requestHandler";
 import { getItem } from 'utils/tokenStore'
 
@@ -22,7 +22,6 @@ const HOC = (WrappedComponent) => {
     getDataTypes = () => {
       let payload = {
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getDataTypes`,
         payload,
@@ -39,7 +38,6 @@ const HOC = (WrappedComponent) => {
     getAlertConfigurations = () => {
       let payload = {
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getAlertConfigurations`,
         payload,
@@ -58,7 +56,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         data:configs
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/setAlertConfigurations`,
         payload,
@@ -76,7 +73,7 @@ const HOC = (WrappedComponent) => {
       const form_data = new FormData();
       form_data.append('logo', values, "logo.png");
       console.log(form_data)
-      Post(
+      PostForm(
         `/api/uploadLogo`,
         form_data,
         this.uploadLogoSuccess,

@@ -128,8 +128,9 @@ def on_message(client, obj, msg):
             AX = "NULL" if D['accX']==None else str(round(D['accX'],3))
             AY = "NULL" if D['accY']==None else str(round(D['accX'],3))
             AZ = "NULL" if D['accZ']==None else str(round(D['accX'],3))
+            SIGN_OF_LIFE = "NULL" if D.get('signOfLife') == None else str(D.get('signOfLife'))
             # print(STATE,OBJECT_COUNT,OBJECT_LOCATION)
-            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ)
+            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`, `SIGN_OF_LIFE`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ,SIGN_OF_LIFE)
             sql2 = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ)
             cursor.execute(sql2)  
             if OBJECT_COUNT > 0 and STATE ==4:
@@ -138,13 +139,14 @@ def on_message(client, obj, msg):
             # print(D)
             IN_BED = 0 if D['bedOccupancy']==None else D['bedOccupancy']
             IN_BED_MOVING = "NULL" if D.get('inBedMoving')==None else str(D.get('inBedMoving'))
+            SIGN_OF_LIFE = "NULL" if D.get('signOfLife') == None else str(D.get('signOfLife'))
             if D['bedOccupancy']:
                 STATE = 2
                 OBJECT_LOCATION = 1
                 ROOM_STATUS = 2
             HEART_RATE = "NULL" if D['heartRate']==None else str(round(D['heartRate'],1))
             BREATH_RATE = "NULL" if D['breathRate']==None else str(round(D['breathRate'],1))
-            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING)
+            sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`, `SIGN_OF_LIFE`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING,SIGN_OF_LIFE)
             sql2 = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING)
             cursor.execute(sql2)  
         # print(sql)
@@ -183,6 +185,7 @@ def check_table_exist(connection,cursor,table_name):
           `OBJECT_LOCATION` tinyint(4) DEFAULT NULL COMMENT '0: out room, 1: in room',
           `IN_BED` tinyint(1) NOT NULL DEFAULT 0,
           `IN_BED_MOVING` tinyint(1) DEFAULT NULL,
+          `SIGN_OF_LIFE` tinyint(1) DEFAULT NULL,
           `HEART_RATE` float DEFAULT NULL,
           `BREATH_RATE` float DEFAULT NULL,
           `PX` float DEFAULT NULL,

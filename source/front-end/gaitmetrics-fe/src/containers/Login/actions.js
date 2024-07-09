@@ -29,9 +29,9 @@ const HOC = (WrappedComponent) => {
         this.load
       )}
     loginSuccess = payload => {
-      let combinedPayload = _.merge({}, ...payload.DATA)
-      combinedPayload = _.mapValues(combinedPayload, value => _.toString(value));
-      storeItem('LOGIN_TOKEN', JSON.stringify(combinedPayload))
+      storeItem('LOGIN_TOKEN', payload.access_token)
+      storeItem('TYPE', payload.type)
+      storeItem('Username', payload.username)
       this.onChangeHOC('loggedIn',true)
     }
 

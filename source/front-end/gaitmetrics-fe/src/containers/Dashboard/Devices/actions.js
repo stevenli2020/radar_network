@@ -26,7 +26,7 @@ const HOC = (WrappedComponent) => {
     getDevices = () => {
       Post(
         `/api/getRegDevices`,
-        JSON.parse(getItem("LOGIN_TOKEN")),
+        {},
         this.getDevicesSuccess,
         error => requestError(error),
         this.load
@@ -42,7 +42,6 @@ const HOC = (WrappedComponent) => {
         let payload = {
           VALUE: value
         }
-        payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
         Post(
           `/api/getRoomSuggestion`,
           payload,
@@ -82,7 +81,6 @@ const HOC = (WrappedComponent) => {
         DESCRIPTION: values.devicedescription,
         PASSWORD:values.password
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       console.log(payload)
       Post(
         `/api/addNewDevice`,
@@ -104,7 +102,6 @@ const HOC = (WrappedComponent) => {
         username: values.macAddress,
         password:values.password
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       console.log(payload)
       Post(
         `/api/addDeviceCredential`,
@@ -141,7 +138,6 @@ const HOC = (WrappedComponent) => {
         DEVICE_TYPE: values.TYPE,
         DESCRIPTION: values.DESCRIPTION,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       console.log(payload)
       Post(
         `/api/updateDevice`,
@@ -160,7 +156,6 @@ const HOC = (WrappedComponent) => {
         Id: device.Id,
         MAC: device.MAC
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/deleteDevice`,
         payload,
@@ -176,7 +171,7 @@ const HOC = (WrappedComponent) => {
     getMQTTClientID = async() => {
       await Post(
         `/api/getMQTTClientID`,
-        JSON.parse(getItem("LOGIN_TOKEN")),
+        {},
         this.getMQTTClientIDSuccess,
         error => requestError(error),
         this.load
@@ -191,7 +186,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         client_id: client_id,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       await Post(
         `/api/setClientConnection`,
         payload,

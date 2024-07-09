@@ -33,8 +33,8 @@ const Header = () => {
   }, [imageUrl]);
 
   useEffect(()=>{
-    if (getItem("LOGIN_TOKEN")){
-      if (JSON.parse(getItem("LOGIN_TOKEN")).TYPE == "1"){
+    if (getItem("LOGIN_TOKEN") && getItem("TYPE")){
+      if (getItem("TYPE") == "1"){
         updateMenuItems(_.find( router, { label: "Dashboard" } ).children.slice(0, 3))
       }else{
         updateMenuItems(_.find( router, { label: "Dashboard" } ).children.slice(0, 1))

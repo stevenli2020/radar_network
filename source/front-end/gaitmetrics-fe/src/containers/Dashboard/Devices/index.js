@@ -91,7 +91,7 @@ const Devices = props => {
             client.onMessageArrived = onMessageArrived;
           },
           onFailure: doFail,
-          userName: JSON.parse(getItem("LOGIN_TOKEN")).Username,
+          userName: getItem("Username"),
           password: "c764eb2b5fa2d259dc667e2b9e195218",
         });
       } catch (error) {

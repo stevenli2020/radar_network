@@ -15,15 +15,15 @@ def auth(data):
     dbresult = cursor.fetchall()
     login = False
     admin = False
-    if len(dbresult)==1:
+    if len(dbresult)==0:
         login = False
         admin = False
     cursor.close()
     connection.close()
-    if data.get('TYPE') == '0':
+    if data.get('TYPE') == 0:
         login = True
         admin = False
-    elif data.get('TYPE') == '1':
+    elif data.get('TYPE') == 1:
         login = True
         admin = True
     return login, admin
@@ -43,7 +43,6 @@ def signIn(data):
     if not dbresult:
         result['ERROR'].append({'Username': 'Username is incorrect!'})
         return result
-    print(dbresult)
     if dbresult[2] != data['PWD']:
         result['ERROR'].append({'PWD': 'Password is incorrect!'})    
     if len(result['ERROR']):
@@ -51,10 +50,12 @@ def signIn(data):
     sql = "UPDATE USERS SET STATUS='%s' WHERE LOGIN_NAME='%s'"%(2,data["LOGIN_NAME"])
     cursor.execute(sql)
     connection.commit()
-    result['DATA'].append({'ID': dbresult[0]})
-    result['DATA'].append({'Username': dbresult[1]})
-    result['DATA'].append({'CODE': dbresult[3]})
-    result['DATA'].append({'TYPE': dbresult[4]})
+    result['DATA'].append({
+        'ID': dbresult[0],
+        'Username': dbresult[1],
+        'CODE': dbresult[3],
+        'TYPE': dbresult[4]
+    })
     cursor.close()
     connection.close()
     return result

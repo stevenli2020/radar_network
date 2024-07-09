@@ -1,11 +1,14 @@
 import Axios from 'axios'
 import getDomainURL from 'utils/api'
+import { getItem } from 'utils/tokenStore'
 
 export const Get = (url, response, error, load, isPublic ) => {
   load(true)
+  let token = getItem("LOGIN_TOKEN")
   Axios.defaults.headers = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*'
+    'Access-Control-Allow-Origin': '*',
+    ...token ? {'Authorization': `Bearer ${token}`} : {}
   }
   return Axios.get(`${getDomainURL()}${url}`).then(res => {
     response(res.data)
@@ -31,8 +34,11 @@ export const Get = (url, response, error, load, isPublic ) => {
 
 export const Post = (url, data, response, error, load, isPublic) => {
   load(true)
+  let token = getItem("LOGIN_TOKEN")
   Axios.defaults.headers = {
-    'Access-Control-Allow-Origin': '*'
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    ...token ? {'Authorization': `Bearer ${token}`} : {}
   }
   const requestUrl = url.indexOf( 'http' ) > -1 ? url : `${getDomainURL()}${ url }`
   return Axios.post( requestUrl, data ).then( res => {
@@ -73,9 +79,11 @@ export const Post = (url, data, response, error, load, isPublic) => {
 
 export const PostForm = (url, data, response, error, load, isPublic) => {
   load(true)
+  let token = getItem("LOGIN_TOKEN")
   Axios.defaults.headers = {
     'Content-Type': 'multipart/form-data',
-    'Access-Control-Allow-Origin': '*'
+    'Access-Control-Allow-Origin': '*',
+    ...token ? {'Authorization': `Bearer ${token}`} : {}
   }
   const requestUrl = url.indexOf( 'http' ) > -1 ? url : `${getDomainURL()}${ url }`
   return Axios.post( requestUrl, data ).then( res => {
@@ -116,8 +124,11 @@ export const PostForm = (url, data, response, error, load, isPublic) => {
 
 export const Put = (url, data, response, error, load, isPublic, customToken ) => {
   load(true)
+  let token = getItem("LOGIN_TOKEN")
   Axios.defaults.headers = {
-    'Access-Control-Allow-Origin': '*'
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    ...token ? {'Authorization': `Bearer ${token}`} : {}
   }
   return Axios.put(`${getDomainURL()}${url}`, data).then(res => {
     response(res.data)
@@ -147,8 +158,11 @@ export const Put = (url, data, response, error, load, isPublic, customToken ) =>
 
 export const Delete = (url, response, error, load, isPublic) => {
   load(true)
+  let token = getItem("LOGIN_TOKEN")
   Axios.defaults.headers = {
-    'Access-Control-Allow-Origin': '*'
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    ...token ? {'Authorization': `Bearer ${token}`} : {}
   }
   return Axios.delete(`${getDomainURL()}${url}`).then(res => {
     response(res.data)

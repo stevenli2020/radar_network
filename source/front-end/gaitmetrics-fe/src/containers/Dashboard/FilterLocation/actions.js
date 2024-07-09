@@ -21,7 +21,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         ROOM_UUID:room_uuid
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getRoomDetail`,
         payload,
@@ -41,7 +40,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         room_id:room_id
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getFilterLocationHistory`,
         payload,
@@ -61,7 +59,6 @@ const HOC = (WrappedComponent) => {
         room_id:this.state.room.ID,
         data:areas
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/updateFilterLocationHistory`,
         payload,

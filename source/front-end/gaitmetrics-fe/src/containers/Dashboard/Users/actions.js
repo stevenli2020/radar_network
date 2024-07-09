@@ -23,7 +23,7 @@ const HOC = (WrappedComponent) => {
 
     getUsers = () => Post(
         `/api/getAllUsers`,
-        JSON.parse(getItem("LOGIN_TOKEN")),
+        {},
         this.getUsersSuccess,
         error => requestError(error),
         this.load
@@ -38,7 +38,6 @@ const HOC = (WrappedComponent) => {
         let payload = {
           VALUE: value
         }
-        payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
         Post(
           `/api/getRoomSuggestion`,
           payload,
@@ -72,7 +71,6 @@ const HOC = (WrappedComponent) => {
         USER_TYPE: values.usertype,
         ROOM: values.rooms,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/usersManagement`,
         payload,
@@ -96,7 +94,6 @@ const HOC = (WrappedComponent) => {
         USER_TYPE: values.TYPE,
         ROOM: values.rooms,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/updateUser`,
         payload,
@@ -113,7 +110,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         USER_ID:user.ID
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/deleteUser`,
         payload,
@@ -130,7 +126,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         USER_ID:user.ID
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/sentEmail`,
         payload,

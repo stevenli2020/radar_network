@@ -11,7 +11,7 @@ const Dashboard = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if(!getItem("LOGIN_TOKEN")){
+    if(!getItem("LOGIN_TOKEN") || !getItem("Username") || !getItem("TYPE")){
       navigate('/')
     }else{
       const currPath = window.location.pathname.split("/")

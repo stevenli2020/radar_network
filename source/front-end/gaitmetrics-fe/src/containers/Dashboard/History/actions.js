@@ -37,7 +37,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         ROOM_UUID:room_uuid
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getRoomDetail`,
         payload,
@@ -78,7 +77,6 @@ const HOC = (WrappedComponent) => {
       if (unread){
         this.setState({receivedAlert:this.state.receivedAlert+1})
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getRoomAlerts`,
         payload,
@@ -116,7 +114,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         ROOM_UUID:room_uuid
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getRLMacRoom`,
         payload,
@@ -187,7 +184,6 @@ const HOC = (WrappedComponent) => {
       }else{
         payload.CUSTOM = 0
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       // console.log(payload)
       Post(
         `/api/getSummaryPositionData`,
@@ -210,7 +206,6 @@ const HOC = (WrappedComponent) => {
         ROOM_UUID: room_uuid,
         CUSTOM: 0
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getAnalyticData`,
         payload,
@@ -239,7 +234,6 @@ const HOC = (WrappedComponent) => {
         payload.CUSTOM = 0
         payload.TIME = type
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getHistOfVital`,
         payload,
@@ -285,7 +279,7 @@ const HOC = (WrappedComponent) => {
     getMQTTClientID = async() => {
       await Post(
         `/api/getMQTTClientID`,
-        JSON.parse(getItem("LOGIN_TOKEN")),
+        {},
         this.getMQTTClientIDSuccess,
         error => requestError(error),
         this.load
@@ -300,7 +294,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         client_id: client_id,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       await Post(
         `/api/setClientConnection`,
         payload,

@@ -22,15 +22,58 @@ const HOC = (WrappedComponent) => {
       client_id: null
     };
 
+    sound = new Audio(alertSound);
+
     onChangeHOC = (key, val) => this.setState({ [key]: val });
 
     load = (param) => this.setState({ loading: param });
     temp = (param) => this.setState({ temp: param });
 
+    componentWillUnmount() {
+      // Cleanup audio playback and event listener
+      this.stopSound();
+    }
+
+    playSound = () => {
+      // Play audio and set playing state to true
+      this.sound.play()
+        .then(() => {
+          console.log("Sound playing");
+          this.setState({ playing: true });
+        })
+        .catch((error) => {
+          console.error("Playback error:", error);
+          this.setState({ playing: false });
+        });
+
+      // Listen for 'ended' event to restart playback
+      this.sound.addEventListener('ended', this.playAndRestart);
+    };
+
+    stopSound = () => {
+      // Stop audio playback and reset state
+      this.sound.pause();
+      this.sound.currentTime = 0;
+      this.setState({ playing: false });
+      this.sound.removeEventListener('ended', this.playAndRestart);
+    };
+
+    playAndRestart = () => {
+      // Function to restart playback when audio ends
+      this.sound.currentTime = 0;
+      this.sound.play()
+        .then(() => {
+          console.log("Sound playing");
+        })
+        .catch((error) => {
+          console.error("Playback error:", error);
+        });
+    };
+
     getRoomDetails = async() => {
       await Post(
         `/api/getRoomDetails`,
-        JSON.parse(getItem("LOGIN_TOKEN")),
+        {},
         this.getRoomDetailsSuccess,
         error => requestError(error),
         this.load
@@ -51,18 +94,7 @@ const HOC = (WrappedComponent) => {
         }
       });
       if (urgent){			
-        try{
-          const sound = new Audio(alertSound)
-          sound.play().then(() => {
-            // If playback is successful, sound permission is likely granted
-            console.log("Permission granted")
-          }).catch((error) => {
-            // If playback fails, sound permission is likely denied
-            console.log(error)
-          });
-        } catch (error) {
-          // If an exception occurs, sound permission status is uncertain
-        }
+        this.playSound();
       }
       this.setState({alertLength:c})
     }
@@ -78,8 +110,6 @@ const HOC = (WrappedComponent) => {
         INFO: info,
         IMAGE_NAME: this.state.newUploadImg,
       }
-      console.log(payload)
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/addNewRoom`,
         payload,
@@ -106,7 +136,6 @@ const HOC = (WrappedComponent) => {
         O_IMAGE_NAME: this.state.selectedRoom.IMAGE_NAME,
         ROOM_UUID: this.state.selectedRoom.ROOM_UUID,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       console.log(payload)
       Post(
         `/api/updateRoom`,
@@ -125,7 +154,6 @@ const HOC = (WrappedComponent) => {
         ROOM_UUID: room.ROOM_UUID,
         IMAGE_NAME: room.IMAGE_NAME,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/deleteRoom`,
         payload,
@@ -148,8 +176,7 @@ const HOC = (WrappedComponent) => {
       //   body:
       // }
       // console.log(payload)
-      // payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
-      Post(
+      PostForm(
         `/api/uploadImg`,
         form_data,
         this.uploadNewImgSuccess,
@@ -168,7 +195,7 @@ const HOC = (WrappedComponent) => {
       const form_data = new FormData();
       form_data.append('update-room-img', values, values.name);
       console.log(form_data)
-      Post(
+      PostForm(
         `/api/uploadImg`,
         form_data,
         this.uploadUpdateImgSuccess,
@@ -186,7 +213,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         data:areas
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/updateRoomLocationOnMap`,
         payload,
@@ -204,7 +230,7 @@ const HOC = (WrappedComponent) => {
     getMQTTClientID = async() => {
       await Post(
         `/api/getMQTTClientID`,
-        JSON.parse(getItem("LOGIN_TOKEN")),
+        {},
         this.getMQTTClientIDSuccess,
         error => requestError(error),
         this.load
@@ -219,7 +245,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         client_id: client_id,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       await Post(
         `/api/setClientConnection`,
         payload,

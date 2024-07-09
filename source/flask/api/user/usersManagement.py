@@ -87,7 +87,7 @@ def addNewUser(data):
     now = datetime.now()
     cursor.execute("INSERT INTO Gaitmetrics.USERS (LOGIN_NAME, FULL_NAME, EMAIL, PHONE, TYPE, STATUS, CODE, CREATED) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)", (data['LOGIN_NAME'], data['FULL_NAME'], data['EMAIL'], data['PHONE'], data['USER_TYPE'], 0, code, now))
     connection.commit()
-    body = emailTemplate(data['LOGIN_NAME'], domain_url + "/resetPassword?user="+str(data['LOGIN_NAME'])+"&code="+str(code)+"&mode=add", "add")
+    body = emailTemplate(data['LOGIN_NAME'], domain_url() + "/resetPassword?user="+str(data['LOGIN_NAME'])+"&code="+str(code)+"&mode=add", "add")
     sentMail(data['EMAIL'], 'Account Created Successfully', body)
     if str(data['USER_TYPE']) == '0':
         sql = "SELECT * FROM Gaitmetrics.USERS WHERE LOGIN_NAME='%s'"%(data['LOGIN_NAME'])

@@ -2,6 +2,7 @@ import paho.mqtt.client as paho
 import time
 import mysql.connector
 import json
+from datetime import datetime, timedelta
 
 broker = '143.198.199.16'
 port = 1883
@@ -28,6 +29,10 @@ config = {
 }
 
 heart_abnormal = {
+
+}
+
+sign_of_life = {
 
 }
 
@@ -102,6 +107,31 @@ def subscribe(client: paho):
             else:
                 print(f"Failed to send message to topic {real_topic}")
         elif (parts[-1] == "JSON"):
+            all_zero = True
+            sol = False
+            for item in msg['DATA']:
+                if item.get('signOfLife') != 0:
+                    all_zero = False
+                    
+                    if item.get('signOfLife') == 1:
+                        sol = True
+                
+            if (all_zero):
+                if (sign_of_life.get(room_detail["ROOM_UUID"])):
+                    if check_sol_threshold(sign_of_life[room_detail["ROOM_UUID"]],msg['DATA'][0]["timeStamp"]):
+                        alert_msg = {
+                            "URGENCY":"3",
+                            "TYPE":"1",
+                            "DETAILS":"No Sign of Life!"
+                        }
+                        print("Insert heart rate alert")
+                        insert_alert(room_detail["ID"],alert_msg)
+                else:
+                    sign_of_life[room_detail["ROOM_UUID"]] = msg['DATA'][0]["timeStamp"]
+                
+            if (sol):
+                if (sign_of_life.get(room_detail["ROOM_UUID"])):
+                    del sign_of_life[room_detail["ROOM_UUID"]]
 
             BED_ANALYSIS = {
                 "IN_BED":False
@@ -159,6 +189,16 @@ def subscribe(client: paho):
     client.subscribe(sub_topic1)
     client.subscribe(sub_topic2)
     client.on_message = on_message
+
+def check_sol_threshold(first_ts, curr_ts):
+    first_dt = datetime.fromtimestamp(float(first_ts))
+    curr_dt = datetime.fromtimestamp(float(curr_ts))
+    
+    # Calculate the difference between the two timestamps
+    difference = curr_dt - first_dt
+    
+    # Check if the difference is over 30 seconds
+    return difference > timedelta(seconds=30)
 
 def run():
     client = connect_mqtt()

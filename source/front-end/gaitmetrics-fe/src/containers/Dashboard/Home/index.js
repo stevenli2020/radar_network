@@ -87,8 +87,8 @@ const Home = (props) => {
 
   useEffect(() => {
 
-		if (getItem("LOGIN_TOKEN")){
-      if (JSON.parse(getItem("LOGIN_TOKEN")).TYPE == "1"){
+		if (getItem("LOGIN_TOKEN") && getItem("TYPE")){
+      if (getItem("TYPE") == "1"){
         props.onChangeHOC('isAdmin',true)
       }
     }
@@ -109,7 +109,7 @@ const Home = (props) => {
             client.onMessageArrived = onMessageArrived;
           },
           onFailure: doFail,
-          userName: JSON.parse(getItem("LOGIN_TOKEN")).Username,
+          userName: getItem("Username"),
           password: "c764eb2b5fa2d259dc667e2b9e195218",
         });
       } catch (error) {

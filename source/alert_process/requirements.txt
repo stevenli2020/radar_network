@@ -1,2 +1,2 @@
 mysql.connector
-paho-mqtt
+paho-mqtt<2

@@ -11,7 +11,7 @@ const LoginPage = (props) => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if(getItem("LOGIN_TOKEN")){
+    if(getItem("LOGIN_TOKEN") && getItem("Username") && getItem("TYPE")){
       navigate('/dashboard')
     }
   }, [props.loggedIn])

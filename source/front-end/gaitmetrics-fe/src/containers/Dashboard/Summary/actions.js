@@ -32,6 +32,8 @@ const HOC = (WrappedComponent) => {
       sleeping_hour_options:null,
       time_in_bed_options:null,
       in_room_options:null,
+      in_room_posture_options:null,
+      in_room_series_posture_options:null,
       sleep_disruption_options:null,
       disrupt_duration_options:null,
       heart_rate_options:null,
@@ -59,7 +61,6 @@ const HOC = (WrappedComponent) => {
         room_id: room_id,
         eow:eow
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getRoomLaymanDetail`,
         payload,
@@ -287,13 +288,209 @@ const HOC = (WrappedComponent) => {
               {
                 value: posVal,
                 name: posText,
-                itemStyle: { color: '#088395' } // Set the color for 'Sleeping'
+                // itemStyle: { color: '#088395' } 
               },
               {
                 value: negVal,
                 name: negText,
-                itemStyle: { color: '#35A29F' } // Set the color for 'Not Sleeping'
+                // itemStyle: { color: '#35A29F' } 
               }
+            ]
+          }
+        ]
+      }
+    }
+
+    generateSeriesPostureOptions = (data_arr) => {
+
+      let dates = []
+      let social_data = []
+      let moving_data = []
+      let upright_data = []
+      let laying_data = []
+      let unknown_data = []
+      let not_in_room_data = []
+
+      data_arr.forEach(item => {
+        dates.push(item.date);
+        social_data.push(item.social);
+        moving_data.push(item.moving);
+        upright_data.push(item.upright);
+        laying_data.push(item.laying);
+        unknown_data.push(item.unknown);
+        not_in_room_data.push(item.not_in_room)
+      });
+
+      return {
+        // title: {
+        //   text: 'In Room Posture Time Series Analysis'
+        // },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#6a7985'
+            }
+          },
+          formatter: function (params) {
+            let tooltipText = `<b>${params[0].name}</b><br/>`;
+            params.forEach(param => {
+              let minutes = param.value
+              let day = Math.floor(minutes / (24 * 60));
+              let hour = Math.floor((minutes % (24 * 60)) / 60);
+              let minute = minutes % 60;
+              let textString = ''
+        
+              if (day > 0){
+                textString += day.toString() + "d" 
+              }
+              if (hour > 0){
+                textString += hour.toString() + "h" 
+              }
+              if (minute > 0){
+                textString += minute.toString() + "m" 
+              }
+        
+              if (textString == ''){
+                textString = '0m'
+              }
+              tooltipText += `<b>${param.seriesName}:</b> ${textString}<br/>`;
+            });
+            return tooltipText;
+          },
+        },
+        legend: {
+          data: ['Social','Moving', 'Upright', 'Laying', 'Unknown', 'Not In Room']
+        },
+        toolbox: {
+          feature: {
+            saveAsImage: {}
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: [
+          {
+            type: 'category',
+            boundaryGap: true,
+            data: dates
+          }
+        ],
+        yAxis: [
+          {
+            type: 'value'
+          }
+        ],
+        series: [
+          {
+            name: 'Social',
+            type: 'bar',
+            stack: 'Total',
+            emphasis: {
+              focus: 'series'
+            },
+            data: social_data
+          },
+          {
+            name: 'Moving',
+            type: 'bar',
+            stack: 'Total',
+            emphasis: {
+              focus: 'series'
+            },
+            data: moving_data
+          },
+          {
+            name: 'Upright',
+            type: 'bar',
+            stack: 'Total',
+            emphasis: {
+              focus: 'series'
+            },
+            data: upright_data
+          },
+          {
+            name: 'Laying',
+            type: 'bar',
+            stack: 'Total',
+            emphasis: {
+              focus: 'series'
+            },
+            data: laying_data
+          },
+          {
+            name: 'Unknown',
+            type: 'bar',
+            stack: 'Total',
+            emphasis: {
+              focus: 'series'
+            },
+            data: unknown_data
+          },
+          {
+            name: 'Not In Room',
+            type: 'bar',
+            stack: 'Total',
+            emphasis: {
+              focus: 'series'
+            },
+            data: not_in_room_data
+          }
+        ]
+      }
+    }
+
+    generatePostureOptions = (data) => {
+      return {
+        legend: {
+          orient: 'vertical',
+          right: '0%',
+          bottom: '5%' 
+        },
+        dataset: [
+          {
+            source: [
+              { value: data.social, name: 'Social' },
+              { value: data.moving, name: 'Moving' },
+              { value: data.upright, name: 'Upright' },
+              { value: data.laying, name: 'Laying' },
+              { value: data.unknown, name: 'Unknown' },
+            ],
+            
+          }
+        ],
+        series: [
+          {
+            type: 'pie',
+            radius: '70%',
+            center: ['50%', '50%'], // Center the pie chart both horizontally and vertically
+            label: {
+              position: 'inside',
+              formatter: '{d}%',
+              color: 'black',
+              fontSize: 10
+            },
+            percentPrecision: 0,
+            emphasis: {
+              label: { show: true },
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            },
+            // Set colors for each name (category)
+            data: [
+              { value: data.social, name: 'Social' },
+              { value: data.moving, name: 'Moving' },
+              { value: data.upright, name: 'Upright' },
+              { value: data.laying, name: 'Laying' },
+              { value: data.unknown, name: 'Unknown' },
             ]
           }
         ]
@@ -403,6 +600,12 @@ const HOC = (WrappedComponent) => {
       }else{
         this.setState({ breath_rate_options: null })
       }
+
+      if (payload.data.inroom_analysis.length > 0){
+        let inroom_analysis = payload.data.inroom_analysis
+        this.setState({in_room_posture_options: this.generatePostureOptions(inroom_analysis[inroom_analysis.length-1])})
+        this.setState({in_room_series_posture_options: this.generateSeriesPostureOptions(inroom_analysis)})
+      }
     } 
 
     getRoomAlerts = (room_id,unread=true) => {
@@ -414,7 +617,6 @@ const HOC = (WrappedComponent) => {
       if (unread){
         this.setState({receivedAlert:this.state.receivedAlert+1})
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       Post(
         `/api/getRoomAlerts`,
         payload,
@@ -451,7 +653,7 @@ const HOC = (WrappedComponent) => {
     getMQTTClientID = async() => {
       await Post(
         `/api/getMQTTClientID`,
-        JSON.parse(getItem("LOGIN_TOKEN")),
+        {},
         this.getMQTTClientIDSuccess,
         error => requestError(error),
         this.load
@@ -466,7 +668,6 @@ const HOC = (WrappedComponent) => {
       let payload = {
         client_id: client_id,
       }
-      payload = { ...JSON.parse(getItem("LOGIN_TOKEN")), ...payload }
       await Post(
         `/api/setClientConnection`,
         payload,

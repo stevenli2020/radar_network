@@ -34,6 +34,8 @@ const Userbox = () => {
           break
         case "logout":
           storeItem("LOGIN_TOKEN", "")
+          storeItem("Username", "")
+          storeItem("TYPE", "")
           window.location.reload()
           break
         default: 

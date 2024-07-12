@@ -220,7 +220,9 @@ def getLaymanData(date,room_uuid):
     if (len(tables)>0):
         combine_table = []
         for table in tables:
-            combine_table.append(f"SELECT tb.* FROM {table} tb LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}' AND TIMESTAMP >= '{start_date}'")
+            combine_table.append(f"""SELECT tb.ID,tb.TIMESTAMP,tb.ROOM_UUID,tb.MAC,tb.TYPE,tb.STATE,tb.OBJECT_COUNT,
+                                 tb.OBJECT_LOCATION,tb.IN_BED,tb.IN_BED_MOVING,tb.HEART_RATE,tb.BREATH_RATE FROM {table} tb 
+                                 LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}' AND TIMESTAMP >= '{start_date}'""")
         combine_table_query = " UNION ".join(combine_table)
             
         sql = f"""

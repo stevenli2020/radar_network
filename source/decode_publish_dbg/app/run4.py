@@ -172,13 +172,6 @@ def decode_process_publish(mac, data):
 
                 # print(deltaT)
                 if deltaT > 100:
-                    wallStateParam[mac]['x0'] = np.nan
-                    wallStateParam[mac]['y0'] = np.nan
-                    wallStateParam[mac]['z0'] = np.nan
-                    wallStateParam[mac]['timeStamp_stationary'] = np.nan
-                    wallStateParam[mac]['period_stationary'] = np.nan
-                    wallStateParam[mac]['timeStamp_lastSignOfLife'] = np.nan
-                    wallStateParam[mac]['period_noSignOfLife'] = np.nan
                     wallStateParam[mac]['x_coord_multi'] = []
                     wallStateParam[mac]['y_coord_multi'] = []
                     wallStateParam[mac]['z_coord_multi'] = []
@@ -199,7 +192,7 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['trackerInvalid'] = np.zeros((0))
                     wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy',
                                                                             'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ', 'accX', 'accY', 'accZ', 
-                                                                            'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult', 'signOfLife'])
+                                                                            'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult'])
 
                 # Read parsed data from radar output dictionary
                 # Radar Trackers' Data Extraction
@@ -436,36 +429,6 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['trackPos'][minDistIdx] = [x_pos, y_pos, z_pos]
                                 wallStateParam[mac]['trackVelocity'][minDistIdx] = [x_vel, y_vel, z_vel]
 
-                                # Sign Of life
-                                if numTracks == 1:
-                                    if math.isnan(wallStateParam[mac]['x0']):
-                                        wallStateParam[mac]['x0'] = x_pos
-                                        wallStateParam[mac]['y0'] = y_pos
-                                        wallStateParam[mac]['z0'] = z_pos
-                                    else:
-                                        distanceMoved = np.abs(wallStateParam[mac]['x0'] - x_pos) + np.abs(wallStateParam[mac]['y0'] - y_pos) + np.abs(wallStateParam[mac]['z0'] - z_pos)
-                                        wallStateParam[mac]['x0'] = x_pos
-                                        wallStateParam[mac]['y0'] = y_pos
-                                        wallStateParam[mac]['z0'] = z_pos
-                                        if distanceMoved > 0.1 or math.isnan(wallStateParam[mac]['timeStamp_stationary']):
-                                            wallStateParam[mac]['timeStamp_stationary'] = ts
-                                        else:
-                                            wallStateParam[mac]['period_stationary'] = ts - wallStateParam[mac]['timeStamp_stationary']
-                                            if len(x_coord[trackIndices == trackId]) > 0 or math.isnan(wallStateParam[mac]['timeStamp_lastSignOfLife']):
-                                                wallStateParam[mac]['timeStamp_lastSignOfLife'] = ts
-                                            else:
-                                                wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
-                                                if wallStateParam[mac]['period_noSignOfLife'] > 30 and wallStateParam[mac]['period_stationary'] > 60:
-                                                    wall_Dict['signOfLife'] = 0
-                                                    
-                                                    # Publish alert via MQTT communication channel
-                                                    pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}
-                                                    jsonData = json.dumps(pubPayload)
-                                                    mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
-
-                                                else:
-                                                    wall_Dict['signOfLife'] = 1
-
                                 # Multi-Frame Aggregation
                                 wallStateParam[mac]['x_coord_multi'][minDistIdx].append(x_coord[trackIndices == trackId])
                                 wallStateParam[mac]['y_coord_multi'][minDistIdx].append(y_coord[trackIndices == trackId])
@@ -641,7 +604,6 @@ def decode_process_publish(mac, data):
                                     else:
                                         aggregate_dict['state'] = np.nan
                                     aggregate_dict['kidOrAdult'] = pandasDF_dum['kidOrAdult'].mean(skipna=True)
-                                    aggregate_dict['signOfLife'] = pandasDF_dum['signOfLife'].mean(skipna=True)
 
                                     # if aggregate_dict['state'].dropna().empty:
                                     # print(aggregate_dict)
@@ -673,9 +635,6 @@ def decode_process_publish(mac, data):
                                         aggregate_dict['numSubjects'] = int(round(aggregate_dict['numSubjects']))
                                     if not math.isnan(aggregate_dict['roomOccupancy']):
                                         aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
-                                    if not math.isnan(aggregate_dict['signOfLife']):
-                                        aggregate_dict['signOfLife'] = bool(round(aggregate_dict['signOfLife']))
-
                                     for key, value in aggregate_dict.items():
                                         if str(value)[0:3] == 'nan':
                                             aggregate_dict[key] = None
@@ -754,7 +713,6 @@ def decode_process_publish(mac, data):
                             aggregate_dict['bodyWidth'] = None
                             aggregate_dict['state'] = None
                             aggregate_dict['kidOrAdult'] = None
-                            aggregate_dict['signOfLife'] = None
 
                             # print(aggregate_dict['state'])
                             dict_copy = copy.deepcopy(aggregate_dict)
@@ -770,7 +728,6 @@ def decode_process_publish(mac, data):
                             # Append data frame
                             # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
                             wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
-                     
                   """
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
@@ -1537,7 +1494,7 @@ def decode_process_publish(mac, data):
                     vitalStateParam[mac]['rollingHeight'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving'])
 
                 # Vital Sign Data Extraction
                 # numTracks = 0
@@ -1559,7 +1516,7 @@ def decode_process_publish(mac, data):
                      if numTracks > 0 and len(vitalStateParam[mac]['previous_pointClouds']) > 0 and \
                             len(vitalStateParam[mac]['previous_pointClouds']) == len(trackIndices):
 
-                      if ('vitals' in outputDict) and vitalStateParam[mac]['periodStationary'] > 5:  # and count_subjectStationary > 100:
+                      if ('vitals' in outputDict) and vitalStateParam[mac]['periodStationary'] > 15:  # and count_subjectStationary > 100:
                         vitalsDict = outputDict['vitals']
                         # if count_vitalSign == 0:
                         #     Breathsignal = np.array(vitalsDict['breathWaveform'])
@@ -1615,7 +1572,7 @@ def decode_process_publish(mac, data):
                         vitalStateParam[mac]['prevBreathRate'] = curBreathRate
                         # print("\n*******************\nvital_dict: ", vital_dict)
 
-                      elif vitalStateParam[mac]['periodStationary'] <= 5:  # count_subjectStationary <= 100:
+                      elif vitalStateParam[mac]['periodStationary'] <= 15:  # count_subjectStationary <= 100:
                         # print("\n*******************\nvital_dict: X", )
                         # count_vitalSign = 0
                         vitalStateParam[mac]['prevBreathRate'] = 0
@@ -1625,9 +1582,6 @@ def decode_process_publish(mac, data):
                       # if dataOk and len(detObj["x"]) > 1:
                       if numTracks > 0 and len(vitalStateParam[mac]['previous_pointClouds']) > 0 and \
                             len(vitalStateParam[mac]['previous_pointClouds']) == len(trackIndices):
-
-                        # Sign of Life
-                        vital_dict['signOfLife'] = 1
 
                         # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                         # Since track indexes are delayed a frame, delay showing the current points by 1 frame
@@ -1737,7 +1691,7 @@ def decode_process_publish(mac, data):
 
                                 # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
                                 if len(v_coord[trackIndices == trackId]) > 5:
-                                  if np.abs(x_pos) < 1.0 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
+                                  if np.abs(x_pos) < 0.5 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
                                     # if np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) <= 0.3:
                                     # print("In Bed, Subject Stationary")
                                     vital_dict['bedOccupancy'] = 1
@@ -1752,7 +1706,7 @@ def decode_process_publish(mac, data):
                                     vitalStateParam[mac]['label_list'].append(1)
 
                                   # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
-                                  elif np.abs(x_pos) < 1.0 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
+                                  elif np.abs(x_pos) < 0.5 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
                                     # elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) > 0.3:
                                     # print("In Bed, Subject Moving")
                                     vital_dict['bedOccupancy'] = 1
@@ -1762,7 +1716,7 @@ def decode_process_publish(mac, data):
                                     vitalStateParam[mac]['periodStationary'] = 0
                                     vitalStateParam[mac]['label_list'].append(1)
 
-                                  elif np.abs(x_pos) > 1.0: # or np.abs(z_pos) > 1.0:
+                                  elif np.abs(x_pos) > 1.0 or np.abs(z_pos) > 1.0:
                                     # print("Out of Bed")
                                     vital_dict['bedOccupancy'] = 0
                                     # label_list.append(2)
@@ -1815,7 +1769,7 @@ def decode_process_publish(mac, data):
                 
                 if vitalStateParam[mac]['pandasDF'].empty:
                     # Append data frame
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving'])
                     vitalStateParam[mac]['pandasDF'] = pd.concat([vitalStateParam[mac]['pandasDF'], pd.DataFrame([vital_dict])], ignore_index=True)
 
                 elif (vital_dict['timeStamp'] - vitalStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
@@ -1847,14 +1801,11 @@ def decode_process_publish(mac, data):
                     aggregate_dict['breathRate'] = vitalStateParam[mac]['pandasDF']['breathRate'].mean(skipna=True)
                     aggregate_dict['heartRate'] = vitalStateParam[mac]['pandasDF']['heartRate'].mean(skipna=True)
                     aggregate_dict['inBedMoving'] = vitalStateParam[mac]['pandasDF']['inBedMoving'].mean(skipna=True)
-                    aggregate_dict['signOfLife'] = vitalStateParam[mac]['pandasDF']['signOfLife'].mean(skipna=True)
 
                     if not math.isnan(aggregate_dict['bedOccupancy']):
                         aggregate_dict['bedOccupancy'] = bool(round(aggregate_dict['bedOccupancy']))
                     if not math.isnan(aggregate_dict['inBedMoving']):
                         aggregate_dict['inBedMoving'] = bool(round(aggregate_dict['inBedMoving']))
-                    if not math.isnan(aggregate_dict['signOfLife']):
-                        aggregate_dict['signOfLife'] = bool(round(aggregate_dict['signOfLife']))
 
                     for key, value in aggregate_dict.items():
                         if str(value)[0:3] == 'nan':

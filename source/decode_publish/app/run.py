@@ -1537,7 +1537,7 @@ def decode_process_publish(mac, data):
                     vitalStateParam[mac]['rollingHeight'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife'])
 
                 # Vital Sign Data Extraction
                 # numTracks = 0
@@ -1625,6 +1625,9 @@ def decode_process_publish(mac, data):
                       # if dataOk and len(detObj["x"]) > 1:
                       if numTracks > 0 and len(vitalStateParam[mac]['previous_pointClouds']) > 0 and \
                             len(vitalStateParam[mac]['previous_pointClouds']) == len(trackIndices):
+
+                        # Sign of Life
+                        vital_dict['signOfLife'] = 1
 
                         # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                         # Since track indexes are delayed a frame, delay showing the current points by 1 frame
@@ -1812,7 +1815,7 @@ def decode_process_publish(mac, data):
                 
                 if vitalStateParam[mac]['pandasDF'].empty:
                     # Append data frame
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife'])
                     vitalStateParam[mac]['pandasDF'] = pd.concat([vitalStateParam[mac]['pandasDF'], pd.DataFrame([vital_dict])], ignore_index=True)
 
                 elif (vital_dict['timeStamp'] - vitalStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
@@ -1844,11 +1847,14 @@ def decode_process_publish(mac, data):
                     aggregate_dict['breathRate'] = vitalStateParam[mac]['pandasDF']['breathRate'].mean(skipna=True)
                     aggregate_dict['heartRate'] = vitalStateParam[mac]['pandasDF']['heartRate'].mean(skipna=True)
                     aggregate_dict['inBedMoving'] = vitalStateParam[mac]['pandasDF']['inBedMoving'].mean(skipna=True)
+                    aggregate_dict['signOfLife'] = vitalStateParam[mac]['pandasDF']['signOfLife'].mean(skipna=True)
 
                     if not math.isnan(aggregate_dict['bedOccupancy']):
                         aggregate_dict['bedOccupancy'] = bool(round(aggregate_dict['bedOccupancy']))
                     if not math.isnan(aggregate_dict['inBedMoving']):
                         aggregate_dict['inBedMoving'] = bool(round(aggregate_dict['inBedMoving']))
+                    if not math.isnan(aggregate_dict['signOfLife']):
+                        aggregate_dict['signOfLife'] = bool(round(aggregate_dict['signOfLife']))
 
                     for key, value in aggregate_dict.items():
                         if str(value)[0:3] == 'nan':

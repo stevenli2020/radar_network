@@ -204,7 +204,7 @@ def getRoomAlertsData(room_uuid,unread = True,set=True):
     connection.close()
     return result
 
-def getRoomsAlerts(MAC=[],unread=True):
+def getRoomsAlerts(MAC,unread=True):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     result = defaultdict(list)
@@ -212,11 +212,7 @@ def getRoomsAlerts(MAC=[],unread=True):
     if (unread):
         option = ' AND a.`NOTIFY`=0 ORDER BY a.`TIMESTAMP` DESC;'
 
-    macs = []
-    for mac in MAC:
-        macs.append("'" + mac + "'")
-    macs = ",".join(macs)
-    sql = f"SELECT a.`ID`,a.`TIMESTAMP`,a.`URGENCY`,a.`TYPE`,a.`DETAILS`,a.`NOTIFY` ,a.`NOTIFY_TIMESTAMP` FROM `ALERT` a LEFT JOIN `ROOMS_DETAILS` r ON a.`ROOM_ID`=r.`ID` LEFT JOIN `RL_ROOM_MAC` rm ON r.`ROOM_UUID`=rm.`ROOM_UUID` WHERE rm.`MAC` IN ({macs})" + option
+    sql = f"SELECT a.`ID`,a.`TIMESTAMP`,a.`URGENCY`,a.`TYPE`,a.`DETAILS`,a.`NOTIFY` ,a.`NOTIFY_TIMESTAMP` FROM `ALERT` a LEFT JOIN `ROOMS_DETAILS` r ON a.`ROOM_ID`=r.`ID` LEFT JOIN `RL_ROOM_MAC` rm ON r.`ROOM_UUID`=rm.`ROOM_UUID` WHERE a.URGENCY=3 AND rm.`MAC`='{MAC}'" + option
     cursor.execute(sql)   
     local_timezone = get_localzone()
     result["DATA"] = [{"ID": ID, "TIMESTAMP": TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if TIMESTAMP else TIMESTAMP, "URGENCY":URGENCY, "TYPE":TYPE, "DETAILS":DETAILS, "NOTIFY":NOTIFY, "NOTIFY_TIMESTAMP": NOTIFY_TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if NOTIFY_TIMESTAMP else NOTIFY_TIMESTAMP} for (ID, TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP) in cursor]

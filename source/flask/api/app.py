@@ -831,15 +831,15 @@ def getRoomAlerts():
         else:
             return {"ERROR": 'Empty json!'}
         
-@app.route('/api/getAlerts', methods=['POST'])
+@app.route('/api/getCriticalAlerts', methods=['POST'])
 def getAlerts():
     if request.method == 'POST':
         data = request.json  
         if data:
-            if "room_id" in data:              
-                return getRoomsAlerts(data.get("MAC",[]),unread=data.get("unread",True))
+            if "MAC" in data:              
+                return getRoomsAlerts(data.get("MAC"),unread=data.get("unread",True))
             else:
-                return {"ERROR": 'Please provide room id!'}
+                return {"ERROR": 'Please provide MAC!'}
         else:
             return {"ERROR": 'Empty json!'}
         

@@ -450,12 +450,13 @@ def decode_process_publish(mac, data):
                                         if distanceMoved > 0.1 or math.isnan(wallStateParam[mac]['timeStamp_stationary']):
                                             wallStateParam[mac]['timeStamp_stationary'] = ts
                                         else:
-                                            wallStateParam[mac]['period_stationary'] = ts - wallStateParam[mac]['timeStamp_stationary']
+                                            
                                             if len(x_coord[trackIndices == trackId]) > 0 or math.isnan(wallStateParam[mac]['timeStamp_lastSignOfLife']):
                                                 wallStateParam[mac]['timeStamp_lastSignOfLife'] = ts
                                             else:
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
-                                                if wallStateParam[mac]['period_noSignOfLife'] > 30 and wallStateParam[mac]['period_stationary'] > 60:
+                                                wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
+                                                if wallStateParam[mac]['period_noSignOfLife'] > 30 and wallStateParam[mac]['period_stationary'] > 30:
                                                     wall_Dict['signOfLife'] = 0
                                                     
                                                     # Publish alert via MQTT communication channel

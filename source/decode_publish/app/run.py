@@ -460,9 +460,9 @@ def decode_process_publish(mac, data):
                                                     wall_Dict['signOfLife'] = 0
                                                     
                                                     # Publish alert via MQTT communication channel
-                                                    pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}
-                                                    jsonData = json.dumps(pubPayload)
-                                                    mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
+                                                    # pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}
+                                                    # jsonData = json.dumps(pubPayload)
+                                                    # mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
 
                                                 else:
                                                     wall_Dict['signOfLife'] = 1

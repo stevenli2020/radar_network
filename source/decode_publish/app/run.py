@@ -456,7 +456,7 @@ def decode_process_publish(mac, data):
                                             else:
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
                                                 wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
-                                                if wallStateParam[mac]['period_noSignOfLife'] > 30 and wallStateParam[mac]['period_stationary'] > 30:
+                                                if wallStateParam[mac]['period_noSignOfLife'] > 60 and wallStateParam[mac]['period_stationary'] > 60:
                                                     wall_Dict['signOfLife'] = 0
                                                     
                                                     # Publish alert via MQTT communication channel
@@ -541,7 +541,7 @@ def decode_process_publish(mac, data):
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
                                           # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
-                                          if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8 and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
+                                          if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 3
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 2

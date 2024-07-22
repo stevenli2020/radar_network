@@ -361,7 +361,8 @@ const HOC = (WrappedComponent) => {
           },
         },
         legend: {
-          data: ['Social','Moving', 'Upright', 'Laying', 'Unknown', 'Not In Room']
+          data: ['Social', 'Moving', 'Upright', 'Laying', 'Unknown', 'Not In Room'],
+          type: 'scroll'
         },
         toolbox: {
           feature: {
@@ -448,9 +449,10 @@ const HOC = (WrappedComponent) => {
     generatePostureOptions = (data) => {
       return {
         legend: {
-          orient: 'vertical',
-          right: '0%',
-          bottom: '5%' 
+          orient: 'horizontal',
+          bottom: '0%',
+          left: 'center',
+          type: 'scroll'
         },
         dataset: [
           {

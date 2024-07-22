@@ -535,8 +535,21 @@ def text_to_seconds(text):
 
     return total_seconds
 
+def is_nap(start_time, end_time):
+    # Define daytime hours
+    nap_start_limit = datetime.time(6, 0, 0)  # 6:00 AM
+    nap_end_limit = datetime.time(20, 0, 0)   # 8:00 PM
+    
+    # Calculate the duration of the sleep
+    duration = end_time - start_time
+    
+    # Check if the nap is within the specified daytime hours and duration
+    if (nap_start_limit <= start_time.time() <= nap_end_limit) and (timedelta(minutes=10) <= duration <= timedelta(hours=3.5)):
+        return True
+    return False
+
 def check_sleeping_intervals(data):
-    threshold = 60 * 90
+    threshold = 60 * 45
     sleeping_threshold = 60 * 45
 
     disruption_threshold = 60 * 2.5
@@ -704,16 +717,17 @@ def analyseData(data,current_date):
             break    
 
     for interval in sleeping_intervals:
-        start_sleep_time.append(interval[0]["MINUTE"])
+        if not is_nap(interval[0]["MINUTE"],interval[-1]["MINUTE"]):
+            start_sleep_time.append(interval[0]["MINUTE"])
 
-        if (str(interval[0]["MINUTE"].date()) == current_date):
-            current_bed_time = to_bedtime(interval[0]["MINUTE"])
+            if (str(interval[0]["MINUTE"].date()) == current_date):
+                current_bed_time = to_bedtime(interval[0]["MINUTE"])
 
-        wake_up_time.append(interval[-1]["MINUTE"])
+            wake_up_time.append(interval[-1]["MINUTE"])
 
-        if (str(interval[-1]["MINUTE"].date()) == current_date):
-            if not current_wake_time:
-                current_wake_time = to_waketime(interval[-1]["MINUTE"])
+            if (str(interval[-1]["MINUTE"].date()) == current_date):
+                if not current_wake_time:
+                    current_wake_time = to_waketime(interval[-1]["MINUTE"])
 
     try:
         sleeping_longest = int(max(sleeping_seconds))

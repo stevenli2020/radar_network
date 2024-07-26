@@ -172,14 +172,14 @@ def analyse_position_data(data):
 
         if row["IN_ROOM"] == 1:
             in_room_min += 1
-            if row["IS_SOCIAL"] == 1:
-                social_min += 1
-            elif row["IS_MOVING"] == 1:
+            if row["IS_MOVING"] == 1:
                 moving_min += 1
             elif row["IS_UPRIGHT"] == 1:
                 upright_min += 1
             elif row["IS_LAYING"] == 1:
                 laying_min += 1
+            elif row["IS_SOCIAL"] == 1:
+                social_min += 1
             else:
                 unknown += 1
                 

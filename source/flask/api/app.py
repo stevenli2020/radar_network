@@ -53,6 +53,8 @@ from user.roomManager import getRoomData
 from user.roomManager import getSpecificRoomData
 from user.roomManager import getRoomAlertsData
 from user.roomManager import getRoomsAlerts
+from user.roomManager import getDeviceConfig
+from user.roomManager import setDeviceConfig
 from user.roomManager import readRoomAlertsData
 from user.roomManager import getFilterLocationHistoryData
 from user.roomManager import updateFilterLocationHistoryData
@@ -838,6 +840,30 @@ def getAlerts():
         if data:
             if "MAC" in data:              
                 return getRoomsAlerts(data.get("MAC"),unread=data.get("unread",True))
+            else:
+                return {"ERROR": 'Please provide MAC!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/getDeviceConfig', methods=['POST'])
+def getConfig():
+    if request.method == 'POST':
+        data = request.json  
+        if data:
+            if "MAC" in data:              
+                return getDeviceConfig(data.get("MAC"))
+            else:
+                return {"ERROR": 'Please provide MAC!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/setDeviceConfig', methods=['POST'])
+def setConfig():
+    if request.method == 'POST':
+        data = request.json  
+        if data:
+            if "MAC" in data:              
+                return setDeviceConfig(data.get("MAC"),flag=data.get("flag",True))
             else:
                 return {"ERROR": 'Please provide MAC!'}
         else:

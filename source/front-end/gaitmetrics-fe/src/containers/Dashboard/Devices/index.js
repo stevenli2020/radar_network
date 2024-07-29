@@ -323,7 +323,7 @@ const Devices = props => {
 			}
 
       <AddDeviceModal visible={addVisible} action={props.registerDevice} close={closeAddModal} suggestions={props.roomSuggestions} />
-      { updateVisible && <UpdateDeviceModal visible={updateVisible} action={props.updateDevice} close={closeUpdateModal} selectedDevice={props.selectedDevice} suggestions={props.roomSuggestions}/>}
+      { updateVisible && <UpdateDeviceModal visible={updateVisible} action={props.updateDevice} close={closeUpdateModal} selectedDevice={props.selectedDevice} suggestions={props.roomSuggestions} setDeviceConfig={props.setDeviceConfig}/>}
       { configureVisible && <ConfigureDeviceModal visible={configureVisible} action={configureDevice} close={closeConfigureModal} selectedDevice={props.selectedDevice}/>}
     </Container>
 	)

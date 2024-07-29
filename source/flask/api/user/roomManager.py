@@ -309,3 +309,43 @@ def updateRoomLocationOnMapData(data):
             "ERROR":str(e),
             "RESULT": False
         }
+
+def getDeviceConfig(MAC):
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    result = defaultdict(list)
+
+    sql = f"SELECT CONFIG_SWITCH FROM `DEVICES` WHERE MAC='{MAC}'"
+    cursor.execute(sql)
+    flag = 0
+    for (CONFIG_SWITCH) in cursor:
+        flag = CONFIG_SWITCH
+
+    if flag:
+        result["DATA"] = {
+            "DETAILS":"CONFIG"
+            }
+    else:
+        result["DATA"] = None
+    cursor.close()
+    connection.close()
+    return result
+
+def setDeviceConfig(MAC,flag):
+    try:
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor()
+        result = defaultdict(list)
+        print(result)
+        sql = f"UPDATE DEVICES SET CONFIG_SWITCH={flag} WHERE MAC='{MAC}';"
+        cursor.execute(sql)   
+        connection.commit() 
+        return {
+            "RESULT": True
+        }
+    except Exception as e:
+        print(e)
+        return {
+            "ERROR":str(e),
+            "RESULT": False
+        }

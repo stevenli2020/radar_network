@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Input, Row, Col, Select, Modal } from 'antd';
+import { Form, Input, Row, Col, Select, Modal, Button } from 'antd';
 
 const UpdateDeviceModal = (props) => {
   const [form] = Form.useForm();
@@ -12,6 +12,16 @@ const UpdateDeviceModal = (props) => {
     props.action(values)
     props.close()
   };
+
+  const setConfig = () =>{
+    var flag = props.selectedDevice.CONFIG_SWITCH
+    if (flag == 0){
+      flag = 1
+    }else{
+      flag = 0
+    }
+    props.setDeviceConfig(props.selectedDevice.MAC,flag)
+  }
 
   return (
     <Modal
@@ -143,6 +153,16 @@ const UpdateDeviceModal = (props) => {
             >
               <TextArea />
             </Form.Item>
+          </Col>
+
+          <Col span={24}>
+            <Button
+              type="primary"
+              size="large"
+              onClick={setConfig}
+            >
+              {props.selectedDevice.CONFIG_SWITCH==0?'Turn On Config':'Turn Off Config'}
+            </Button>
           </Col>
         </Row>
       </Form>

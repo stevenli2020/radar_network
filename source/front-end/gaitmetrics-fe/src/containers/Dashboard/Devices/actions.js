@@ -199,6 +199,32 @@ const HOC = (WrappedComponent) => {
       this.setState({client_id:payload.DATA.client_id})
     }
 
+    setDeviceConfig = async(mac,flag) => {
+      let payload = {
+        MAC: mac,
+        flag:flag
+      }
+      await Post(
+        `/api/setDeviceConfig`,
+        payload,
+        this.setDeviceConfigSuccess,
+        error => requestError(error),
+        this.temp
+      )
+    }
+
+    setDeviceConfigSuccess = payload => {
+      this.getDevices()
+      var temp = this.state.selectedDevice
+      if (temp.CONFIG_SWITCH == 0){
+        temp.CONFIG_SWITCH = 1
+      }else{
+        temp.CONFIG_SWITCH = 0
+      }
+      this.setState({selectedDevice:temp})
+      requestSuccess("Device config set successfully!")
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -214,6 +240,7 @@ const HOC = (WrappedComponent) => {
           suggestRoom={this.getRoomSuggestion}
           getMQTTClientID={this.getMQTTClientID}
           setClientConnection={this.setClientConnection}
+          setDeviceConfig={this.setDeviceConfig}
         />
       );
     };

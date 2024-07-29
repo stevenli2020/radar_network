@@ -548,6 +548,27 @@ def is_nap(start_time, end_time):
         return True
     return False
 
+def is_uninterrupted_night_sleep(end_time_prev, start_time_current, max_wake_duration=1.5, night_start='22:00', night_end='06:00'):
+    
+    # Calculate wake duration
+    wake_duration = (start_time_current - end_time_prev).total_seconds() / 3600
+    
+    # Check if wake duration exceeds the threshold
+    if wake_duration > max_wake_duration:
+        return False
+    
+    # Define night period
+    night_start_time = pd.to_datetime(night_start).time()
+    night_end_time = pd.to_datetime(night_end).time()
+    
+    # Check if the sleep interval falls within the night period
+    start_time_current_time = start_time_current.time()
+    
+    if night_start_time <= start_time_current_time or start_time_current_time < night_end_time:
+        return True
+    else:
+        return False
+
 def check_sleeping_intervals(data):
     threshold = 60 * 45
     sleeping_threshold = 60 * 45
@@ -629,12 +650,25 @@ def check_sleeping_intervals(data):
 
             diff = interval[-1]["MINUTE"] - interval[0]["MINUTE"]
             if (diff.total_seconds() > sleeping_threshold and len(interval) > 45):
-                print("From",interval[0]["MINUTE"],"to",interval[-1]["MINUTE"])
-                sleep_intervals.append(interval)
-                sleeping_disruptions.append(disruptions[index])
-                sleeping_disrupt_durations.append(disrupt_durations[index])
+                # print("From",interval[0]["MINUTE"],"to",interval[-1]["MINUTE"])
+                if (index >0):
+                    if (is_uninterrupted_night_sleep(sleep_intervals[-1][-1]["MINUTE"],interval[0]["MINUTE"])):
+                        sleep_intervals[-1] = sleep_intervals[-1] + interval
+                        sleeping_disruptions[-1] = sleeping_disruptions[-1] + disruptions[index]
+                        sleeping_disrupt_durations[-1] = sleeping_disrupt_durations[-1] + disrupt_durations[index]
+                    else:
+                        sleep_intervals.append(interval)
+                        sleeping_disruptions.append(disruptions[index])
+                        sleeping_disrupt_durations.append(disrupt_durations[index])
+                else:
+                    sleep_intervals.append(interval)
+                    sleeping_disruptions.append(disruptions[index])
+                    sleeping_disrupt_durations.append(disrupt_durations[index])
         
         index += 1
+
+    for interval in sleep_intervals:
+        print("From",interval[0]["MINUTE"],"to",interval[-1]["MINUTE"])
 
     for row in data:
         for interval in sleep_intervals:

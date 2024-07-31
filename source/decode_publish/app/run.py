@@ -105,6 +105,7 @@ def decode_process_publish(mac, data):
                 outputDict = parseStandardFrame(byteAD)
             except:
                 outputDict = None
+                continue
             print(mac)
             # print(byteAD)
             # print(outputDict)
@@ -722,7 +723,6 @@ def decode_process_publish(mac, data):
                         wallStateParam[mac]['trackerInvalid'] = wallStateParam[mac]['trackerInvalid'][wallStateParam[mac]['trackerInvalid'] == 0]
                         wallStateParam[mac]['trackerInvalid'] = wallStateParam[mac]['trackerInvalid'] + 1
 
-                  """
                   else:
                     
                     wall_Dict = {}
@@ -732,8 +732,8 @@ def decode_process_publish(mac, data):
                     if "pandasDF" in wallStateParam[mac]:
                         if wallStateParam[mac]['pandasDF'].empty:
                             # Append data frame
-                            # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
-                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                            wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
+                            # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
                         elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
 
@@ -763,16 +763,15 @@ def decode_process_publish(mac, data):
                             # print(json_string)
 
                             # Update the new data frame
-                            # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
-                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                            wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
+                            # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
                             wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].iloc[-1:,:]
 
                         else:
                             # Append data frame
-                            # wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
-                            wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
+                            wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
+                            # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
                      
-                  """
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 # Since track indexes are delayed a frame, delay showing the current points by 1 frame

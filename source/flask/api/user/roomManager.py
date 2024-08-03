@@ -318,15 +318,15 @@ def getDeviceConfig(MAC):
     sql = f"SELECT CONFIG_SWITCH FROM `DEVICES` WHERE MAC='{MAC}'"
     cursor.execute(sql)
     flag = 0
-    for (CONFIG_SWITCH) in cursor:
-        flag = CONFIG_SWITCH
+    for (CONFIG_SWITCH) in cursor.fetchall():
+        flag = CONFIG_SWITCH[0]
 
     if flag:
-        result["DATA"] = {
+        result["DATA"] = [{
             "DETAILS":"CONFIG"
-            }
+            }]
     else:
-        result["DATA"] = None
+        result["DATA"] = []
     cursor.close()
     connection.close()
     return result

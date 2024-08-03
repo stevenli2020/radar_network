@@ -16,7 +16,10 @@ export const Get = (url, response, error, load, isPublic ) => {
   }).catch(err => {
     console.error( err )
     if (err && err.response) {
-      if (err.response.status === 401) {
+      if (err.response.status === 502) {
+
+      }
+      else if (err.response.status === 401) {
 
       } else if (err.response.status === 500) {
         error('Server encountered issues. Please contact your system admin for assistance.')
@@ -63,7 +66,10 @@ export const Post = (url, data, response, error, load, isPublic) => {
   }).catch( err => {
     console.error( err )
     if ( err && err.response ) {
-      if( err.response.status === 413 ){
+      if (err.response.status === 502) {
+
+      }
+      else if( err.response.status === 413 ){
         error('The file is too large. Please try with smaller file')
       } else if (err.response.status === 401) {
         error('User unauthorized!')
@@ -108,7 +114,10 @@ export const PostForm = (url, data, response, error, load, isPublic) => {
   }).catch( err => {
     console.error( err )
     if ( err && err.response ) {
-      if( err.response.status === 413 ){
+      if (err.response.status === 502) {
+
+      }
+      else if( err.response.status === 413 ){
         error('The file is too large. Please try with smaller file')
       } else if (err.response.status === 401) {
         error('User unauthorized!')
@@ -136,7 +145,10 @@ export const Put = (url, data, response, error, load, isPublic, customToken ) =>
   }).catch(err => {
     console.error( err )
     if (err && err.response && err.response.status) {
-      if (err.response.status === 500) {
+      if (err.response.status === 502) {
+
+      }
+      else if (err.response.status === 500) {
         error('Server encountered issues. Please contact your system admin for assistance.')
       } else if(err.response.status === 422){
         error( err.response.data )
@@ -170,7 +182,10 @@ export const Delete = (url, response, error, load, isPublic) => {
   }).catch(err => {
     console.error( err )
     if (err && err.response && err.response.status) {
-      if (err.response.status === 500) {
+      if (err.response.status === 502) {
+
+      }
+      else if (err.response.status === 500) {
         error('Server encountered issues. Please contact your system admin for assistance.')
       } else if(err.response.status === 422){
         error( err.response.data )

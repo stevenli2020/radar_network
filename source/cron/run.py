@@ -548,7 +548,7 @@ def is_nap(start_time, end_time):
         return True
     return False
 
-def is_uninterrupted_night_sleep(end_time_prev, start_time_current, max_wake_duration=1.5, night_start='22:00', night_end='06:00'):
+def is_uninterrupted_night_sleep(end_time_prev, start_time_current, max_wake_duration=1.5, night_start='18:00', night_end='06:00'):
     
     # Calculate wake duration
     wake_duration = (start_time_current - end_time_prev).total_seconds() / 3600
@@ -652,7 +652,7 @@ def check_sleeping_intervals(data):
             if (diff.total_seconds() > sleeping_threshold and len(interval) > 45):
                 # print("From",interval[0]["MINUTE"],"to",interval[-1]["MINUTE"])
                 if (index >0):
-                    if (is_uninterrupted_night_sleep(sleep_intervals[-1][-1]["MINUTE"],interval[0]["MINUTE"])):
+                    if (len(interval)>0 and len(sleep_intervals)>0 and is_uninterrupted_night_sleep(sleep_intervals[-1][-1]["MINUTE"],interval[0]["MINUTE"])):
                         sleep_intervals[-1] = sleep_intervals[-1] + interval
                         sleeping_disruptions[-1] = sleeping_disruptions[-1] + disruptions[index]
                         sleeping_disrupt_durations[-1] = sleeping_disrupt_durations[-1] + disrupt_durations[index]

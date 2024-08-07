@@ -125,6 +125,15 @@ const Summary = props => {
   }, [props.room_uuid,isActive, props.client_id]); // Include dependencies if needed
   
 	useEffect(() => {
+    return () => {
+      if (client && client.isConnected()) {
+        client.disconnect();
+        console.log("Disconnected from MQTT broker");
+      }
+    };
+  }, []);
+
+	useEffect(() => {
 		if (props.alerts.length>0){
 			setAlertVisible(true)
 		}

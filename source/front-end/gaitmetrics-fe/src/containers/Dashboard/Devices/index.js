@@ -128,6 +128,15 @@ const Devices = props => {
     }
   }, [deviceConfMac,isActive, props.client_id]); // Include dependencies if needed
 
+  useEffect(() => {
+    return () => {
+      if (client && client.isConnected()) {
+        client.disconnect();
+        console.log("Disconnected from MQTT broker");
+      }
+    };
+  }, []);
+
   const [addVisible, setAddVisible] = useState(false);
   const [updateVisible, setUpdateVisible] = useState(false);
   const [configureVisible, setConfigureVisible] = useState(false);

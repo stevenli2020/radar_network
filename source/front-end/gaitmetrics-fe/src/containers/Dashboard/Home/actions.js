@@ -255,7 +255,7 @@ const HOC = (WrappedComponent) => {
     }
 
     setClientConnectionSuccess = payload => {
-      this.setState({client_id:payload.DATA.client_id})
+      // this.setState({client_id:payload.DATA.client_id})
     }
 
     render = () => {

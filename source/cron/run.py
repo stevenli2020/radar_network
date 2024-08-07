@@ -8,6 +8,7 @@ import re
 import random
 import pandas as pd
 import numpy as np
+import requests
 
 config = {
     'user': 'flask',
@@ -1642,6 +1643,62 @@ def remove_connection():
     vernemq_cursor.close()
     vernemq_connection.close()  
 
+domain_url = "https://aswelfarehome.gaitmetrics.org/api"
+
+def get_user_token():
+    username= "sam"
+    password = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+
+    data = {
+        'LOGIN_NAME': username,
+        'PWD': password
+    }
+
+    response = requests.post(domain_url+"/login",json=data)
+
+    # Handling the response
+    if response.status_code == 200:
+        response_json = response.json()
+        return response_json
+    else:
+        return None
+    
+def get_room_summary(user,room_uuid):
+    
+    headers = {
+        'Content-Type': 'application/json',  # Specify the content type if you're sending JSON
+        'Authorization': 'Bearer ' + user['access_token']  # Example of how to include a token for authorization
+    }
+    
+    data = {
+        "ROOM_UUID": room_uuid,
+        "CUSTOM": 0
+    }
+
+    for i in range(3):
+        response = requests.post(domain_url + "/getAnalyticData", json=data, headers=headers)
+        if response.status_code == 200:
+            print("Success:", response.json())
+            return
+        else:
+            print("Failed:", response.status_code, response.text)
+
+def get_summary_data():
+    user = get_user_token()
+    if user:
+        
+        global config
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor(dictionary=True)
+        sql = f"SELECT `ROOM_UUID` FROM ROOMS_DETAILS;"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        for room in result:
+            room_uuid = room["ROOM_UUID"]
+
+            get_room_summary(user,room_uuid)
+
+
 if __name__ == "__main__":
     #previous
     schedule.every().monday.at("23:59", timezone("Asia/Singapore")).do(previous_week)
@@ -1664,6 +1721,7 @@ if __name__ == "__main__":
     #     schedule.every().sunday.at(i, timezone("Asia/Singapore")).do(current_layman)
         
     schedule.every(5).minutes.do(remove_connection)
+    schedule.every().hour.do(get_summary_data)
 
     while True:
         print(datetime.datetime.now(timezone("Asia/Singapore")))

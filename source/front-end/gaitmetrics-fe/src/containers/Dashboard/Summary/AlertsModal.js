@@ -41,7 +41,7 @@ const AlertsModal = (props) => {
         <div style={{textAlign:'center'}}>
           <AlertFilled style={{color:'red'}}></AlertFilled> Alert
         </div>}
-      open={props.visible}
+      open={true}
       onOk={props.close}
       onCancel={props.close}
     >

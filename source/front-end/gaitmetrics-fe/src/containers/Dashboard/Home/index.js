@@ -76,7 +76,7 @@ const Home = (props) => {
 					roomToUpdate.IN_BED = payloadJson["IN_BED"];
 				}
 				
-				props.onChangeHOC('rooms',updatedRooms)
+				// props.onChangeHOC('rooms',updatedRooms)
 			} 
     } catch (error) {
       console.error("Error processing MQTT message:", error);
@@ -145,6 +145,16 @@ const Home = (props) => {
       };
 		}
   }, [props.rooms,connected, isActive, props.client_id]); // Include dependencies if needed
+
+	useEffect(() => {
+    return () => {
+      if (client && client.isConnected()) {
+        client.disconnect();
+        console.log("Disconnected from MQTT broker");
+        setConnected(false);
+      }
+    };
+  }, []);
 
 	useEffect(() => {
 		if (getItem("LOGIN_TOKEN") && props.client_id){

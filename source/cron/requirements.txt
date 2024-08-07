@@ -3,3 +3,4 @@ pytz
 mysql.connector
 numpy
 pandas
+requests

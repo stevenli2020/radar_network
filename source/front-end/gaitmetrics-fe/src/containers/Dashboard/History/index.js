@@ -200,7 +200,7 @@ const History = props => {
 	}
 
   useEffect(() => {
-		if (props.receivedAlert == 1 && props.alerts.length > 0 && getItem("LOGIN_TOKEN")){
+		if (props.receivedAlert > 0 && props.alerts.length > 0 && getItem("LOGIN_TOKEN")){
 			setAlertVisible(true)
 		}
 	},[props.receivedAlert,props.alerts])
@@ -262,6 +262,15 @@ const History = props => {
 
     
   }, [props.sensors,isActive, props.client_id]); // Include dependencies if needed
+
+  useEffect(() => {
+    return () => {
+      if (client && client.isConnected()) {
+        client.disconnect();
+        console.log("Disconnected from MQTT broker");
+      }
+    };
+  }, []);
 
   const navigateTo = () =>{
 		navigate('/dashboard/summary?roomId='+props.room_uuid)

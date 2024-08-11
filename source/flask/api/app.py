@@ -76,6 +76,8 @@ from user.user_settings import get_data_types
 from user.user_settings import get_alert_configurations
 from user.user_settings import set_alert_configurations
 
+from user.mqtt_manager import trigger_alert
+
 import os
 import json
 from redis import Redis
@@ -878,10 +880,10 @@ def readRoomAlerts():
             current_user = get_jwt_identity()
             login, admin = auth(current_user)
             if login:              
-                if "alerts" in data:              
-                    return readRoomAlertsData(data.get("alerts"))
+                if "ROOM_UUID" in data:              
+                    return readRoomAlertsData(data.get("ROOM_UUID"))
                 else:
-                    return {"ERROR": 'Please provide alerts id!'}
+                    return {"ERROR": 'Please provide room uuid!'}
             else:
                 return {"ERROR": 'Not authorized!'}
         else:
@@ -978,6 +980,21 @@ def set_alert_configurations_API():
             login, admin = auth(current_user)
             if login and admin:              
                 return set_alert_configurations(data=data.get("data",[]))
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'}
+        
+@app.route('/api/triggerAlert', methods=['POST'])
+@jwt_required()
+def trigger_alert_API():
+    if request.method == 'POST':
+        data = request.json  
+        if data:    
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
+            if login and admin:              
+                return trigger_alert(data=data)
             else:
                 return {"ERROR": 'Not authorized!'}
         else:

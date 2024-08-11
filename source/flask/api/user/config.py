@@ -18,3 +18,6 @@ def vernemq():
 
 def domain_url():
     return "https://aswelfarehome.gaitmetrics.org"
+
+def server_ip():
+    return "143.198.199.16"

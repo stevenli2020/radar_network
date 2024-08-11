@@ -49,6 +49,42 @@ const HOC = (WrappedComponent) => {
     load = (param) => this.setState({ loading: param });
     temp = (param) => this.setState({ temp: param });
 
+    sound = new Audio(alertSound);
+
+    componentWillUnmount() {
+      // Cleanup audio playback and event listener
+      this.stopSound();
+    }
+
+    playSound = () => {
+      // Play audio and set playing state to true
+      this.sound.play()
+        .then(() => {
+          console.log("Sound playing");
+          this.setState({ playing: true });
+        })
+        .catch((error) => {
+          console.error("Playback error:", error);
+          this.setState({ playing: false });
+        });
+
+      // Listen for 'ended' event to restart playback
+      this.sound.addEventListener('ended', this.playAndRestart);
+    };
+
+    stopSound = () => {
+      // Stop audio playback and reset state
+      this.sound.pause();
+      this.sound.currentTime = 0;
+      this.setState({ playing: false });
+      this.sound.removeEventListener('ended', this.playAndRestart);
+    };
+
+    playAndRestart = () => {
+      console.log("ended")
+      this.getRoomAlerts(this.state.room_uuid,true,this.temp)
+    };
+
     initView = (room_id) =>{
       const defaultEOW = moment().subtract(1, 'days').format('YYYY-MM-DD');
       this.setState({room_uuid:room_id})
@@ -610,11 +646,11 @@ const HOC = (WrappedComponent) => {
       }
     } 
 
-    getRoomAlerts = (room_id,unread=true) => {
+    getRoomAlerts = (room_id,unread=true,loader=this.load) => {
       let payload = {
         room_id: room_id,
         unread: unread,
-        set: true
+        set: false
       }
       if (unread){
         this.setState({receivedAlert:this.state.receivedAlert+1})
@@ -624,7 +660,7 @@ const HOC = (WrappedComponent) => {
         payload,
         this.getRoomAlertsSuccess,
         error => requestError(error),
-        this.load
+        loader
       )
     }
     
@@ -634,22 +670,26 @@ const HOC = (WrappedComponent) => {
 
         const hasUrgency3 = payload.DATA.some(alert => alert.URGENCY === 3 && alert.NOTIFY === 0);
         if (hasUrgency3) {
-          try{
-            const sound = new Audio(alertSound)
-            sound.play().then(() => {
-              // If playback is successful, sound permission is likely granted
-              console.log("Permission granted")
-            }).catch((error) => {
-              // If playback fails, sound permission is likely denied
-              console.log(error)
-            });
-          } catch (error) {
-            // If an exception occurs, sound permission status is uncertain
-          }
+          this.playSound()
         }
       }
-      
+    }
 
+    readAlert = () => {
+      let payload = {
+        ROOM_UUID: this.state.room_uuid
+      }
+      Post(
+        `/api/readRoomAlerts`,
+        payload,
+        this.readAlertSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+    
+    readAlertSuccess = payload => {
+      
     }
 
     getMQTTClientID = async() => {
@@ -690,6 +730,7 @@ const HOC = (WrappedComponent) => {
           {...this.state}
           getRoomSummary={this.getRoomSummary}
           getRoomAlerts={this.getRoomAlerts}
+          readAlert={this.readAlert}
           onLoading={this.state.loading}
           onChangeHOC={this.onChangeHOC}
           initView={this.initView}

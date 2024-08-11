@@ -3,7 +3,7 @@ import moment from 'moment';
 import WithHOC from './actions'
 import { useNavigate } from "react-router-dom"
 import { Typography, Card, Row, Col, Divider,Tag, Space, Modal, Button, Popover, Table } from 'antd'
-import { ArrowRightOutlined, EditTwoTone, DeleteTwoTone, PlusOutlined, AlertFilled, EditOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined, EditTwoTone, DeleteTwoTone, PlusOutlined, AlertFilled, EditOutlined, SendOutlined } from '@ant-design/icons'
 
 import LoadingOverlay from 'components/LoadingOverlay'
 import { Container } from 'react-bootstrap'
@@ -20,6 +20,7 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { color } from 'echarts';
 import EditRoomOnMapModal from './EditRoomOnMapModal';
+import TriggerAlertModal from './TriggerRoomAlert';
 
 let client = null
 
@@ -174,6 +175,7 @@ const Home = (props) => {
 
 	const [addVisible, setAddVisible] = useState(false);
 	const [updateVisible, setUpdateVisible] = useState(false);
+	const [triggerAlertVisible, setTriggerAlertVisible] = useState(false);
 	const [editMapVisible, setEditMapVisible] = useState(false);
 
 	const { Title } = Typography
@@ -207,12 +209,20 @@ const Home = (props) => {
     setUpdateVisible(false);
   };
 
+	const closeTriggerAlertModal = () => {
+    setTriggerAlertVisible(false);
+  };
+
 	const closeEditMapModal = () => {
     setEditMapVisible(false);
   };
 
   const showUpdateModal = () => {
     setUpdateVisible(true);
+  };
+
+	const showTriggerAlertModal = () => {
+    setTriggerAlertVisible(true);
   };
 
 	const popoverContent = (room) =>{
@@ -468,6 +478,13 @@ const Home = (props) => {
 													<AlertFilled style={{color:'red'}}></AlertFilled>
 												</Popover>):(<></>)
 										}
+										{
+											props.isAdmin?<SendOutlined onClick={ ()=>{
+												props.onChangeHOC('selectedRoom',room)
+												showTriggerAlertModal()
+											}
+											}></SendOutlined>:(<></>)
+										}
 										<EditTwoTone onClick={ ()=>{
 											props.onChangeHOC('updateUploadImg',null)
 											props.onChangeHOC('selectedRoom',room)
@@ -532,7 +549,7 @@ const Home = (props) => {
 			{props.isAdmin && props.mapView && editMapVisible && <EditRoomOnMapModal close={closeEditMapModal} rooms={props.rooms} action={props.updateRoomLocationOnMap}/>}
 			<AddRoomModal visible={addVisible} uploadImg={props.newUploadImg} close={closeAddModal} action={props.addRoom} upload={props.uploadNewImg}/>
 			{ updateVisible && <UpdateRoomModal uploadImg={props.updateUploadImg} visible={updateVisible} close={closeUpdateModal} action={props.updateRoom} selectedRoom={props.selectedRoom} upload={props.uploadUpdateImg}/>}
-			
+			{ triggerAlertVisible && <TriggerAlertModal visible={triggerAlertVisible} close={closeTriggerAlertModal} action={props.triggerAlert} selectedRoom={props.selectedRoom}/>}
 		</Container>
 	)
 }

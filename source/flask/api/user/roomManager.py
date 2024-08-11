@@ -221,12 +221,11 @@ def getRoomsAlerts(MAC,unread=True):
     connection.close()
     return result
 
-def readRoomAlertsData(alerts):
+def readRoomAlertsData(room_uuid):
     try:
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor()
-        alerts = tuple(alerts)
-        sql = f"UPDATE `ALERT` SET `NOTIFY`=1,`NOTIFY_TIMESTAMP`=NOW() WHERE `ID` IN {alerts}"
+        sql = f"UPDATE `ALERT` a LEFT JOIN ROOMS_DETAILS r on a.ROOM_ID=r.ID SET a.`NOTIFY`=1,a.`NOTIFY_TIMESTAMP`=NOW() WHERE r.`ROOM_UUID`='{room_uuid}'"
         cursor.execute(sql)  
         connection.commit() 
         cursor.close()

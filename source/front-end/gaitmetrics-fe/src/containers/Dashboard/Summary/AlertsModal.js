@@ -42,7 +42,10 @@ const AlertsModal = (props) => {
           <AlertFilled style={{color:'red'}}></AlertFilled> Alert
         </div>}
       open={true}
-      onOk={props.close}
+      onOk={()=>{
+        props.action()
+        props.close()
+      }}
       onCancel={props.close}
     >
       <Table 

@@ -4,7 +4,7 @@ numpy
 pandas
 redis
 mysql-connector
-paho-mqtt
+paho-mqtt<2
 google-auth
 google-auth-oauthlib
 google-auth-httplib2

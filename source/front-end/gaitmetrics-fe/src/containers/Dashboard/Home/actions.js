@@ -59,24 +59,26 @@ const HOC = (WrappedComponent) => {
     };
 
     playAndRestart = () => {
-      // Function to restart playback when audio ends
-      this.sound.currentTime = 0;
-      this.sound.play()
-        .then(() => {
-          console.log("Sound playing");
-        })
-        .catch((error) => {
-          console.error("Playback error:", error);
-        });
+      console.log("ended")
+      this.getRoomDetails(this.temp)
+      // // Function to restart playback when audio ends
+      // this.sound.currentTime = 0;
+      // this.sound.play()
+      //   .then(() => {
+      //     console.log("Sound playing");
+      //   })
+      //   .catch((error) => {
+      //     console.error("Playback error:", error);
+      //   });
     };
 
-    getRoomDetails = async() => {
+    getRoomDetails = async(loader=this.load) => {
       await Post(
         `/api/getRoomDetails`,
         {},
         this.getRoomDetailsSuccess,
         error => requestError(error),
-        this.load
+        loader
       )
     }
 
@@ -147,6 +149,28 @@ const HOC = (WrappedComponent) => {
     updateRoomSuccess = payload => {
       requestSuccess("Room updated successfully!")
       this.getRoomDetails()
+    }
+
+    triggerAlert = (values) => {
+      console.log(values)
+      console.log(this.state.selectedRoom)
+      let payload = {
+        URGENCY:values.urgency,
+        TYPE:"1",
+        DETAILS:values.details,
+        ROOM_UUID: this.state.selectedRoom.ROOM_UUID,
+      }
+      console.log(payload)
+      Post(
+        `/api/triggerAlert`,
+        payload,
+        this.triggerAlertSuccess,
+        error => requestError(error),
+        this.load
+      )}
+    triggerAlertSuccess = payload => {
+      requestSuccess("Alert triggered successfully!")
+      // this.getRoomDetails()
     }
 
     deleteRoom = (room) => {
@@ -267,6 +291,7 @@ const HOC = (WrappedComponent) => {
           getRoomDetails={this.getRoomDetails}
           addRoom={this.addRoom}
           updateRoom={this.updateRoom}
+          triggerAlert={this.triggerAlert}
           deleteRoom={this.deleteRoom}
           uploadNewImg={this.uploadNewImg}
           uploadUpdateImg={this.uploadUpdateImg}

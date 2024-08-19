@@ -377,6 +377,7 @@ const HOC = (WrappedComponent) => {
               let hour = Math.floor((minutes % (24 * 60)) / 60);
               let minute = minutes % 60;
               let textString = ''
+              let percentString = ''
         
               if (day > 0){
                 textString += day.toString() + "d" 
@@ -387,11 +388,13 @@ const HOC = (WrappedComponent) => {
               if (minute > 0){
                 textString += minute.toString() + "m" 
               }
+
+              percentString = ((minutes*100)/(24*60)).toFixed(2).toString()
         
               if (textString == ''){
                 textString = '0m'
               }
-              tooltipText += `<b>${param.seriesName}:</b> ${textString}<br/>`;
+              tooltipText += `<b>${param.seriesName}:</b> ${textString} (${percentString} %)<br/>`;
             });
             return tooltipText;
           },
@@ -399,11 +402,6 @@ const HOC = (WrappedComponent) => {
         legend: {
           data: ['Social', 'Moving', 'Upright', 'Laying', 'Unknown', 'Not In Room'],
           type: 'scroll'
-        },
-        toolbox: {
-          feature: {
-            saveAsImage: {}
-          }
         },
         grid: {
           left: '3%',
@@ -641,7 +639,13 @@ const HOC = (WrappedComponent) => {
 
       if (payload.data.inroom_analysis.length > 0){
         let inroom_analysis = payload.data.inroom_analysis
-        this.setState({in_room_posture_options: this.generatePostureOptions(inroom_analysis[inroom_analysis.length-1])})
+        const mergedDict = inroom_analysis.reduce((acc, curr) => {
+            for (let key in curr) {
+                acc[key] = (acc[key] || 0) + curr[key];
+            }
+            return acc;
+        }, {});
+        this.setState({in_room_posture_options: this.generatePostureOptions(mergedDict)})
         this.setState({in_room_series_posture_options: this.generateSeriesPostureOptions(inroom_analysis)})
       }
     } 

@@ -24,8 +24,8 @@ def get_dates_between(start_date_str, end_date_str):
     
     return dates
 
-start_date = "2024-07-20"
-end_date = "2024-07-20"
+start_date = "2024-07-21"
+end_date = "2024-07-21"
 
 dates_between = get_dates_between(start_date, end_date)
 
@@ -33,8 +33,8 @@ for curr in dates_between:
     # print("Running current layman")
     rooms = get_rooms()
     for room in rooms:
-        # if (room["ID"] not in [7,19]):
-        #     continue
+        if (room["ID"] not in [7]):
+            continue
         print(curr,room["ID"],room["ROOM_UUID"])
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \
             current_sleeping_hour, current_sleep_disruption, current_disrupt_duration, \
@@ -69,16 +69,16 @@ for curr in dates_between:
             insert_data(curr,room["ID"],"sleep_disruption",current_sleep_disruption,mode="day")
             insert_data(curr,room["ID"],"disrupt_duration",current_disrupt_duration,mode="day")
         
-        for alert_config in alert_configs:
-            key = alert_config["DATA_TYPE"]
-            mode = "day" if alert_config["MODE"] == 1 else "weekday"
-            threshold = alert_config["THRESHOLD"]
-            min_dp = alert_config["MIN_DATA_POINT"]
-            max_dp = alert_config["MAX_DATA_POINT"]
+        # for alert_config in alert_configs:
+        #     key = alert_config["DATA_TYPE"]
+        #     mode = "day" if alert_config["MODE"] == 1 else "weekday"
+        #     threshold = alert_config["THRESHOLD"]
+        #     min_dp = alert_config["MIN_DATA_POINT"]
+        #     max_dp = alert_config["MAX_DATA_POINT"]
 
-            curr_key_data = get_data_by_date_and_key(curr,key,room["ID"])
+        #     curr_key_data = get_data_by_date_and_key(curr,key,room["ID"])
 
-            if (curr_key_data):
-                if (key in ALERT.data_type and key in ALERT.message and check_anomaly(curr,room["ID"],key,curr_key_data,ALERT.data_type[key],threshold=threshold,min_dp=min_dp,max_dp=max_dp)):
-                    print(curr,ALERT.message[key][mode].replace("[DATA]",str(curr_key_data)))
-                    insert_alert(room["ID"],1,1,ALERT.message[key][mode].replace("[DATA]",str(curr_key_data)))
+        #     if (curr_key_data):
+        #         if (key in ALERT.data_type and key in ALERT.message and check_anomaly(curr,room["ID"],key,curr_key_data,ALERT.data_type[key],threshold=threshold,min_dp=min_dp,max_dp=max_dp)):
+        #             print(curr,ALERT.message[key][mode].replace("[DATA]",str(curr_key_data)))
+        #             insert_alert(room["ID"],1,1,ALERT.message[key][mode].replace("[DATA]",str(curr_key_data)))

@@ -541,8 +541,8 @@ def decode_process_publish(mac, data):
                                           deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-35]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
-                                          # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
-                                          if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
+                                          if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
+                                          # if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 3
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 2
@@ -564,13 +564,13 @@ def decode_process_publish(mac, data):
                                             elif z_height > 0.4 and z_height < 1.0 and body_width < 0.5:
                                                 wall_Dict['kidOrAdult'] = 0
 
-                                          elif body_width > 0.5 and z_height < 1.1 and ((body_width) / (z_dim + 0.2)) > 1.5:
+                                          elif body_width > 1 and z_height < 1.5 and ((body_width) / (z_dim + 0.2)) > 1.5:
                                             # print('Laying')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 2
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 2
                                             wall_Dict['state'] = 2
 
-                                          elif z_dim > 0.5 and body_width > 0.2 and z_height > 0.5 and ((z_dim) / (body_width + 0.0001)) > 1.2:
+                                          elif z_dim > 0.5 and body_width > 0.3 and z_height > 0.5 and ((z_dim) / (body_width + 0.0001)) > 1.2:
                                             # print('Upright')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 1
                                             wallStateParam[mac]['labelGuess'][minDistIdx] = 1

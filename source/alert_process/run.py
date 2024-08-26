@@ -99,7 +99,7 @@ def subscribe(client: paho):
         if (parts[-1] == "ALERT"):
             insert_alert(room_detail["ID"],msg)
             real_topic = pub_topic1.replace("ROOM_UUID",room_detail["ROOM_UUID"])
-            result = client.publish(real_topic, "New alert")
+            result = client.publish(real_topic, "New alert", qos=1)
             # result: [0, 1]
             status = result[0]
             if status == 0:
@@ -142,7 +142,7 @@ def subscribe(client: paho):
                 BED_ANALYSIS["IN_BED"] = True
                 print("At least one bed is occupied.")
                 real_topic = pub_topic2.replace("ROOM_UUID",room_detail["ROOM_UUID"])
-                result = client.publish(real_topic, json.dumps(BED_ANALYSIS))
+                result = client.publish(real_topic, json.dumps(BED_ANALYSIS), qos=1)
             else:
                 print("No beds are occupied.")
 
@@ -162,7 +162,7 @@ def subscribe(client: paho):
                         # print(heart_abnormal)
 
                     real_topic = pub_topic3.replace("ROOM_UUID",room_detail["ROOM_UUID"])
-                    client.publish(real_topic, rate)
+                    client.publish(real_topic, rate, qos=1)
                     break
 
                 if (abnormal):
@@ -177,7 +177,7 @@ def subscribe(client: paho):
                         print("Insert heart rate alert")
                         insert_alert(room_detail["ID"],alert_msg)
                         real_topic = pub_topic1.replace("ROOM_UUID",room_detail["ROOM_UUID"])
-                        client.publish(real_topic, "New alert")
+                        client.publish(real_topic, "New alert", qos=1)
                 else:
                     print("reset")
                     heart_abnormal[room_detail["ROOM_UUID"]] = {

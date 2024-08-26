@@ -20,18 +20,25 @@ import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orien
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css'
 import { DeleteTwoTone } from '@ant-design/icons'
-import { requestError } from 'utils/requestHandler'
+import Paho from 'paho-mqtt'
+import getWebsocketServer from 'utils/websocket'
+import { requestSuccess,requestError } from 'utils/requestHandler'
+
+let client = null
 
 const Settings = props => {
 
 	const { Title } = Typography
   const [form] = Form.useForm();
+  const [algoForm] = Form.useForm();
   const { TextArea } = Input;
   const [roomImg, setRoomImg] = useState('')
   const [files, setFiles] = useState([])
   const [threshold, setThreshold] = useState(2);
   const [alertConfigs,setAlertConfigs] = useState([])
+  const [algoConfigs,setAlgoConfigs] = useState([])
   const [dpRange, setDPRange] = useState([15,60])
+  const [isActive, setIsActive] = useState(true);
 
   const onChange = (value) => {
     console.log('onChange: ', value);
@@ -109,6 +116,46 @@ const Settings = props => {
     },
   ] 
 
+  const algoColumns = [ 
+    { 
+      key: "ID", 
+      title: "ID", 
+      render: (_, __, index) => index + 1, // Render the index as the ID, starting from 1
+    },
+    { 
+      key: "CONFIG_KEY", 
+      title: "Config Key", 
+      dataIndex: "CONFIG_KEY", 
+    },
+    { 
+      key: "VALUE", 
+      title: "Value", 
+      dataIndex: "VALUE", 
+    },
+    { 
+      key: "ACT", 
+      title: "Action", 
+      render: (_, config) => (
+        <>
+        <Space>
+          <DeleteTwoTone onClick={() => 
+            Modal.confirm({
+              title: 'Delete Device',
+              content: 'Are you sure you want to delete this configuration?',
+              okText:'Confirm',
+              cancelText:'Cancel',
+              onOk:() => {
+                const newAlgoConfigs = algoConfigs.filter(configs => configs !== config);
+                setAlgoConfigs(newAlgoConfigs);
+              },
+            })
+          }></DeleteTwoTone>
+        </Space>
+        </>
+      ),
+    },
+  ] 
+
   useEffect(() => {
 		if (props.selectedRoom){
       form.setFieldValue(props.selectedRoom)
@@ -122,12 +169,23 @@ const Settings = props => {
 		if (getItem("LOGIN_TOKEN")){
 			props.getDataTypes()
 			props.getAlertConfigurations()
+      props.getAlgoConfigurations()
     }
 	}, [])
 
   useEffect(() => {
 		setAlertConfigs(props.alertConfigs)
 	}, [props.alertConfigs])
+
+  useEffect(() => {
+    const arrayOfDicts = Object.keys(props.algoConfigs).map(key => {
+        return {
+            CONFIG_KEY: key,
+            VALUE: props.algoConfigs[key]
+        };
+    });
+		setAlgoConfigs(arrayOfDicts)
+	}, [props.algoConfigs])
 
   useEffect((()=>{
     if (files.length > 0){
@@ -139,6 +197,108 @@ const Settings = props => {
     }
   }),[files])
 
+  useEffect(() => {
+
+    if (getItem("LOGIN_TOKEN") && props.client_id == null){
+			props.getMQTTClientID()
+		}
+    
+    const handleVisibilityChange = () => {
+      setIsActive(!document.hidden);
+    };
+  }, []);
+
+  const doFail = (e) => {
+    console.error("Connection failed:", e);
+  };
+
+  const configureDevice = (device) => {
+    console.log("Configure... MQTT")
+    publishToMQTT("UPDATED","/GMT/DEV/ALGOCONFIG")
+  }
+
+  const publishToMQTT = (msg, topic) => {
+    let message = new Paho.Message(msg);
+    message.destinationName = topic;
+    client.send(message);
+  }
+
+  const onMessageArrived = async (message) => {
+    try {
+      if(message.destinationName.includes("ALGO_CONFIG/R")){
+        if(message.payloadString.includes("UPDATED")){
+          requestSuccess("Process Status: "+ message.payloadString)
+        }    
+      }
+
+    } catch (error) {
+      console.error("Error processing MQTT message:", error);
+    }
+  };
+
+  useEffect(() => {
+    const connectToBroker = async () => {
+      try {
+        const clientId = props.client_id;
+        const brokerUrl = getWebsocketServer();  // Include the path if required
+        client = new Paho.Client(brokerUrl, clientId);
+        
+        await client.connect({
+          timeout: 3,
+          onSuccess: () => {
+            console.log("Connected");
+            client.subscribe("/GMT/DEV/+/DATA/+/JSON");
+            client.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF");
+            client.subscribe("/GMT/#");
+            client.onMessageArrived = onMessageArrived;
+          },
+          onFailure: doFail,
+          userName: getItem("Username"),
+          password: "c764eb2b5fa2d259dc667e2b9e195218",
+        });
+      } catch (error) {
+        console.error("Error connecting to MQTT broker:", error);
+      }
+    };
+
+    if (getItem("LOGIN_TOKEN") && props.client_id != null){
+      connectToBroker();
+
+      let intervalId;
+
+      const startInterval = () => {
+        intervalId = setInterval(() => {
+          // Your interval function here
+          console.log('Interval function running');
+          connectToBroker();
+        }, 1000 * 60 * 10); // Adjust the interval time as needed
+      };
+
+      const stopInterval = () => {
+        clearInterval(intervalId);
+      };
+
+      if (isActive) {
+        startInterval();
+      } else {
+        stopInterval();
+      }
+
+      return () => {
+        stopInterval();
+      };
+    }
+  }, [isActive, props.client_id]); // Include dependencies if needed
+
+  useEffect(() => {
+    return () => {
+      if (client && client.isConnected()) {
+        client.disconnect();
+        console.log("Disconnected from MQTT broker");
+      }
+    };
+  }, []);
+
   const onFinish = (values) => {
     // Handle the form submission logic (e.g., send data to the server)
     console.log('Received values:', values);
@@ -149,6 +309,13 @@ const Settings = props => {
     props.action(values)
     props.close()
   };
+
+  const onAlgoFinish = (values) => {
+    // Handle the form submission logic (e.g., send data to the server)
+    console.log('Received values:', values);
+    // props.action(values)
+    // props.close()
+  };
   
   const clearAlertConfigs = () => {
 		setAlertConfigs([])
@@ -156,6 +323,10 @@ const Settings = props => {
 
   const updateAlertConfigs = () => {
 		props.setAlertConfigurations(alertConfigs)
+	}
+
+  const updateAlgoConfigs = () => {
+		props.setAlgoConfigurations(algoConfigs)
 	}
 
   const addAlertConfig = () => {
@@ -178,7 +349,25 @@ const Settings = props => {
     }else{
       requestError("Please fill in required fields!")
     }
-    
+	}
+
+  const addAlgoConfig = () => {
+    if (algoForm.getFieldValue('configKey')!=undefined && algoForm.getFieldValue('value') != undefined){
+      const foundObject = _.find(algoConfigs, { CONFIG_KEY: algoForm.getFieldValue('configKey')});
+      if (foundObject == undefined){
+        let temp = [...algoConfigs]
+        temp.push({
+          "CONFIG_KEY":algoForm.getFieldValue('configKey'),
+          "VALUE":algoForm.getFieldValue('value')
+        }) 
+        setAlgoConfigs(temp)
+      }else{
+        requestError("Duplicate configuration!")
+      }
+      
+    }else{
+      requestError("Please fill in required fields!")
+    }
 	}
 
 	return (
@@ -350,6 +539,89 @@ const Settings = props => {
                     onClick={clearAlertConfigs}
                   >
                     Clear
+                  </Button>
+                </Space>
+                </div>
+              </div>
+						</Card>
+          </Col>
+        </Row>
+      </Form>
+
+      <Form
+        form={algoForm}
+        onFinish={onAlgoFinish}
+        layout="vertical" // Set the form layout
+      >
+        <Row className='mt-2' gutter={16}>
+          <Col span={24}>
+            <Card 
+              title={ 
+                <>
+                  Algorithm Configurations
+                </>  } 
+              style={{}} 
+              className='content-card'
+            >
+              <Row gutter={16}>
+                <Col span={24} lg={8}>
+                  <Form.Item
+                    label="Config Key"
+                    name="configKey"
+                    rules={[{ required: true, message: 'Please enter config key' }]}
+                  >
+                    <Input/>
+                  </Form.Item>
+                </Col>
+                <Col span={24} lg={8}>
+                  <Form.Item
+                    label="Value"
+                    name="value"
+                    rules={[{ required: true, message: 'Please enter value' }]}
+                  >
+                    <Input type='number'/>
+                  </Form.Item>
+                </Col>
+                
+                <Col span={24} lg={8} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={addAlgoConfig}
+                  >
+                    Add
+                  </Button>
+                </Col>
+
+              </Row>
+              
+              {algoConfigs.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <Table 
+                    dataSource={algoConfigs} 
+                    columns={algoColumns} 
+                    rowKey={"ID"}
+                    pagination={{
+                      // Enable pagination
+                      pageSizeOptions: ['10', '20', '50'], // Specify the available page sizes
+                      showSizeChanger: true, // Show the page size changer
+                      defaultPageSize: 10, // Default number of items per page
+                      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`, // Display total number of items
+                    }}
+                  />
+                </div>
+              )}
+              
+              <div>
+                <Divider/>
+                <div style={{textAlign:'center'}}>
+                <Space style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={updateAlgoConfigs}
+                  >
+                    Update Configs
                   </Button>
                 </Space>
                 </div>

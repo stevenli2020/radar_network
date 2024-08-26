@@ -33,7 +33,7 @@ def publish(id,client):
   payload = generate_random_payload(size)
   print(f"Payload size: {len(payload)} bytes")
   msg = json.dumps({"id":str(id) + "-5","data": payload})
-  result = client.publish(topic, msg)
+  result = client.publish(topic, msg, qos=1)
   status = result[0]
   if status == 0:
     print(f"Send `{id}` to topic `{topic}`")

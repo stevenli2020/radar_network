@@ -170,7 +170,7 @@ const HOC = (WrappedComponent) => {
       )}
     triggerAlertSuccess = payload => {
       requestSuccess("Alert triggered successfully!")
-      // this.getRoomDetails()
+      this.getRoomDetails()
     }
 
     deleteRoom = (room) => {

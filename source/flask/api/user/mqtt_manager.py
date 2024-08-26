@@ -57,7 +57,7 @@ def connect_mqtt():
 
 def publish(client,msg,topic):
   msg = json.dumps(msg)
-  result = client.publish(topic, msg)
+  result = client.publish(topic, msg, qos=1)
   # result: [0, 1]
   status = result[0]
   if status == 0:

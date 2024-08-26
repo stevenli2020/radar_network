@@ -40,7 +40,7 @@ def on_message(client, obj, msg):
             cursor.close()
             connection.close() 
             ACK_TOPIC = msg.topic.replace(REQ, "ACK")
-            client.publish(ACK_TOPIC,"")
+            client.publish(ACK_TOPIC,"", qos=1)
         return
     elif TOPIC[-1]=="STATUS":
         MAC = TOPIC[3]

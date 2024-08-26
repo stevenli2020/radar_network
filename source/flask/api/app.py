@@ -78,6 +78,8 @@ from user.user_settings import set_alert_configurations
 
 from user.mqtt_manager import trigger_alert
 
+from user.algo_configs import get_algo_configs, add_algo_config, update_algo_configs, delete_algo_config
+
 import os
 import json
 from redis import Redis
@@ -999,6 +1001,50 @@ def trigger_alert_API():
                 return {"ERROR": 'Not authorized!'}
         else:
             return {"ERROR": 'Empty json!'}
+
+@app.route('/api/algo-config', methods=['GET'])
+def algo_config():
+    if request.method == 'GET':
+        # Return all configurations
+        return get_algo_configs()
+    
+@app.route('/api/algo-config', methods=['POST'])
+@jwt_required()
+def new_algo_config():
+    if request.method == 'POST':
+        data = request.json
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login and admin:              
+            key = data.get('CONFIG_KEY')
+            value = data.get('VALUE')
+            if not key:
+                return {"ERROR": 'Data required!'}
+            return add_algo_config(key,value)
+        else:
+            return {"ERROR": 'Not authorized!'}
+
+@app.route('/api/algo-config', methods=['PUT'])
+@jwt_required()
+def update_algo_config():
+    data = request.json
+    current_user = get_jwt_identity()
+    login, admin = auth(current_user)
+    if login and admin:              
+        return update_algo_configs(data.get("data",[]))
+    else:
+        return {"ERROR": 'Not authorized!'}
+
+@app.route('/api/algo-config/<key>', methods=['DELETE'])
+@jwt_required()
+def algo_config_key(key):
+    if request.method == 'DELETE':
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login and admin:
+            return delete_algo_config(key)
+        else:
+            return {"ERROR": 'Not authorized!'}
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

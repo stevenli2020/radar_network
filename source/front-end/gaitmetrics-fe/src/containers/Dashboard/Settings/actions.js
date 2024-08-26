@@ -14,7 +14,8 @@ const HOC = (WrappedComponent) => {
         {value:1,label:'Day'},
         {value:2,label:'Day of Week'}
       ],
-      alertConfigs: []
+      alertConfigs: [],
+      algoConfigs: {}
     };
 
     load = (param) => this.setState({ loading: param });
@@ -66,7 +67,37 @@ const HOC = (WrappedComponent) => {
     }
 
     setAlertConfigurationsSuccess = payload => {
-      requestSuccess('Alert configurations updated successfully!')
+      requestSuccess('Algorithm configurations updated successfully!')
+    }
+
+    getAlgoConfigurations = () => {
+      Get(
+        `/api/algo-config`,
+        this.getAlgoConfigurationsSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getAlgoConfigurationsSuccess = payload => {
+      this.setState({algoConfigs:payload.DATA})
+    }
+
+    setAlgoConfigurations = (configs) => {
+      let payload = {
+        data:configs
+      }
+      Put(
+        `/api/algo-config`,
+        payload,
+        this.setAlgoConfigurationsSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    setAlgoConfigurationsSuccess = payload => {
+      requestSuccess('Algorithm configurations updated successfully!')
     }
 
     uploadLogo = (values) => {
@@ -85,6 +116,37 @@ const HOC = (WrappedComponent) => {
       requestSuccess("Logo updated successfully! Refresh to take effect!")
     }
 
+    getMQTTClientID = async() => {
+      await Post(
+        `/api/getMQTTClientID`,
+        {},
+        this.getMQTTClientIDSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getMQTTClientIDSuccess = payload => {
+      this.setState({client_id:payload.DATA.client_id})
+    }
+
+    setClientConnection = async(client_id) => {
+      let payload = {
+        client_id: client_id,
+      }
+      await Post(
+        `/api/setClientConnection`,
+        payload,
+        this.setClientConnectionSuccess,
+        error => requestError(error),
+        this.temp
+      )
+    }
+
+    setClientConnectionSuccess = payload => {
+      this.setState({client_id:payload.DATA.client_id})
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -92,6 +154,10 @@ const HOC = (WrappedComponent) => {
           {...this.state}
           setAlertConfigurations={this.setAlertConfigurations}
           getAlertConfigurations={this.getAlertConfigurations}
+          setAlgoConfigurations={this.setAlgoConfigurations}
+          getAlgoConfigurations={this.getAlgoConfigurations}
+          getMQTTClientID={this.getMQTTClientID}
+          setClientConnection={this.setClientConnection}
           getDataTypes={this.getDataTypes}
           upload={this.uploadLogo}
           onLoading={this.state.loading}

@@ -9,6 +9,8 @@ import random
 import pandas as pd
 import numpy as np
 import requests
+import smtplib
+from email.mime.text import MIMEText
 
 config = {
     'user': 'flask',
@@ -1698,6 +1700,75 @@ def get_summary_data():
 
             get_room_summary(user,room_uuid)
 
+def check_disconnected_devices():
+    recipients = ["limcheewei4727_@hotmail.com"]
+    global config
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+    sql = f"SELECT r.ID,r.ROOM_NAME,d.MAC FROM DEVICES d left join RL_ROOM_MAC rrm on rrm.MAC=d.MAC left join ROOMS_DETAILS r on rrm.ROOM_UUID=r.ROOM_UUID WHERE d.STATUS='DISCONNECTED' AND r.ACTIVE=1;"
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    table_content = ""
+    for row in result:
+        room_name = row["ROOM_NAME"]
+        mac = row["MAC"]
+
+        table_content += f"""
+            <tr>
+                <td>{room_name}</td>
+                <td>{mac}</td>
+            </tr>
+        """
+
+    if (len(result) > 0):
+        body = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                table {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+                }
+                
+                td, th {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+                }
+                
+                tr:nth-child(even) {
+                background-color: #dddddd;
+                }
+                </style>
+            </head>
+            <body>
+                <p>There are some devices are disconnected in active room. Please check it out! Below are the details:</p>
+                <table>
+                <tr>
+                    <th>Room Name</th>
+                    <th>Device</th>
+                </tr>
+                """ + table_content + """
+                </table>
+            </body>
+            </html>
+        """
+        sentMail(",".join(recipients),"Aswelfarehome Devices Disconnected!",body)
+
+sender_email = "www.gaitmetric.com.sg@gmail.com"
+sender_password = "wolryshamgswgvzu"
+# recipient_email = "recipient@gmail.com"
+def sentMail(recipient, subject, body):
+    html_message = MIMEText(body, 'html')
+    html_message['Subject'] = subject
+    html_message['From'] = sender_email
+    html_message['To'] = recipient
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.login(sender_email, sender_password)
+    server.sendmail(sender_email, recipient, html_message.as_string())
+    server.quit()
 
 if __name__ == "__main__":
     #previous
@@ -1722,6 +1793,7 @@ if __name__ == "__main__":
         
     schedule.every(5).minutes.do(remove_connection)
     schedule.every().hour.do(get_summary_data)
+    schedule.every().hour.do(check_disconnected_devices)
 
     while True:
         print(datetime.datetime.now(timezone("Asia/Singapore")))

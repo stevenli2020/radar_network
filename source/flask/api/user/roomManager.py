@@ -182,15 +182,36 @@ def deleteRoomDetail(data, uploadsLoc):
 
 def getRoomAlertsData(room_uuid,unread = True,set=True):
     connection = mysql.connector.connect(**config)
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     result = defaultdict(list)
-    option = ' ORDER BY a.`TIMESTAMP` DESC;'
+    option = ' ORDER BY a.`ID` DESC;'
     if (unread):
-        option = ' AND a.`NOTIFY`=0 ORDER BY a.`TIMESTAMP` DESC;'
+        option = ' AND a.`NOTIFY`=0 ORDER BY a.`ID` DESC;'
     sql = f"SELECT a.`ID`,a.`TIMESTAMP`,a.`URGENCY`,a.`TYPE`,a.`DETAILS`,a.`NOTIFY` ,a.`NOTIFY_TIMESTAMP` FROM `ALERT` a LEFT JOIN `ROOMS_DETAILS` r ON a.`ROOM_ID`=r.`ID` WHERE r.`ROOM_UUID`='{room_uuid}'" + option
     cursor.execute(sql)   
     local_timezone = get_localzone()
-    result["DATA"] = [{"ID": ID, "TIMESTAMP": TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if TIMESTAMP else TIMESTAMP, "URGENCY":URGENCY, "TYPE":TYPE, "DETAILS":DETAILS, "NOTIFY":NOTIFY, "NOTIFY_TIMESTAMP": NOTIFY_TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if NOTIFY_TIMESTAMP else NOTIFY_TIMESTAMP} for (ID, TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP) in cursor]
+    data = cursor.fetchall()
+    result["DATA"] = []
+
+    for row in data:
+        id              = row.get("ID")
+        timestamp       = row.get("TIMESTAMP")
+        urgency         = row.get("URGENCY")
+        type            = row.get("TYPE")
+        details         = row.get("DETAILS")
+        notify          = row.get("NOTIFY")
+        notify_ts       = row.get("NOTIFY_TIMESTAMP")
+        result["DATA"].append(
+            {
+                "ID": id, 
+                "TIMESTAMP": timestamp.astimezone(local_timezone).astimezone(pytz.utc) if timestamp else timestamp, 
+                "URGENCY":urgency, 
+                "TYPE":type, 
+                "DETAILS":details, 
+                "NOTIFY":notify, 
+                "NOTIFY_TIMESTAMP": notify_ts.astimezone(local_timezone).astimezone(pytz.utc) if notify_ts else notify_ts
+            }
+         )
     
     if set:
         for d in result["DATA"]:

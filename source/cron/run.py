@@ -1792,8 +1792,8 @@ if __name__ == "__main__":
     #     schedule.every().sunday.at(i, timezone("Asia/Singapore")).do(current_layman)
         
     schedule.every(5).minutes.do(remove_connection)
-    schedule.every().hour.do(get_summary_data)
-    schedule.every().hour.do(check_disconnected_devices)
+    schedule.every().hour.at(":15").do(get_summary_data)
+    schedule.every().hour.at(":45").do(check_disconnected_devices)
 
     while True:
         print(datetime.datetime.now(timezone("Asia/Singapore")))

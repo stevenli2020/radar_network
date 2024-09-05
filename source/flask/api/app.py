@@ -65,6 +65,7 @@ from user.roomManager import addNewRoomDetail
 from user.roomManager import updateRoomDetail
 from user.roomManager import deleteRoomDetail
 from user.roomManager import searchRoomDetail
+from user.roomManager import update_active_room
 # upload img
 from user.uploadManager import uploadImgFile
 from werkzeug.utils import secure_filename
@@ -79,6 +80,7 @@ from user.user_settings import set_alert_configurations
 from user.mqtt_manager import trigger_alert
 
 from user.algo_configs import get_algo_configs, add_algo_config, update_algo_configs, delete_algo_config
+from user.notifier_manager import get_notifier, add_notifier, delete_notifier
 
 import os
 import json
@@ -1045,6 +1047,60 @@ def algo_config_key(key):
             return delete_algo_config(key)
         else:
             return {"ERROR": 'Not authorized!'}
+        
+@app.route('/api/notifier', methods=['GET'])
+@jwt_required()
+def get_notifier_api():
+    if request.method == 'GET':
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login and admin:              
+            return get_notifier()
+        else:
+            return {"ERROR": 'Not authorized!'}
+        
+    
+@app.route('/api/notifier', methods=['POST'])
+@jwt_required()
+def add_notifier_api():
+    if request.method == 'POST':
+        data = request.json
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login and admin:              
+            print(data)
+            email = data.get('EMAIL')
+            if not email:
+                return {"ERROR": 'Data required!'}
+            return add_notifier(email)
+        else:
+            return {"ERROR": 'Not authorized!'}
+
+@app.route('/api/notifier/<email>', methods=['DELETE'])
+@jwt_required()
+def delete_notifier_api(email):
+    if request.method == 'DELETE':
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login and admin:
+            return delete_notifier(email)
+        else:
+            return {"ERROR": 'Not authorized!'}
+        
+@app.route('/api/updateRoomActive', methods=['POST'])
+@jwt_required()
+def update_active_room_api():
+    data = request.json
+    current_user = get_jwt_identity()
+    login, admin = auth(current_user)
+    if login and admin:        
+        room_uuid = data.get('ROOM_UUID')
+        active = data.get('ACTIVE')
+        if not room_uuid:
+            return {"ERROR": 'Data required!'}      
+        return update_active_room(room_uuid,active)
+    else:
+        return {"ERROR": 'Not authorized!'}
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

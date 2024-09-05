@@ -36,7 +36,7 @@ def getRoomData(req, admin):
     # Get the local timezone
     local_timezone = get_localzone()
     # result["DATA"] = [{"ID": ID, "ROOM_NAME": ROOM_NAME, "MAC": MAC, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "RADAR_X_LOC": RADAR_X_LOC, "RADAR_Y_LOC":RADAR_Y_LOC, "IMAGE_NAME": IMAGE_NAME} for (ID, ROOM_NAME, MAC, ROOM_X, ROOM_Y, RADAR_X_LOC, RADAR_Y_LOC, IMAGE_NAME) in cursor]
-    result["DATA"] = [{"ID": ID, "ROOM_LOC": ROOM_LOC, "ROOM_NAME": ROOM_NAME, "ROOM_UUID":ROOM_UUID, "IMAGE_NAME": IMAGE_NAME, "INFO": INFO, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "STATUS":STATUS, "OCCUPANCY":OCCUPANCY, "LAST_DATA_TS":LAST_DATA_TS.astimezone(local_timezone).astimezone(pytz.utc) if LAST_DATA_TS else LAST_DATA_TS, "LAST_DATA_RECEIVED": LAST_DATA_RECEIVED.astimezone(local_timezone).astimezone(pytz.utc) if LAST_DATA_RECEIVED else LAST_DATA_RECEIVED, "x":x, "y":y, "w":w, "h":h,"MAC":MAC.split(",") if MAC else []} for (ID, ROOM_LOC, ROOM_NAME, ROOM_UUID, IMAGE_NAME, INFO, ROOM_X, ROOM_Y, STATUS, OCCUPANCY, LAST_DATA_TS, ACTIVE, LAST_DATA_RECEIVED,x,y,w,h,MAC) in cursor]
+    result["DATA"] = [{"ID": ID, "ROOM_LOC": ROOM_LOC, "ROOM_NAME": ROOM_NAME, "ROOM_UUID":ROOM_UUID, "ACTIVE":ACTIVE, "IMAGE_NAME": IMAGE_NAME, "INFO": INFO, "ROOM_X":ROOM_X, "ROOM_Y":ROOM_Y, "STATUS":STATUS, "OCCUPANCY":OCCUPANCY, "LAST_DATA_TS":LAST_DATA_TS.astimezone(local_timezone).astimezone(pytz.utc) if LAST_DATA_TS else LAST_DATA_TS, "LAST_DATA_RECEIVED": LAST_DATA_RECEIVED.astimezone(local_timezone).astimezone(pytz.utc) if LAST_DATA_RECEIVED else LAST_DATA_RECEIVED, "x":x, "y":y, "w":w, "h":h,"MAC":MAC.split(",") if MAC else []} for (ID, ROOM_LOC, ROOM_NAME, ROOM_UUID, IMAGE_NAME, INFO, ROOM_X, ROOM_Y, STATUS, OCCUPANCY, LAST_DATA_TS, ACTIVE, LAST_DATA_RECEIVED,x,y,w,h,MAC) in cursor]
     for room in result["DATA"]:
         cursor.execute(f"""SELECT `ID`,`TIMESTAMP`,`URGENCY`,`TYPE`,`DETAILS`,`NOTIFY` ,`NOTIFY_TIMESTAMP` FROM `ALERT` WHERE `ROOM_ID`={room["ID"]} AND `NOTIFY`=0 GROUP BY `URGENCY` ORDER BY `URGENCY` DESC;""")
         room["ALERTS"] = [{"ID":ID,"TIMESTAMP":TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if TIMESTAMP else TIMESTAMP,"URGENCY": URGENCY, "TYPE": TYPE,"DETAILS":DETAILS,"NOTIFY":NOTIFY,"NOTIFY_TIMESTAMP":NOTIFY_TIMESTAMP.astimezone(local_timezone).astimezone(pytz.utc) if NOTIFY_TIMESTAMP else NOTIFY_TIMESTAMP} for (ID,TIMESTAMP,URGENCY,TYPE,DETAILS,NOTIFY,NOTIFY_TIMESTAMP ) in cursor]
@@ -358,6 +358,25 @@ def setDeviceConfig(MAC,flag):
         result = defaultdict(list)
         print(result)
         sql = f"UPDATE DEVICES SET CONFIG_SWITCH={flag} WHERE MAC='{MAC}';"
+        cursor.execute(sql)   
+        connection.commit() 
+        return {
+            "RESULT": True
+        }
+    except Exception as e:
+        print(e)
+        return {
+            "ERROR":str(e),
+            "RESULT": False
+        }
+    
+def update_active_room(room_uuid,active):
+    try:
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor()
+        result = defaultdict(list)
+        print(result)
+        sql = f"UPDATE ROOMS_DETAILS SET ACTIVE={active} WHERE ROOM_UUID='{room_uuid}';"
         cursor.execute(sql)   
         connection.commit() 
         return {

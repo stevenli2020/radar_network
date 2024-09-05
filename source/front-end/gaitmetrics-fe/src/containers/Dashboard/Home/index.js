@@ -3,7 +3,7 @@ import moment from 'moment';
 import WithHOC from './actions'
 import { useNavigate } from "react-router-dom"
 import { Typography, Card, Row, Col, Divider,Tag, Space, Modal, Button, Popover, Table } from 'antd'
-import { ArrowRightOutlined, EditTwoTone, DeleteTwoTone, PlusOutlined, AlertFilled, EditOutlined, SendOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined, EditTwoTone, DeleteTwoTone, PlusOutlined, AlertFilled, EditOutlined, SendOutlined, LoginOutlined } from '@ant-design/icons'
 
 import LoadingOverlay from 'components/LoadingOverlay'
 import { Container } from 'react-bootstrap'
@@ -484,6 +484,25 @@ const Home = (props) => {
 												showTriggerAlertModal()
 											}
 											}></SendOutlined>:(<></>)
+										}
+										{
+											props.isAdmin?<LoginOutlined onClick={ ()=>{
+												Modal.confirm({
+													title: room.ACTIVE?'Deactivate Room':'Activate Room',
+													content: room.ACTIVE?'Are you sure you want to deactivate '+room.ROOM_NAME+'?':'Are you sure you want to activate '+room.ROOM_NAME+'?',
+													okText:'Confirm',
+													cancelText:'Cancel',
+													onOk:() => {
+														if (room.ACTIVE){
+															props.updateRoomActive(room.ROOM_UUID,0)
+														}else{
+															props.updateRoomActive(room.ROOM_UUID,1)
+														}
+														
+													},
+												})
+											}
+											}></LoginOutlined>:(<></>)
 										}
 										<EditTwoTone onClick={ ()=>{
 											props.onChangeHOC('updateUploadImg',null)

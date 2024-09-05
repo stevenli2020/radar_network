@@ -282,6 +282,25 @@ const HOC = (WrappedComponent) => {
       // this.setState({client_id:payload.DATA.client_id})
     }
 
+    updateRoomActive = (room_uuid,active) => {
+      let payload = {
+        ROOM_UUID: room_uuid,
+        ACTIVE:active
+      }
+      console.log(payload)
+      Post(
+        `/api/updateRoomActive`,
+        payload,
+        this.updateRoomActiveSuccess,
+        error => requestError(error),
+        this.load
+      )}
+
+      updateRoomActiveSuccess = payload => {
+      requestSuccess("Room status updated successfully!")
+      this.getRoomDetails()
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -291,6 +310,7 @@ const HOC = (WrappedComponent) => {
           getRoomDetails={this.getRoomDetails}
           addRoom={this.addRoom}
           updateRoom={this.updateRoom}
+          updateRoomActive={this.updateRoomActive}
           triggerAlert={this.triggerAlert}
           deleteRoom={this.deleteRoom}
           uploadNewImg={this.uploadNewImg}

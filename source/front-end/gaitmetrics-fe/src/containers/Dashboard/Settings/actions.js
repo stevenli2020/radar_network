@@ -15,7 +15,9 @@ const HOC = (WrappedComponent) => {
         {value:2,label:'Day of Week'}
       ],
       alertConfigs: [],
-      algoConfigs: {}
+      algoConfigs: {},
+      notifier:[],
+      updateConfigFlag: 0
     };
 
     load = (param) => this.setState({ loading: param });
@@ -98,6 +100,52 @@ const HOC = (WrappedComponent) => {
 
     setAlgoConfigurationsSuccess = payload => {
       requestSuccess('Algorithm configurations updated successfully!')
+      this.setState({updateConfigFlag:this.state.updateConfigFlag+1})
+    }
+
+    getNotifier = () => {
+      Get(
+        `/api/notifier`,
+        this.getNotifierSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getNotifierSuccess = payload => {
+      this.setState({notifier:payload.DATA})
+    }
+
+    addNotifier = (configs) => {
+      let payload = {
+        EMAIL:configs
+      }
+      Post(
+        `/api/notifier`,
+        payload,
+        this.addNotifierSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    addNotifierSuccess = payload => {
+      requestSuccess('New notifier added successfully!')
+      this.getNotifier()
+    }
+
+    deleteNotifier = (email) => {
+      Delete(
+        `/api/notifier/${email}`,
+        this.deleteNotifierSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    deleteNotifierSuccess = payload => {
+      requestSuccess('Notifier deleted successfully!')
+      this.getNotifier()
     }
 
     uploadLogo = (values) => {
@@ -158,6 +206,9 @@ const HOC = (WrappedComponent) => {
           getAlgoConfigurations={this.getAlgoConfigurations}
           getMQTTClientID={this.getMQTTClientID}
           setClientConnection={this.setClientConnection}
+          getNotifier={this.getNotifier}
+          addNotifier={this.addNotifier}
+          deleteNotifier={this.deleteNotifier}
           getDataTypes={this.getDataTypes}
           upload={this.uploadLogo}
           onLoading={this.state.loading}

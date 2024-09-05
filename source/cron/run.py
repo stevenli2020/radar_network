@@ -1700,8 +1700,20 @@ def get_summary_data():
 
             get_room_summary(user,room_uuid)
 
+def get_notifier():
+    global config
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+    sql = f"SELECT `EMAIL` FROM EMAIL_RECIPIENT;"
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    data = []
+    for row in result:
+        data.append(row["EMAIL"])
+    return data
+
 def check_disconnected_devices():
-    recipients = ["limcheewei4727_@hotmail.com"]
+    recipients = get_notifier()
     global config
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)

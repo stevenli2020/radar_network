@@ -19,10 +19,11 @@ import 'filepond/dist/filepond.min.css'
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css'
-import { DeleteTwoTone } from '@ant-design/icons'
+import { DeleteTwoTone, EditTwoTone } from '@ant-design/icons'
 import Paho from 'paho-mqtt'
 import getWebsocketServer from 'utils/websocket'
 import { requestSuccess,requestError } from 'utils/requestHandler'
+import UpdateAlgoConfigModal from './UpdateAlgoConfigModal'
 
 let client = null
 
@@ -31,6 +32,7 @@ const Settings = props => {
 	const { Title } = Typography
   const [form] = Form.useForm();
   const [algoForm] = Form.useForm();
+  const [notifierForm] = Form.useForm();
   const { TextArea } = Input;
   const [roomImg, setRoomImg] = useState('')
   const [files, setFiles] = useState([])
@@ -39,6 +41,8 @@ const Settings = props => {
   const [algoConfigs,setAlgoConfigs] = useState([])
   const [dpRange, setDPRange] = useState([15,60])
   const [isActive, setIsActive] = useState(true);
+  const [selectedAlgoConfig, setSelectedAlgoConfig] = useState(null)
+  const [updateVisible, setUpdateVisible] = useState(false);
 
   const onChange = (value) => {
     console.log('onChange: ', value);
@@ -47,6 +51,14 @@ const Settings = props => {
   
   const onChangeComplete = (value) => {
     console.log('onChangeComplete: ', value);
+  };
+
+  const closeUpdateModal = () => {
+    setUpdateVisible(false);
+  };
+
+  const showUpdateModal = () => {
+    setUpdateVisible(true);
   };
 
   const onChangeThreshold = (value) => {
@@ -138,6 +150,11 @@ const Settings = props => {
       render: (_, config) => (
         <>
         <Space>
+          <EditTwoTone onClick={ ()=>{
+            setSelectedAlgoConfig(config)
+            showUpdateModal()
+          }
+          }></EditTwoTone>
           <DeleteTwoTone onClick={() => 
             Modal.confirm({
               title: 'Delete Device',
@@ -147,6 +164,40 @@ const Settings = props => {
               onOk:() => {
                 const newAlgoConfigs = algoConfigs.filter(configs => configs !== config);
                 setAlgoConfigs(newAlgoConfigs);
+              },
+            })
+          }></DeleteTwoTone>
+        </Space>
+        </>
+      ),
+    },
+  ] 
+
+  const notifierColumns = [ 
+    { 
+      key: "ID", 
+      title: "ID", 
+      render: (_, __, index) => index + 1, // Render the index as the ID, starting from 1
+    },
+    { 
+      key: "EMAIL", 
+      title: "Email", 
+      dataIndex: "EMAIL", 
+    },
+    { 
+      key: "ACT", 
+      title: "Action", 
+      render: (_, notifier) => (
+        <>
+        <Space>
+          <DeleteTwoTone onClick={() => 
+            Modal.confirm({
+              title: 'Delete email',
+              content: 'Are you sure you want to delete this email?',
+              okText:'Confirm',
+              cancelText:'Cancel',
+              onOk:() => {
+                props.deleteNotifier(notifier.EMAIL)
               },
             })
           }></DeleteTwoTone>
@@ -170,6 +221,7 @@ const Settings = props => {
 			props.getDataTypes()
 			props.getAlertConfigurations()
       props.getAlgoConfigurations()
+      props.getNotifier()
     }
 	}, [])
 
@@ -212,15 +264,22 @@ const Settings = props => {
     console.error("Connection failed:", e);
   };
 
-  const configureDevice = (device) => {
+  useEffect(() => {
+    if (getItem("LOGIN_TOKEN") && props.client_id != null && props.updateConfigFlag > 0){
+			configureDevice()
+		}
+  }, [props.updateConfigFlag]);
+
+  const configureDevice = () => {
     console.log("Configure... MQTT")
-    publishToMQTT("UPDATED","/GMT/DEV/ALGOCONFIG")
+    publishToMQTT("UPDATED","/GMT/DEV/ALGO_CONFIG")
   }
 
   const publishToMQTT = (msg, topic) => {
     let message = new Paho.Message(msg);
     message.destinationName = topic;
     client.send(message);
+    console.log("Publish",message,"to",topic)
   }
 
   const onMessageArrived = async (message) => {
@@ -327,6 +386,20 @@ const Settings = props => {
 
   const updateAlgoConfigs = () => {
 		props.setAlgoConfigurations(algoConfigs)
+	}
+
+  const addNotifier = () => {
+    if (notifierForm.getFieldValue('email')!=undefined){
+      const foundObject = _.find(props.notifier, { EMAIL: notifierForm.getFieldValue('email')});
+      if (foundObject == undefined){
+        props.addNotifier(notifierForm.getFieldValue('email'))
+      }else{
+        requestError("Duplicate email!")
+      }
+      
+    }else{
+      requestError("Please fill in required fields!")
+    }
 	}
 
   const addAlertConfig = () => {
@@ -630,6 +703,64 @@ const Settings = props => {
           </Col>
         </Row>
       </Form>
+      <Form
+        form={notifierForm}
+        layout="vertical" // Set the form layout
+      >
+        <Row className='mt-2' gutter={16}>
+          <Col span={24}>
+            <Card 
+              title={ 
+                <>
+                  Notifier
+                </>  } 
+              style={{}} 
+              className='content-card'
+            >
+              <Row gutter={16}>
+                <Col span={24} lg={8}>
+                  <Form.Item
+                    label="Email"
+                    name="email"
+                    rules={[{ required: true, message: 'Please enter email' }]}
+                  >
+                    <Input/>
+                  </Form.Item>
+                </Col>
+                
+                <Col span={24} lg={8} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={addNotifier}
+                  >
+                    Add
+                  </Button>
+                </Col>
+
+              </Row>
+              
+              {props.notifier.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <Table 
+                    dataSource={props.notifier} 
+                    columns={notifierColumns} 
+                    rowKey={"ID"}
+                    pagination={{
+                      // Enable pagination
+                      pageSizeOptions: ['10', '20', '50'], // Specify the available page sizes
+                      showSizeChanger: true, // Show the page size changer
+                      defaultPageSize: 10, // Default number of items per page
+                      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`, // Display total number of items
+                    }}
+                  />
+                </div>
+              )}
+						</Card>
+          </Col>
+        </Row>
+      </Form>
+      { updateVisible && <UpdateAlgoConfigModal visible={updateVisible} close={closeUpdateModal} selectedKey={selectedAlgoConfig.CONFIG_KEY} selectedAlgoConfig={selectedAlgoConfig} algoConfigs={algoConfigs} setAlgoConfigs={setAlgoConfigs}/>}
 			{
 				props.onLoading && <LoadingOverlay/>
 			}

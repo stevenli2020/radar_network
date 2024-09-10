@@ -22,6 +22,10 @@ import { color } from 'echarts';
 import EditRoomOnMapModal from './EditRoomOnMapModal';
 import TriggerAlertModal from './TriggerRoomAlert';
 
+import heart from '../../../assets/heart.png';
+import heartWarning from '../../../assets/heart_orange.png';
+import heartNormal from '../../../assets/heart_green.png';
+
 let client = null
 
 const viewportWidthInPixels = window.innerWidth;
@@ -78,11 +82,65 @@ const Home = (props) => {
 				}
 				
 				// props.onChangeHOC('rooms',updatedRooms)
-			} 
+			} else if (destination[destination.length-1] == "HEART_RATE"){
+
+				const payloadBuffer = message.payloadString;
+
+				// Convert the Buffer to a UTF-8 encoded string
+				const payloadStr = payloadBuffer.toString('utf-8');
+
+				// Parse the JSON string to a JavaScript object
+				// console.log(destination[3],payloadJson)
+				
+				const updatedRooms = [...props.rooms]; // Create a shallow copy of rooms
+				const roomToUpdate = _.find(updatedRooms, { ROOM_UUID: destination[4] });
+				console.log(destination[4])
+				if (roomToUpdate) {
+					const now = new Date();
+					// Get the user's timezone offset in minutes
+					const userTimezoneOffset = now.getTimezoneOffset();
+					// Calculate the timezone offset in milliseconds
+					const timezoneOffsetMilliseconds = userTimezoneOffset * 60 * 1000;
+					// Get the current time in UTC
+					const nowUTC = now.getTime() - timezoneOffsetMilliseconds;
+					// Create a new Date object with the adjusted time
+					const timeInUserTimezone = new Date(nowUTC);
+					roomToUpdate.LAST_DATA_RECEIVED = Date.now();
+					roomToUpdate.HEART_RATE = parseFloat(payloadStr).toFixed(1);
+					roomToUpdate.LAST_HEART_TS = Date.now()
+					roomToUpdate.IN_BED = true;
+					roomToUpdate.LAST_IN_BED_TS = Date.now()
+					
+					props.onChangeHOC('rooms',updatedRooms)
+				}
+			}
     } catch (error) {
       console.error("Error processing MQTT message:", error);
     }
   };
+
+	useEffect(() => {
+		if (props.rooms.length >0) {
+			props.rooms
+				.forEach((room) => {
+
+					const heartItem = document.getElementById(`heart-item-${room.ID}`);
+					
+					if (heartItem) {
+						if (room.HEART_RATE) {
+							heartItem.style.display = 'block';
+							if (room.HEART_RATE >= 40 && room.HEART_RATE <= 110) {
+								heartItem.src = heartNormal // Set image for normal heart rate
+							} else {
+								heartItem.src = heartWarning; // Set image for abnormal heart rate
+							}
+						} else {
+							heartItem.style.display = 'none';
+						}
+					}
+				});
+		}
+	}, [props.rooms]);
 
 	const [connected, setConnected] = useState(false);
 
@@ -107,6 +165,7 @@ const Home = (props) => {
 						setConnected(true)
             client.subscribe("/GMT/DEV/ROOM/+/ALERT");
 						client.subscribe("/GMT/DEV/ROOM/+/BED_ANALYSIS");
+						client.subscribe("/GMT/DEV/ROOM/+/HEART_RATE");
             client.onMessageArrived = onMessageArrived;
           },
           onFailure: doFail,
@@ -231,8 +290,18 @@ const Home = (props) => {
 			<Table 
 				dataSource={room.ALERTS} 
         columns={columns} >
-
 			</Table>
+			<span>
+				<Button
+					type="primary"
+					onClick={()=>{
+						props.readAlerts(room.ROOM_UUID)
+					}}
+				>
+					OK
+				</Button>
+			</span>
+			
 		</div>)
 	}
 
@@ -539,7 +608,7 @@ const Home = (props) => {
 										}
 									} 
 								>
-									<p>{room.INFO?room.INFO:'-'}</p>
+									<p>{room.INFO?room.INFO:'-'} <img id={`heart-item-${room.ID}`} src={heart} alt="Heart" style={{ display:'none', position:'absolute', right: 0, top:50,  margin: '16px',height: '30px', width: 'auto' }} /></p>
 									<p>Status: <Tag>{
 										room.MAC.length === 0? 'No sensor':
 										room.STATUS === 0? 'Room is empty':

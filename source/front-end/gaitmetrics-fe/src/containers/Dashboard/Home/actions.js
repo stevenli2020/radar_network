@@ -301,6 +301,24 @@ const HOC = (WrappedComponent) => {
       this.getRoomDetails()
     }
 
+    readAlerts = (room_uuid) => {
+      let payload = {
+        ROOM_UUID: room_uuid
+      }
+      Post(
+        `/api/readRoomAlerts`,
+        payload,
+        this.readAlertsSuccess,
+        error => requestError(error),
+        this.load
+      )
+      console.log("Read")
+    }
+    
+    readAlertsSuccess = payload => {
+      this.getRoomDetails()
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -318,6 +336,7 @@ const HOC = (WrappedComponent) => {
           updateRoomLocationOnMap={this.updateRoomLocationOnMap}
           getMQTTClientID={this.getMQTTClientID}
           setClientConnection={this.setClientConnection}
+          readAlerts={this.readAlerts}
           onChangeHOC={this.onChangeHOC}
         />
       );

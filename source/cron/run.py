@@ -1684,6 +1684,7 @@ def get_room_summary(user,room_uuid):
             return
         else:
             print("Failed:", response.status_code, response.text)
+            time.sleep(30)
 
 def get_summary_data():
     user = get_user_token()

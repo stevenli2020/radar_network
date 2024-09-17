@@ -18,7 +18,7 @@ import copy
 import pytz
 import _thread
 import atexit
-import requests
+
 
 ##while 1: #time.sleep(10)
 
@@ -53,7 +53,6 @@ wallStateParam = {}
 ceilStateParam = {}
 vitalStateParam = {}
 devicesTbl = {}
-algoCfg = {}
 
 xShift = 0
 yShift = 0
@@ -86,9 +85,8 @@ class NumpyArrayEncoder(JSONEncoder):
 # Decode, Process, and Publish MQTT Data Packets from Radar
 # def decode_process_publish(mac, data, radarType, xShift, yShift, zShift, rotXDegree, rotYDegree, rotZDegree, aggregate_period):
 def decode_process_publish(mac, data):
-    global mqttc, config, aggregate_period, devicesTbl, breathRate_MA, heartRate_MA, algoCfg
+    global mqttc, config, aggregate_period, devicesTbl, breathRate_MA, heartRate_MA
     my_list = []
-    print("algorithm configuration: ", algoCfg)
     # for x in data:
     for ts_str, byteAD in data.items():
         try:
@@ -126,31 +124,6 @@ def decode_process_publish(mac, data):
             rotXDegree = DEVICE["ROT_X"]
             rotYDegree = DEVICE["ROT_Y"]
             rotZDegree = DEVICE["ROT_Z"]
-
-            if "fall_deltaZHeight_" + mac in algoCfg["DATA"]:
-                deltaZHeight_threshold = algoCfg["DATA"]["fall_deltaZHeight_"+mac]
-            else:
-                deltaZHeight_threshold = algoCfg["DATA"]["fall_deltaZHeight"]
-
-            if "fall_deltaZPos_" + mac in algoCfg["DATA"]:
-                deltaZPos_threshold = algoCfg["DATA"]["fall_deltaZPos_"+mac]
-            else:
-                deltaZPos_threshold = algoCfg["DATA"]["fall_deltaZPos"]
-
-            if "fall_bodyWidth_" + mac in algoCfg["DATA"]:
-                bodyWidth_threshold = algoCfg["DATA"]["fall_bodyWidth_"+mac]
-            else:
-                bodyWidth_threshold = algoCfg["DATA"]["fall_bodyWidth"]
-
-            if "fall_averageHeight_" + mac in algoCfg["DATA"]:
-                averageHeight_threshold = algoCfg["DATA"]["fall_averageHeight_"+mac]
-            else:
-                averageHeight_threshold = algoCfg["DATA"]["fall_averageHeight"]
-
-            if "fall_minZVel_" + mac in algoCfg["DATA"]:
-                minZVel_threshold = algoCfg["DATA"]["fall_minZVel_"+mac]
-            else:
-                minZVel_threshold = algoCfg["DATA"]["fall_minZVel"]
 
             if radarType == 'wall':
                 global wallStateParam
@@ -568,8 +541,7 @@ def decode_process_publish(mac, data):
                                           deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-35]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
-                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold:
-                                          # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
+                                          if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
                                           # if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
                                             wallStateParam[mac]['labelCount'][minDistIdx] = 3
@@ -1764,8 +1736,8 @@ def decode_process_publish(mac, data):
                                     # vitalStateParam[mac]['label_list'].append(2)
 
                                 # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
-                                if len(v_coord[trackIndices == trackId]) > 0:
-                                  if np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
+                                if len(v_coord[trackIndices == trackId]) > 5:
+                                  if np.abs(x_pos) < 1.0 and np.abs(z_pos) < 1.0 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
                                     # if np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) <= 0.3:
                                     # print("In Bed, Subject Stationary")
                                     vital_dict['bedOccupancy'] = 1
@@ -1780,7 +1752,7 @@ def decode_process_publish(mac, data):
                                     vitalStateParam[mac]['label_list'].append(1)
 
                                   # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
-                                  elif np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
+                                  elif np.abs(x_pos) < 1.0 and np.abs(z_pos) < 1.0 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
                                     # elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) > 0.3:
                                     # print("In Bed, Subject Moving")
                                     vital_dict['bedOccupancy'] = 1
@@ -1935,7 +1907,7 @@ def decode_process_publish(mac, data):
 
 
 def on_message(mosq, obj, msg):
-    global devicesTbl,config,aggregate_period,algoCfg
+    global devicesTbl,config,aggregate_period
     # print(msg.payload)
     in_data = ''
     topicList = msg.topic.split('/')
@@ -1948,16 +1920,6 @@ def on_message(mosq, obj, msg):
             print(DEV)
             del devicesTbl[DEV]
         return
-    if topicList[-1] == "ALGO_CONFIG":
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
-        algoCfg = _algoCfg.json()
-        pubPayload = {"STATUS":"UPDATED"}
-        jsonData = json.dumps(pubPayload)
-        mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
-    elif bool(algoCfg) == 0:
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
-        algoCfg = _algoCfg.json()
-            
     devName = ''
     xShift = 0
     yShift = 0
@@ -2065,7 +2027,6 @@ print("Subscribe to topic: "+ "/GMT/DEV/+/DATA/+/RAW/#")
 mqttc.subscribe("/GMT/DEV/+/DATA/+/RAW/#")
 print("Subscribe to topic: "+ "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
 mqttc.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
-mqttc.subscribe("/GMT/DEV/ALGO_CONFIG")
 time.sleep(1)
 print("Start mqtt receiving loop")
 _thread.start_new_thread( WatchDog, ())

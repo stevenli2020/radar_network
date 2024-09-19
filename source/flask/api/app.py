@@ -468,8 +468,25 @@ def getAnalyticData():
                 result = getAnalyticDataofPosture(data)  
                 cache_data(data, json.dumps(result))
                 return result
-                # return getAnalyticDataofPosture(data)  
-                # return getSaveRawData(data)  
+            else:
+                return {"ERROR": 'Not authorized!'}
+        else:
+            return {"ERROR": 'Empty json!'} 
+        
+@app.route('/api/refreshAnalyticData', methods=["POST"])
+@jwt_required()
+def getAnalyticData():
+    if request.method == 'POST':
+        data = request.json   
+        if data:                 
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
+            if login:
+                data["API"] = "ANALYTICS_DATA"
+                
+                result = getAnalyticDataofPosture(data)  
+                cache_data(data, json.dumps(result))
+                return result
             else:
                 return {"ERROR": 'Not authorized!'}
         else:

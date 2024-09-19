@@ -23,8 +23,8 @@ config = {
 vernemq = {
     'user': 'flask',
     'password': 'CrbI1q)KUV1CsOj-',
-    'host': 'db',
-    'port': '3306',
+    'host': '143.198.199.16',
+    'port': '2203',
     'database': 'vernemq_db'
 }
 
@@ -171,20 +171,19 @@ def analyse_position_data(data):
     social_min = 0
     unknown = 0
     for row in data:
-        row["MINUTE"] = dt.strptime(row["MINUTE"], date_format)
 
         if row["IN_ROOM"] == 1:
-            in_room_min += 1
+            in_room_min += 0.25
             if row["IS_MOVING"] == 1:
-                moving_min += 1
+                moving_min += 0.25
             elif row["IS_UPRIGHT"] == 1:
-                upright_min += 1
+                upright_min += 0.25
             elif row["IS_LAYING"] == 1:
-                laying_min += 1
+                laying_min += 0.25
             elif row["IS_SOCIAL"] == 1:
-                social_min += 1
+                social_min += 0.25
             else:
-                unknown += 1
+                unknown += 0.25
                 
     return seconds_to_text(social_min*60),seconds_to_text(moving_min*60),seconds_to_text(upright_min*60),seconds_to_text(laying_min*60)
 
@@ -269,7 +268,8 @@ def getLaymanData(date,room_uuid):
             breath_rate,heart_rate, current_breath_rate, current_heart_rate = analyseVitalData(vital_data,date)
 
         sql = f"""
-            SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,
+            SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i:') AS `TIME`,
+                FLOOR(SECOND(pd.`TIMESTAMP`) / 15) * 15 AS `SECOND`,
                 MAX(CASE WHEN pd.`OBJECT_COUNT` > 1 THEN 1 ELSE 0 END) AS `IS_SOCIAL`,
                 MAX(CASE WHEN pd.`STATE` = 2 THEN 1 ELSE 0 END) AS `IS_LAYING`,
                 MAX(CASE WHEN pd.`STATE` = 0 THEN 1 ELSE 0 END) AS `IS_MOVING`,
@@ -278,10 +278,9 @@ def getLaymanData(date,room_uuid):
             FROM (SELECT tb.* FROM {tables[-1]} tb LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}' AND TIMESTAMP >= '{date}') pd
             LEFT JOIN `RL_ROOM_MAC` rrm ON rrm.MAC = pd.MAC
             WHERE rrm.ROOM_UUID = '{room_uuid}'
-            GROUP BY `MINUTE`
+            GROUP BY `TIME`, `SECOND`
             ORDER BY pd.`TIMESTAMP`;
         """
-
         # Execute the query with parameters
         cursor.execute(sql)
         position_data = cursor.fetchall()
@@ -1474,6 +1473,7 @@ def filter_non_zero(number):
     return number > 0
 
 def seconds_to_text(seconds):
+    seconds = int(seconds)
     if (seconds == 0):
         return "0m"
     # Calculate hours, minutes, and remaining seconds
@@ -1678,7 +1678,7 @@ def get_room_summary(user,room_uuid):
     }
 
     for i in range(3):
-        response = requests.post(domain_url + "/getAnalyticData", json=data, headers=headers)
+        response = requests.post(domain_url + "/refreshAnalyticData", json=data, headers=headers)
         if response.status_code == 200:
             print("Success:", response.json())
             return

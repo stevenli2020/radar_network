@@ -177,7 +177,8 @@ const Home = (props) => {
       }
     };
 
-		if (getItem("LOGIN_TOKEN") && !connected && props.rooms.length > 0 && props.client_id != null){
+		if (getItem("LOGIN_TOKEN") && props.rooms.length > 0 && props.client_id != null){
+			console.log("refresh connection")
     	connectToBroker();
 
 			let intervalId;
@@ -204,7 +205,7 @@ const Home = (props) => {
         stopInterval();
       };
 		}
-  }, [props.rooms,connected, isActive, props.client_id]); // Include dependencies if needed
+  }, [props.rooms,connected, isActive, props.client_id, props.playing]); // Include dependencies if needed
 
 	useEffect(() => {
     return () => {
@@ -535,7 +536,13 @@ const Home = (props) => {
 				{
 					props.rooms.map( room => (
 						<Col xl={6} xxl={6} lg={6} md={12} sm={24} xs={24}	key={"room - " + room.ID}>
-							<Card 
+							{
+								room.ALERTS.length>0?(
+									<Popover 
+										title="Alert(s)" 
+										content={popoverContent(room)} 
+										trigger="hover">
+											<Card 
 								title={ room.ROOM_NAME } 
 								style={{ height: "100%"}} 
 								className='content-card'
@@ -543,9 +550,7 @@ const Home = (props) => {
 									<Space>
 										{
 											room.ALERTS.length>0?(
-												<Popover title="Alert(s)" content={popoverContent(room)}>
-													<AlertFilled style={{color:'red'}}></AlertFilled>
-												</Popover>):(<></>)
+												<AlertFilled style={{color:'red'}}></AlertFilled>):(<></>)
 										}
 										{
 											props.isAdmin?<SendOutlined onClick={ ()=>{
@@ -625,6 +630,99 @@ const Home = (props) => {
 								</div>
 								
 							</Card>
+									</Popover>):
+								(<>
+<Card 
+								title={ room.ROOM_NAME } 
+								style={{ height: "100%"}} 
+								className='content-card'
+								extra={
+									<Space>
+										{
+											room.ALERTS.length>0?(
+												<AlertFilled style={{color:'red'}}></AlertFilled>):(<></>)
+										}
+										{
+											props.isAdmin?<SendOutlined onClick={ ()=>{
+												props.onChangeHOC('selectedRoom',room)
+												showTriggerAlertModal()
+											}
+											}></SendOutlined>:(<></>)
+										}
+										{
+											props.isAdmin?<LoginOutlined onClick={ ()=>{
+												Modal.confirm({
+													title: room.ACTIVE?'Deactivate Room':'Activate Room',
+													content: room.ACTIVE?'Are you sure you want to deactivate '+room.ROOM_NAME+'?':'Are you sure you want to activate '+room.ROOM_NAME+'?',
+													okText:'Confirm',
+													cancelText:'Cancel',
+													onOk:() => {
+														if (room.ACTIVE){
+															props.updateRoomActive(room.ROOM_UUID,0)
+														}else{
+															props.updateRoomActive(room.ROOM_UUID,1)
+														}
+														
+													},
+												})
+											}
+											}></LoginOutlined>:(<></>)
+										}
+										<EditTwoTone onClick={ ()=>{
+											props.onChangeHOC('updateUploadImg',null)
+											props.onChangeHOC('selectedRoom',room)
+											console.log(room)
+											showUpdateModal()
+										}
+										}></EditTwoTone>
+
+										<DeleteTwoTone onClick={() => 
+											Modal.confirm({
+												title: 'Delete Room',
+												content: 'Are you sure you want to delete '+room.ROOM_NAME+'?',
+												okText:'Confirm',
+												cancelText:'Cancel',
+												onOk:() => {
+													props.deleteRoom(room)
+												},
+											})
+										}></DeleteTwoTone>
+
+										{/* <ArrowRightOutlined onClick={
+											() => {
+												toSummary(room.ROOM_UUID)
+											}
+										}></ArrowRightOutlined> */}
+									</Space>
+								}
+							>
+								<div
+									onClick={
+										() => {
+											toSummary(room.ROOM_UUID)
+										}
+									} 
+								>
+									<p>{room.INFO?room.INFO:'-'} <img id={`heart-item-${room.ID}`} src={heart} alt="Heart" style={{ display:'none', position:'absolute', right: 0, top:50,  margin: '16px',height: '30px', width: 'auto' }} /></p>
+									<p>Status: <Tag>{
+										room.MAC.length === 0? 'No sensor':
+										room.STATUS === 0? 'Room is empty':
+										room.STATUS === 1? 'Room is occupied':
+										room.STATUS === 2? 'Sleeping':
+										room.STATUS === 255? 'Alert':
+										'Room is empty'
+									}</Tag></p>
+									<p>Location: <Tag>{room.ROOM_LOC}</Tag></p>
+									<p>Last data: <Tag>{
+										room.MAC.length === 0? '-':
+										moment(room.LAST_DATA_RECEIVED).fromNow()
+										}</Tag></p>
+								</div>
+								
+							</Card>
+								</>)
+							}
+							
 						</Col>
 					))
 				}

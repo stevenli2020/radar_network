@@ -67,7 +67,7 @@ def insert_alert(room_id,msg):
     result = cursor.fetchone()
 
     # If there are no matching entries within the last 15 seconds, proceed with insertion
-    if result['count'] == 0:
+    if result['count'] == 0 and check_should_sol(room_id):
         sql = f"""INSERT INTO ALERT (ROOM_ID,URGENCY,TYPE,DETAILS) VALUES ('{room_id}','{msg["URGENCY"]}','{msg["TYPE"]}','{msg["DETAILS"]}');"""
         cursor.execute(sql)
         connection.commit()
@@ -204,6 +204,37 @@ def run():
     client = connect_mqtt()
     subscribe(client)
     client.loop_forever()
+
+def check_should_sol(room_id):
+    global config
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+    sql = f"SELECT START_TIME, END_TIME FROM ALERT_TIME_RANGE WHERE ROOM_ID='{room_id}';"
+    cursor.execute(sql)
+    records = cursor.fetchall()
+    cursor.close()
+    connection.close()  
+    if records and len(records) > 0:
+        start_time = records[0].get("START_TIME")
+        end_time = records[0].get("END_TIME")
+        if within_time_range(start_time,end_time):
+            return True
+        return False
+
+    return True
+
+def within_time_range(start_time_str, end_time_str):
+    start_time = datetime.strptime(start_time_str, "%H:%M").time()
+    end_time = datetime.strptime(end_time_str, "%H:%M").time()
+
+    current_time = datetime.now().time()
+
+    if start_time < end_time:
+        is_within_range = start_time <= current_time <= end_time
+    else:
+        is_within_range = current_time >= start_time or current_time <= end_time
+
+    return is_within_range
 
 
 if __name__ == '__main__':

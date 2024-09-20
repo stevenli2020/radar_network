@@ -475,7 +475,7 @@ def getAnalyticData():
         
 @app.route('/api/refreshAnalyticData', methods=["POST"])
 @jwt_required()
-def getAnalyticData():
+def refreshAnalyticData():
     if request.method == 'POST':
         data = request.json   
         if data:                 

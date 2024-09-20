@@ -1,4 +1,4 @@
-import schedule
+#import schedule
 import time
 from datetime import datetime, timedelta
 import subprocess
@@ -45,9 +45,9 @@ def archive_old_table():
     print(f"Table data dumped successfully: {dump_file}")
 
     # Optionally, delete old data from the original table
-    delete_old_data_sql = f"DELETE FROM your_table_name WHERE date_column <= '{three_months_ago.strftime('%Y-%m-%d')}'"
-    cursor.execute(delete_old_data_sql)
-    connection.commit()
+    #delete_old_data_sql = f"DELETE FROM your_table_name WHERE date_column <= '{three_months_ago.strftime('%Y-%m-%d')}'"
+    #cursor.execute(delete_old_data_sql)
+    #connection.commit()
     
     print(f"Old data deleted successfully from your_table_name")
 

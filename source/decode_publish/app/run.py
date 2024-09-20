@@ -152,6 +152,27 @@ def decode_process_publish(mac, data):
             else:
                 minZVel_threshold = algoCfg["DATA"]["fall_minZVel"]
 
+            if "vital_periodStationary_" + mac in algoCfg["DATA"]:
+                periodStationary_threshold = algoCfg["DATA"]["vital_periodStationary_"+mac]
+            else:
+                periodStationary_threshold = algoCfg["DATA"]["vital_periodStationary"]
+
+            if "vital_distanceMoved_" + mac in algoCfg["DATA"]:
+                distanceMoved_threshold = algoCfg["DATA"]["vital_distanceMoved_"+mac]
+            else:
+                distanceMoved_threshold = algoCfg["DATA"]["vital_distanceMoved"]
+
+            if "vital_xPos_" + mac in algoCfg["DATA"]:
+                xPos_threshold = algoCfg["DATA"]["vital_xPos_"+mac]
+            else:
+                xPos_threshold = algoCfg["DATA"]["vital_xPos"]
+
+            if "vital_zPos_" + mac in algoCfg["DATA"]:
+                zPos_threshold = algoCfg["DATA"]["vital_zPos_"+mac]
+            else:
+                zPos_threshold = algoCfg["DATA"]["vital_zPos"]
+
+
             if radarType == 'wall':
                 global wallStateParam
 
@@ -213,6 +234,8 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['rollingX'] = []
                     wallStateParam[mac]['rollingY'] = []
                     wallStateParam[mac]['rollingZ'] = []
+                    wallStateParam[mac]['rollingZVel'] = []
+                    wallStateParam[mac]['minZVel'] = []
                     wallStateParam[mac]['rollingHeight'] = []
                     wallStateParam[mac]['averageX'] = []
                     wallStateParam[mac]['averageY'] = []
@@ -437,6 +460,8 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingX'].append([])
                                 wallStateParam[mac]['rollingY'].append([])
                                 wallStateParam[mac]['rollingZ'].append([])
+                                wallStateParam[mac]['rollingZVel'].append([])
+                                wallStateParam[mac]['minZVel'].append([])
                                 wallStateParam[mac]['rollingHeight'].append([])
                                 wallStateParam[mac]['averageX'].append([])
                                 wallStateParam[mac]['averageY'].append([])
@@ -508,6 +533,7 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingX'][minDistIdx].append(x_pos)
                                 wallStateParam[mac]['rollingY'][minDistIdx].append(y_pos)
                                 wallStateParam[mac]['rollingZ'][minDistIdx].append(z_pos)
+                                wallStateParam[mac]['rollingZVel'][minDistIdx].append(z_vel)
 
                                 if len(wallStateParam[mac]['rollingX'][minDistIdx]) >= 10:
                                     wallStateParam[mac]['averageX'][minDistIdx].append(np.average(wallStateParam[mac]['rollingX'][minDistIdx]))
@@ -516,6 +542,12 @@ def decode_process_publish(mac, data):
                                     del wallStateParam[mac]['rollingX'][minDistIdx][0]
                                     del wallStateParam[mac]['rollingY'][minDistIdx][0]
                                     del wallStateParam[mac]['rollingZ'][minDistIdx][0]
+
+                                if len(wallStateParam[mac]['rollingZVel'][minDistIdx]) >= 35:
+                                    wallStateParam[mac]['minZVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingZVel'][minDistIdx], 5))
+                                    del wallStateParam[mac]['rollingZVel'][minDistIdx][0]
+                                    if len(wallStateParam[mac]['minZVel'][minDistIdx]) >= 10:
+                                        del wallStateParam[mac]['minZVel'][minDistIdx][0]
 
                                 if len(wallStateParam[mac]['averageX'][minDistIdx]) > 35:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
@@ -568,7 +600,7 @@ def decode_process_publish(mac, data):
                                           deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-35]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
-                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold:
+                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:
                                           # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
                                           # if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
@@ -737,6 +769,8 @@ def decode_process_publish(mac, data):
                             wallStateParam[mac]['rollingX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZ'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['rollingZVel'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['minZVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingHeight'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageY'].pop(trackerInvalidIdx[Idx])
@@ -1555,6 +1589,9 @@ def decode_process_publish(mac, data):
                 # Parameters Re-Initialization if Time Interval between Consecutive Data Frames Larger than Certain Threshold
                 # For Robust Analytics with Data Frames / Packets Drop
                 if deltaT > 5:
+                    vitalStateParam[mac]['x0'] = np.nan
+                    vitalStateParam[mac]['y0'] = np.nan
+                    vitalStateParam[mac]['z0'] = np.nan
                     vitalStateParam[mac]['periodStationary'] = 0
                     vitalStateParam[mac]['prevTimeStationary'] = 0
                     vitalStateParam[mac]['prevBreathRate'] = 0
@@ -1587,7 +1624,7 @@ def decode_process_publish(mac, data):
                      if numTracks > 0 and len(vitalStateParam[mac]['previous_pointClouds']) > 0 and \
                             len(vitalStateParam[mac]['previous_pointClouds']) == len(trackIndices):
 
-                      if ('vitals' in outputDict) and vitalStateParam[mac]['periodStationary'] > 5:  # and count_subjectStationary > 100:
+                      if ('vitals' in outputDict) and vitalStateParam[mac]['periodStationary'] > periodStationary_threshold:  # and count_subjectStationary > 100:
                         vitalsDict = outputDict['vitals']
                         # if count_vitalSign == 0:
                         #     Breathsignal = np.array(vitalsDict['breathWaveform'])
@@ -1643,7 +1680,7 @@ def decode_process_publish(mac, data):
                         vitalStateParam[mac]['prevBreathRate'] = curBreathRate
                         # print("\n*******************\nvital_dict: ", vital_dict)
 
-                      elif vitalStateParam[mac]['periodStationary'] <= 5:  # count_subjectStationary <= 100:
+                      elif vitalStateParam[mac]['periodStationary'] <= periodStationary_threshold:  # count_subjectStationary <= 100:
                         # print("\n*******************\nvital_dict: X", )
                         # count_vitalSign = 0
                         vitalStateParam[mac]['prevBreathRate'] = 0
@@ -1746,6 +1783,15 @@ def decode_process_publish(mac, data):
                                 vitalStateParam[mac]['trackPos'][minDistIdx] = [x_pos, y_pos, z_pos]
                                 # trackVelocity[minDistIdx] = [x_vel, y_vel, z_vel]
 
+                                if math.isnan(vitalStateParam[mac]['x0']):
+                                    distanceMoved = 10 # Arbitrary large value
+                                else:
+                                    distanceMoved = np.abs(vitalStateParam[mac]['x0'] - x_pos) + np.abs(vitalStateParam[mac]['y0'] - y_pos) + np.abs(vitalStateParam[mac]['z0'] - z_pos)
+                                    
+                                vitalStateParam[mac]['x0'] = x_pos
+                                vitalStateParam[mac]['y0'] = y_pos
+                                vitalStateParam[mac]['z0'] = z_pos
+
                                 # Rolling tracker velocity and height
                                 y_height = np.percentile(y_coord, [1])
                                 y_height = vitalStateParam[mac]['radar_coord'][1] - y_height
@@ -1765,7 +1811,8 @@ def decode_process_publish(mac, data):
 
                                 # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
                                 if len(v_coord[trackIndices == trackId]) > 0:
-                                  if np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
+                                  # if np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
+                                  if np.abs(x_pos) < xPos_threshold and np.abs(z_pos) < zPos_threshold and distanceMoved < distanceMoved_threshold:
                                     # if np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) <= 0.3:
                                     # print("In Bed, Subject Stationary")
                                     vital_dict['bedOccupancy'] = 1
@@ -1780,7 +1827,8 @@ def decode_process_publish(mac, data):
                                     vitalStateParam[mac]['label_list'].append(1)
 
                                   # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
-                                  elif np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
+                                  # elif np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
+                                  elif np.abs(x_pos) < xPos_threshold and np.abs(z_pos) < zPos_threshold:
                                     # elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) > 0.3:
                                     # print("In Bed, Subject Moving")
                                     vital_dict['bedOccupancy'] = 1

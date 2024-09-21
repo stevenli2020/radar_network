@@ -152,6 +152,11 @@ def decode_process_publish(mac, data):
             else:
                 minZVel_threshold = algoCfg["DATA"]["fall_minZVel"]
 
+            if "fall_numFrames_" + mac in algoCfg["DATA"]:
+                numFrames_threshold = int(algoCfg["DATA"]["fall_numFrames_"+mac])
+            else:
+                numFrames_threshold = int(algoCfg["DATA"]["fall_numFrames"])
+
             if "vital_periodStationary_" + mac in algoCfg["DATA"]:
                 periodStationary_threshold = algoCfg["DATA"]["vital_periodStationary_"+mac]
             else:
@@ -543,18 +548,18 @@ def decode_process_publish(mac, data):
                                     del wallStateParam[mac]['rollingY'][minDistIdx][0]
                                     del wallStateParam[mac]['rollingZ'][minDistIdx][0]
 
-                                if len(wallStateParam[mac]['rollingZVel'][minDistIdx]) >= 35:
+                                if len(wallStateParam[mac]['rollingZVel'][minDistIdx]) >= numFrames_threshold:
                                     wallStateParam[mac]['minZVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingZVel'][minDistIdx], 5))
                                     del wallStateParam[mac]['rollingZVel'][minDistIdx][0]
                                     if len(wallStateParam[mac]['minZVel'][minDistIdx]) >= 10:
                                         del wallStateParam[mac]['minZVel'][minDistIdx][0]
 
-                                if len(wallStateParam[mac]['averageX'][minDistIdx]) > 35:
+                                if len(wallStateParam[mac]['averageX'][minDistIdx]) > numFrames_threshold:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
                                     deltaY = wallStateParam[mac]['averageY'][minDistIdx][-1] - wallStateParam[mac]['averageY'][minDistIdx][-10]
                                     deltaZ = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-10]
                                     # deltaZPos = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-47]
-                                    deltaZPos = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-35]
+                                    deltaZPos = wallStateParam[mac]['averageZ'][minDistIdx][-1] - wallStateParam[mac]['averageZ'][minDistIdx][-numFrames_threshold]
                                     del wallStateParam[mac]['averageX'][minDistIdx][0]
                                     del wallStateParam[mac]['averageY'][minDistIdx][0]
                                     del wallStateParam[mac]['averageZ'][minDistIdx][0]
@@ -595,9 +600,9 @@ def decode_process_publish(mac, data):
                                             del(wallStateParam[mac]['rollingHeight'][minDistIdx][0])
 
                                         # if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 47:
-                                        if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 35:
+                                        if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == numFrames_threshold:
                                           # deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-47]
-                                          deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-35]
+                                          deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-numFrames_threshold]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
                                           if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:

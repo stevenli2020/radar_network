@@ -36,6 +36,10 @@ sign_of_life = {
 
 }
 
+sign_of_life_2 = {
+
+}
+
 def get_room_uuid_by_mac(mac):
     global config
     connection = mysql.connector.connect(**config)
@@ -67,7 +71,7 @@ def insert_alert(room_id,msg):
     result = cursor.fetchone()
 
     # If there are no matching entries within the last 15 seconds, proceed with insertion
-    if result['count'] == 0 and check_should_sol(room_id):
+    if result['count'] == 0:
         sql = f"""INSERT INTO ALERT (ROOM_ID,URGENCY,TYPE,DETAILS) VALUES ('{room_id}','{msg["URGENCY"]}','{msg["TYPE"]}','{msg["DETAILS"]}');"""
         cursor.execute(sql)
         connection.commit()
@@ -109,6 +113,10 @@ def subscribe(client: paho):
         elif (parts[-1] == "JSON"):
             all_zero = True
             sol = False
+
+            all_zero_mode_2 = True
+            mode_2 = False
+
             for item in msg['DATA']:
                 if item.get('signOfLife') != 0:
                     all_zero = False
@@ -116,13 +124,36 @@ def subscribe(client: paho):
                     if item.get('signOfLife') == 1:
                         sol = True
                 
+                if item.get('pointCloudDetected',1) != 0:
+                    mode_2 = True
+                    all_zero_mode_2 = False 
+
+            if (all_zero_mode_2 and check_should_sol(room_detail["ID"])):
+                if (sign_of_life_2.get(room_detail["ROOM_UUID"])):
+                    if check_sol_threshold(sign_of_life_2[room_detail["ROOM_UUID"]],msg['DATA'][0]["timeStamp"]):
+                        alert_msg = {
+                            "URGENCY":"3",
+                            "TYPE":"1",
+                            "DETAILS":"No Sign of Life! - Mode 2"
+                        }
+                        print("Insert SOL mode 2 alert")
+                        insert_alert(room_detail["ID"],alert_msg)
+
+                else:
+                    sign_of_life_2[room_detail["ROOM_UUID"]] = msg['DATA'][0]["timeStamp"]
+            
+            if (mode_2 or not check_should_sol(room_detail["ID"])):
+                if (sign_of_life_2.get(room_detail["ROOM_UUID"])):
+                    del sign_of_life_2[room_detail["ROOM_UUID"]]
+
+                
             if (all_zero):
                 if (sign_of_life.get(room_detail["ROOM_UUID"])):
                     if check_sol_threshold(sign_of_life[room_detail["ROOM_UUID"]],msg['DATA'][0]["timeStamp"]):
                         alert_msg = {
                             "URGENCY":"3",
                             "TYPE":"1",
-                            "DETAILS":"No Sign of Life!"
+                            "DETAILS":"No Sign of Life! - Mode 1"
                         }
                         print("Insert heart rate alert")
                         insert_alert(room_detail["ID"],alert_msg)
@@ -221,7 +252,7 @@ def check_should_sol(room_id):
             return True
         return False
 
-    return True
+    return False
 
 def within_time_range(start_time_str, end_time_str):
     start_time = datetime.strptime(start_time_str, "%H:%M").time()

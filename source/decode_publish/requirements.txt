@@ -1,5 +1,4 @@
 numpy
 pandas>2
 mysql-connector
-paho-mqtt<2.0.0
-pyserial
+paho-mqtt<2

@@ -131,8 +131,6 @@ def on_message(client, obj, msg):
             SIGN_OF_LIFE = "NULL" if D.get('signOfLife') == None else str(D.get('signOfLife'))
             # print(STATE,OBJECT_COUNT,OBJECT_LOCATION)
             sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`, `SIGN_OF_LIFE`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ,SIGN_OF_LIFE)
-            sql2 = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_COUNT,OBJECT_LOCATION,PX,PY,PZ,VX,VY,VZ,AX,AY,AZ)
-            cursor.execute(sql2)  
             if OBJECT_COUNT > 0 and STATE ==4:
                 ROOM_STATUS = 1
         elif Type == "3":
@@ -147,8 +145,6 @@ def on_message(client, obj, msg):
             HEART_RATE = "NULL" if D['heartRate']==None else str(round(D['heartRate'],1))
             BREATH_RATE = "NULL" if D['breathRate']==None else str(round(D['breathRate'],1))
             sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`, `SIGN_OF_LIFE`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING,SIGN_OF_LIFE)
-            sql2 = "INSERT INTO `PROCESSED_DATA`(`TIMESTAMP`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`) VALUES (FROM_UNIXTIME(%s),'%s',%s,%d,%d,%d,%s,%s,%s)"%(TIME,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING)
-            cursor.execute(sql2)  
         # print(sql)
         cursor.execute(sql)  
     sql="UPDATE `ROOMS_DETAILS` SET `STATUS`="+str(ROOM_STATUS)+",`OCCUPANCY`="+str(OBJECT_COUNT)+",`LAST_DATA_TS`=NOW() WHERE ROOM_UUID='"+devicesTbl[MAC]['ROOM_UUID']+"';"

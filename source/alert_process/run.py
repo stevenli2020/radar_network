@@ -193,7 +193,13 @@ def subscribe(client: paho):
                         # print(heart_abnormal)
 
                     real_topic = pub_topic3.replace("ROOM_UUID",room_detail["ROOM_UUID"])
-                    client.publish(real_topic, rate, qos=1)
+
+                    room_data = {
+                        "HEART_RATE":rate,
+                        "STATUS":get_room_status(room_detail["ROOM_UUID"])
+                    }
+
+                    client.publish(real_topic, json.dumps(room_data), qos=1)
                     break
 
                 if (abnormal):
@@ -225,16 +231,26 @@ def check_sol_threshold(first_ts, curr_ts):
     first_dt = datetime.fromtimestamp(float(first_ts))
     curr_dt = datetime.fromtimestamp(float(curr_ts))
     
-    # Calculate the difference between the two timestamps
     difference = curr_dt - first_dt
     
-    # Check if the difference is over 30 seconds
-    return difference > timedelta(seconds=30)
+    return difference > timedelta(seconds=60)
 
 def run():
     client = connect_mqtt()
     subscribe(client)
     client.loop_forever()
+
+def get_room_status(room_uuid):
+    global config
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+    sql = f"SELECT STATUS FROM ROOMS_DETAILS WHERE ROOM_UUID='{room_uuid}';"
+    cursor.execute(sql)
+    records = cursor.fetchall()
+    if (records and len(records) > 0):
+        return int(records[0]["STATUS"])
+    
+    return 0
 
 def check_should_sol(room_id):
     global config

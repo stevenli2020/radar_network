@@ -89,6 +89,8 @@ const Home = (props) => {
 				// Convert the Buffer to a UTF-8 encoded string
 				const payloadStr = payloadBuffer.toString('utf-8');
 
+				const payloadJson = JSON.parse(payloadStr);
+
 				// Parse the JSON string to a JavaScript object
 				// console.log(destination[3],payloadJson)
 				
@@ -106,10 +108,11 @@ const Home = (props) => {
 					// Create a new Date object with the adjusted time
 					const timeInUserTimezone = new Date(nowUTC);
 					roomToUpdate.LAST_DATA_RECEIVED = Date.now();
-					roomToUpdate.HEART_RATE = parseFloat(payloadStr).toFixed(1);
+					roomToUpdate.HEART_RATE = parseFloat(payloadJson["HEART_RATE"]).toFixed(1);
 					roomToUpdate.LAST_HEART_TS = Date.now()
 					roomToUpdate.IN_BED = true;
 					roomToUpdate.LAST_IN_BED_TS = Date.now()
+					roomToUpdate.STATUS = payloadJson["STATUS"]
 					
 					props.onChangeHOC('rooms',updatedRooms)
 				}

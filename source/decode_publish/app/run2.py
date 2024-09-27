@@ -22,23 +22,23 @@ import requests
 
 ##while 1: #time.sleep(10)
 
-# brokerAddress="vernemq" 
-# clientID="0002"
-# userName="decode-publish"  
-# userPassword="/-K3tuBhod3-FIzv"
-# dataBuffer=[]
-# SpecialSensors={}
+brokerAddress="vernemq" 
+clientID="0002"
+userName="decode-publish"  
+userPassword="/-K3tuBhod3-FIzv"
+dataBuffer=[]
+SpecialSensors={}
 
 #clientID = "1235"
 #userName = "js-client2"
 #userPassword = "c764eb2b5fa2d259dc667e2b9e195218"
 
-brokerAddress="vernemq" 
-clientID="1013"
-userName="decode-publish-dbg-ojb1"  
-userPassword="/-K3tuBhod3-FIzv"
-dataBuffer=[]
-SpecialSensors={}
+# brokerAddress="vernemq" 
+# clientID="1013"
+# userName="decode-publish-dbg-ojb1"  
+# userPassword="/-K3tuBhod3-FIzv"
+# dataBuffer=[]
+# SpecialSensors={}
 
 config = {
     'user': 'flask',
@@ -255,7 +255,7 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['trackerInvalid'] = np.zeros((0))
                     wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy',
                                                                             'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ', 'accX', 'accY', 'accZ', 
-                                                                            'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult', 'signOfLife', 'pointCloudDetected'])
+                                                                            'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult', 'signOfLife'])
 
                 # Read parsed data from radar output dictionary
                 # Radar Trackers' Data Extraction
@@ -343,10 +343,10 @@ def decode_process_publish(mac, data):
 
                     # Read parsed data from radar output dictionary
                     # Radar Point Clouds + Trackers' Data Extraction and Processing
-                    if len(wallStateParam[mac]['previous_pointClouds']) >= 0 and 'trackIndexes' in outputDict:
+                    if len(wallStateParam[mac]['previous_pointClouds']) > 0 and 'trackIndexes' in outputDict:
                       trackIndices = outputDict['trackIndexes']
 
-                      if numTracks > 0 and len(wallStateParam[mac]['previous_pointClouds']) >= 0 and \
+                      if numTracks > 0 and len(wallStateParam[mac]['previous_pointClouds']) > 0 and \
                         len(wallStateParam[mac]['previous_pointClouds']) == len(trackIndices):
 
                         # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
@@ -395,13 +395,6 @@ def decode_process_publish(mac, data):
                             # Time Stamp
                             wall_Dict = {}
                             wall_Dict['timeStamp'] = ts
-
-                            # Point Cloud Detected ?
-                            if 'pointCloud' in outputDict:
-                              if len(outputDict['pointCloud']) > 0:
-                                wall_Dict['pointCloudDetected'] = 1
-                              else:
-                                wall_Dict['pointCloudDetected'] = 0 
 
                             # Track Index
                             trackId = trackData[trackIdx, 0]
@@ -716,7 +709,6 @@ def decode_process_publish(mac, data):
                                         aggregate_dict['state'] = np.nan
                                     aggregate_dict['kidOrAdult'] = pandasDF_dum['kidOrAdult'].mean(skipna=True)
                                     aggregate_dict['signOfLife'] = pandasDF_dum['signOfLife'].mean(skipna=True)
-                                    aggregate_dict['pointCloudDetected'] = pandasDF_dum['pointCloudDetected'].mean(skipna=True)
 
                                     # if aggregate_dict['state'].dropna().empty:
                                     # print(aggregate_dict)
@@ -749,16 +741,7 @@ def decode_process_publish(mac, data):
                                     if not math.isnan(aggregate_dict['roomOccupancy']):
                                         aggregate_dict['roomOccupancy'] = bool(round(aggregate_dict['roomOccupancy']))
                                     if not math.isnan(aggregate_dict['signOfLife']):
-                                      # aggregate_dict['signOfLife'] = bool(round(aggregate_dict['signOfLife']))
-                                      if aggregate_dict['signOfLife'] > 0:
-                                        aggregate_dict['signOfLife'] = 1
-                                      elif aggregate_dict['signOfLife'] == 0:
-                                        aggregate_dict['signOfLife'] = 0
-                                    if not math.isnan(aggregate_dict['pointCloudDetected']):
-                                      if aggregate_dict['pointCloudDetected'] > 0:
-                                        aggregate_dict['pointCloudDetected'] = 1
-                                      elif aggregate_dict['pointCloudDetected'] == 0:
-                                        aggregate_dict['pointCloudDetected'] = 0
+                                        aggregate_dict['signOfLife'] = bool(round(aggregate_dict['signOfLife']))
 
                                     for key, value in aggregate_dict.items():
                                         if str(value)[0:3] == 'nan':
@@ -811,14 +794,7 @@ def decode_process_publish(mac, data):
                     
                     wall_Dict = {}
                     wall_Dict['timeStamp'] = ts
-
-                    # Point Cloud Detected ?
-                    if 'pointCloud' in outputDict:
-                      if len(outputDict['pointCloud']) > 0:
-                        wall_Dict['pointCloudDetected'] = 1
-                      else:
-                        wall_Dict['pointCloudDetected'] = 0                    
-
+                    
                     # Time Series Data Aggregation 
                     if "pandasDF" in wallStateParam[mac]:
                         if wallStateParam[mac]['pandasDF'].empty:
@@ -847,15 +823,6 @@ def decode_process_publish(mac, data):
                             aggregate_dict['state'] = None
                             aggregate_dict['kidOrAdult'] = None
                             aggregate_dict['signOfLife'] = None
-                            aggregate_dict['pointCloudDetected'] = wallStateParam[mac]['pandasDF']['pointCloudDetected'].mean(skipna=True)
-
-                            if not math.isnan(aggregate_dict['pointCloudDetected']):
-                              if aggregate_dict['pointCloudDetected'] > 0:
-                                aggregate_dict['pointCloudDetected'] = 1
-                              elif aggregate_dict['pointCloudDetected'] == 0:
-                                aggregate_dict['pointCloudDetected'] = 0
-                            else:
-                              aggregate_dict['pointCloudDetected'] = None
 
                             # print(aggregate_dict['state'])
                             dict_copy = copy.deepcopy(aggregate_dict)
@@ -1640,18 +1607,12 @@ def decode_process_publish(mac, data):
                     vitalStateParam[mac]['rollingHeight'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife','pointCloudDetected'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife'])
 
                 # Vital Sign Data Extraction
                 # numTracks = 0
                 # print("============================\n", outputDict,"\n------------------------------\n",vitalStateParam, "\n==============================")
-                if outputDict is not None:
-                  if 'pointCloud' in outputDict:
-                    if len(outputDict['pointCloud']) > 0:
-                      vital_dict['pointCloudDetected'] = 1
-                    else:
-                      vital_dict['pointCloudDetected'] = 0 
-
+                if outputDict is not None:                
                   if "numDetectedTracks" in outputDict:
                     print("+++++++++++++++++++++")
                     numTracks = outputDict['numDetectedTracks']
@@ -1968,7 +1929,6 @@ def decode_process_publish(mac, data):
                     aggregate_dict['heartRate'] = vitalStateParam[mac]['pandasDF']['heartRate'].mean(skipna=True)
                     aggregate_dict['inBedMoving'] = vitalStateParam[mac]['pandasDF']['inBedMoving'].mean(skipna=True)
                     aggregate_dict['signOfLife'] = vitalStateParam[mac]['pandasDF']['signOfLife'].mean(skipna=True)
-                    aggregate_dict['pointCloudDetected'] = vitalStateParam[mac]['pandasDF']['pointCloudDetected'].mean(skipna=True)
 
                     if not math.isnan(aggregate_dict['bedOccupancy']):
                         aggregate_dict['bedOccupancy'] = bool(round(aggregate_dict['bedOccupancy']))
@@ -1976,13 +1936,6 @@ def decode_process_publish(mac, data):
                         aggregate_dict['inBedMoving'] = bool(round(aggregate_dict['inBedMoving']))
                     if not math.isnan(aggregate_dict['signOfLife']):
                         aggregate_dict['signOfLife'] = bool(round(aggregate_dict['signOfLife']))
-                    if not math.isnan(aggregate_dict['pointCloudDetected']):
-                        if aggregate_dict['pointCloudDetected'] > 0:
-                            aggregate_dict['pointCloudDetected'] = 1
-                        elif aggregate_dict['pointCloudDetected'] == 0:
-                            aggregate_dict['pointCloudDetected'] = 0
-                    else:
-                        aggregate_dict['pointCloudDetected'] = None
 
                     for key, value in aggregate_dict.items():
                         if str(value)[0:3] == 'nan':

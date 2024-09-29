@@ -177,6 +177,10 @@ const Summary = props => {
         }, 1000 * 60 * 2); // Adjust the interval time as needed
       };
       startInterval();
+
+			return () => {
+				clearInterval(intervalId);
+			};
 		}
   }, [props.client_id]);
 

@@ -112,7 +112,9 @@ const Home = (props) => {
 					roomToUpdate.LAST_HEART_TS = Date.now()
 					roomToUpdate.IN_BED = true;
 					roomToUpdate.LAST_IN_BED_TS = Date.now()
-					roomToUpdate.STATUS = payloadJson["STATUS"]
+					if (payloadJson["STATUS"] != 0){
+						roomToUpdate.STATUS = payloadJson["STATUS"]
+					}
 					
 					props.onChangeHOC('rooms',updatedRooms)
 				}
@@ -232,6 +234,10 @@ const Home = (props) => {
         }, 1000 * 60 * 2); // Adjust the interval time as needed
       };
       startInterval();
+
+			return () => {
+				clearInterval(intervalId);
+			};
 		}
   }, [props.client_id]);
   

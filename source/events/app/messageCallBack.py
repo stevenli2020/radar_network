@@ -104,7 +104,10 @@ def on_message(client, obj, msg):
         if Type == "1" or Type == "2":
             if D['state'] == None:
                 STATE = 4
-                ROOM_STATUS = 0
+                if (D['numSubjects'] == None or D['numSubjects'] == 0):
+                    ROOM_STATUS = 0
+                else:
+                    ROOM_STATUS = None
             elif D['state'] == "Moving":
                 STATE = 0
                 ROOM_STATUS = 1
@@ -147,7 +150,11 @@ def on_message(client, obj, msg):
             sql = f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`, `SIGN_OF_LIFE`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s)"%(TIME,ROOM_UUID,MAC,Type,STATE,OBJECT_LOCATION,IN_BED,HEART_RATE,BREATH_RATE,IN_BED_MOVING,SIGN_OF_LIFE)
         # print(sql)
         cursor.execute(sql)  
-    sql="UPDATE `ROOMS_DETAILS` SET `STATUS`="+str(ROOM_STATUS)+",`OCCUPANCY`="+str(OBJECT_COUNT)+",`LAST_DATA_TS`=NOW() WHERE ROOM_UUID='"+devicesTbl[MAC]['ROOM_UUID']+"';"
+    
+    if (ROOM_STATUS is not None):
+        sql="UPDATE `ROOMS_DETAILS` SET `STATUS`="+str(ROOM_STATUS)+",`OCCUPANCY`="+str(OBJECT_COUNT)+",`LAST_DATA_TS`=NOW() WHERE ROOM_UUID='"+devicesTbl[MAC]['ROOM_UUID']+"';"
+    else:
+        sql="UPDATE `ROOMS_DETAILS` SET `OCCUPANCY`="+str(OBJECT_COUNT)+",`LAST_DATA_TS`=NOW() WHERE ROOM_UUID='"+devicesTbl[MAC]['ROOM_UUID']+"';"
     cursor.execute(sql)
     print(sql)
         

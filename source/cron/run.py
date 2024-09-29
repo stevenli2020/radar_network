@@ -1206,7 +1206,7 @@ def check_ui():
     try:
         response = requests.get(constants.DOMAIN_URL)
         status_code = response.status_code
-        return status_code == 200  # Check if status is OK
+        return status_code == 200 or status_code == 502  # Check if status is OK
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
         return False
@@ -1215,7 +1215,7 @@ def check_api():
     try:
         response = requests.get(constants.DOMAIN_URL + "/api/test")
         status_code = response.status_code
-        return status_code == 200  # Check if status is OK
+        return status_code == 200 or status_code == 502  # Check if status is OK
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
         return False
@@ -1253,7 +1253,7 @@ def check_servers():
             </body>
             </html>
         """
-        sentMail(",".join(recipients),"Aswelfarehome Servers Disconnected!",body)
+        sentMail(recipients,"Aswelfarehome Servers Disconnected!",body)
 
 def get_notifier():
     global config
@@ -1322,7 +1322,7 @@ def check_disconnected_devices():
             </body>
             </html>
         """
-        sentMail(",".join(recipients),"Aswelfarehome Devices Disconnected!",body)
+        sentMail(recipients,"Aswelfarehome Devices Disconnected!",body)
 
 sender_email = "www.gaitmetric.com.sg@gmail.com"
 sender_password = "wolryshamgswgvzu"
@@ -1331,7 +1331,7 @@ def sentMail(recipient, subject, body):
     html_message = MIMEText(body, 'html')
     html_message['Subject'] = subject
     html_message['From'] = sender_email
-    html_message['To'] = recipient
+    html_message['To'] = ",".join(recipient)
     server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
     server.login(sender_email, sender_password)
     server.sendmail(sender_email, recipient, html_message.as_string())

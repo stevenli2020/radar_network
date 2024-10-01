@@ -1,0 +1,1 @@
+DOMAIN_URL = "https://aswelfarehome.gaitmetrics.org"

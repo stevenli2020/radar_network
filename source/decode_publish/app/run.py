@@ -2048,15 +2048,40 @@ def on_message(mosq, obj, msg):
             print(DEV)
             del devicesTbl[DEV]
         return
+    # if topicList[-1] == "ALGO_CONFIG":
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     algoCfg = _algoCfg.json()
+    #     pubPayload = {"STATUS":"UPDATED"}
+    #     jsonData = json.dumps(pubPayload)
+    #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
+    # elif bool(algoCfg) == 0:
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
+        algoCfg_updated = 0
         _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
-        algoCfg = _algoCfg.json()
-        pubPayload = {"STATUS":"UPDATED"}
-        jsonData = json.dumps(pubPayload)
-        mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
+        while algoCfg_updated == 0:
+          try:
+            while _algoCfg.status_code != 200:
+              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+            algoCfg = _algoCfg.json()
+            pubPayload = {"STATUS":"UPDATED"}
+            jsonData = json.dumps(pubPayload)
+            mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
+            algoCfg_updated = 1
+          except Exception as e:
+            print(e)
     elif bool(algoCfg) == 0:
+        algoCfg_updated = 0
         _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
-        algoCfg = _algoCfg.json()
+        while algoCfg_updated == 0:
+            try:
+              while _algoCfg.status_code != 200:
+                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+              algoCfg = _algoCfg.json()
+              algoCfg_updated = 1
+            except Exception as e:
+                print(e)
             
     devName = ''
     xShift = 0

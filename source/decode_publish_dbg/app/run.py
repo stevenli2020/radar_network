@@ -34,8 +34,9 @@ import requests
 #userPassword = "c764eb2b5fa2d259dc667e2b9e195218"
 
 brokerAddress="vernemq" 
-clientID="1013"
-userName="decode-publish-dbg-ojb1"  
+clientID="0015"
+# userName="decode-publish-dbg-ojb1"  
+userName="decode-publish-dbg-steven"
 userPassword="/-K3tuBhod3-FIzv"
 dataBuffer=[]
 SpecialSensors={}

@@ -40,12 +40,16 @@ sign_of_life_2 = {
 
 }
 
+occupied = {
+
+}
+
 def get_room_uuid_by_mac(mac):
     global config
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
     print(mac)
-    sql = f"SELECT rd.ID,rrm.ROOM_UUID FROM RL_ROOM_MAC rrm LEFT JOIN ROOMS_DETAILS rd ON rrm.ROOM_UUID=rd.ROOM_UUID WHERE rrm.MAC='{mac}';"
+    sql = f"SELECT rd.ID,rrm.ROOM_UUID,rd.STATUS FROM RL_ROOM_MAC rrm LEFT JOIN ROOMS_DETAILS rd ON rrm.ROOM_UUID=rd.ROOM_UUID WHERE rrm.MAC='{mac}';"
     cursor.execute(sql)
     rooms = cursor.fetchall()
     cursor.close()
@@ -117,6 +121,15 @@ def subscribe(client: paho):
             all_zero_mode_2 = True
             mode_2 = False
 
+            room_status = room_detail.get("STATUS")
+            within_period = check_should_sol(room_detail["ID"])
+
+            if (room_status in [1,2] and within_period):
+                occupied[room_detail["ROOM_UUID"]] = True
+
+            if (not within_period):
+                del occupied[room_detail["ROOM_UUID"]]
+
             for item in msg['DATA']:
                 if item.get('signOfLife') != 0:
                     all_zero = False
@@ -128,7 +141,7 @@ def subscribe(client: paho):
                     mode_2 = True
                     all_zero_mode_2 = False 
 
-            if (all_zero_mode_2 and check_should_sol(room_detail["ID"])):
+            if (all_zero_mode_2 and within_period and occupied.get(room_detail["ROOM_UUID"],False)):
                 if (sign_of_life_2.get(room_detail["ROOM_UUID"])):
                     if check_sol_threshold(sign_of_life_2[room_detail["ROOM_UUID"]],msg['DATA'][0]["timeStamp"]):
                         alert_msg = {

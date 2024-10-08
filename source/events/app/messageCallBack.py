@@ -162,6 +162,8 @@ def on_message(client, obj, msg):
     cursor.close()
     connection.close()   
 
+    client.publish(msg.topic.replace("/DATA/","/EXTRA_DATA/"),json.dumps(PAYLOAD), qos=1)
+
 def get_table_name(connection,cursor):
     cursor.execute("SELECT DATE_FORMAT(CURRENT_DATE(), '%Y_%m_%d') AS format_date")
     formatted_date = cursor.fetchall()[0]["format_date"]

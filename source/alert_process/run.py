@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 broker = '143.198.199.16'
 port = 1883
 sub_topic1 = "/GMT/DEV/+/ALERT"
-sub_topic2 = "/GMT/DEV/+/DATA/+/JSON"
+sub_topic2 = "/GMT/DEV/+/EXTRA_DATA/+/JSON"
 pub_topic1 = "/GMT/DEV/ROOM/ROOM_UUID/ALERT"
 pub_topic2 = "/GMT/DEV/ROOM/ROOM_UUID/BED_ANALYSIS"
 pub_topic3 = "/GMT/DEV/ROOM/ROOM_UUID/HEART_RATE"
@@ -128,7 +128,8 @@ def subscribe(client: paho):
                 occupied[room_detail["ROOM_UUID"]] = True
 
             if (not within_period):
-                del occupied[room_detail["ROOM_UUID"]]
+                if (occupied.get(room_detail["ROOM_UUID"])):
+                    del occupied[room_detail["ROOM_UUID"]]
 
             for item in msg['DATA']:
                 if item.get('signOfLife') != 0:

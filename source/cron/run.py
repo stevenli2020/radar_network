@@ -174,18 +174,18 @@ def analyse_position_data(data):
     unknown = 0
     for row in data:
 
-        if row["IN_ROOM"] == 1:
-            in_room_min += 0.25
+        if row["IN_ROOM"] == 1 or (row["HEART_RATE"] and row["HEART_RATE"] >= constants.MIN_HEART_RATE) or (row["BREATH_RATE"] and row["BREATH_RATE"] >= constants.MIN_BREATH_RATE):
+            in_room_min += 1
             if row["IS_MOVING"] == 1:
-                moving_min += 0.25
+                moving_min += 1
             elif row["IS_UPRIGHT"] == 1:
-                upright_min += 0.25
-            elif row["IS_LAYING"] == 1:
-                laying_min += 0.25
+                upright_min += 1
+            elif row["IS_LAYING"] == 1  or (row["HEART_RATE"] and row["HEART_RATE"] >= constants.MIN_HEART_RATE) or (row["BREATH_RATE"] and row["BREATH_RATE"] >= constants.MIN_BREATH_RATE):
+                laying_min += 1
             elif row["IS_SOCIAL"] == 1:
-                social_min += 0.25
+                social_min += 1
             else:
-                unknown += 0.25
+                unknown += 1
                 
     return seconds_to_text(social_min*60),seconds_to_text(moving_min*60),seconds_to_text(upright_min*60),seconds_to_text(laying_min*60)
 
@@ -269,17 +269,18 @@ def getLaymanData(date,room_uuid):
             breath_rate,heart_rate, current_breath_rate, current_heart_rate = analyseVitalData(vital_data,date)
 
         sql = f"""
-            SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i:') AS `TIME`,
-                FLOOR(SECOND(pd.`TIMESTAMP`) / 15) * 15 AS `SECOND`,
+            SELECT DATE_FORMAT(pd.`TIMESTAMP`, '%Y-%m-%d %H:%i') AS `MINUTE`,
                 MAX(CASE WHEN pd.`OBJECT_COUNT` > 1 THEN 1 ELSE 0 END) AS `IS_SOCIAL`,
                 MAX(CASE WHEN pd.`STATE` = 2 THEN 1 ELSE 0 END) AS `IS_LAYING`,
                 MAX(CASE WHEN pd.`STATE` = 0 THEN 1 ELSE 0 END) AS `IS_MOVING`,
                 MAX(CASE WHEN pd.`STATE` = 1 THEN 1 ELSE 0 END) AS `IS_UPRIGHT`,
-                (SUM(OBJECT_LOCATION)) > 0 AS 'IN_ROOM'
+                (SUM(OBJECT_LOCATION)) > 0 AS 'IN_ROOM',
+                MAX(pd.HEART_RATE) AS HEART_RATE,
+                MAX(pd.BREATH_RATE) AS BREATH_RATE
             FROM (SELECT tb.* FROM {tables[-1]} tb LEFT JOIN `RL_ROOM_MAC` irrm ON irrm.MAC = tb.MAC WHERE irrm.ROOM_UUID = '{room_uuid}' AND TIMESTAMP >= '{date}') pd
             LEFT JOIN `RL_ROOM_MAC` rrm ON rrm.MAC = pd.MAC
             WHERE rrm.ROOM_UUID = '{room_uuid}'
-            GROUP BY `TIME`, `SECOND`
+            GROUP BY `MINUTE`
             ORDER BY pd.`TIMESTAMP`;
         """
         # Execute the query with parameters

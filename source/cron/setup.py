@@ -24,8 +24,8 @@ def get_dates_between(start_date_str, end_date_str):
     
     return dates
 
-start_date = "2024-07-21"
-end_date = "2024-07-21"
+start_date = "2024-09-30"
+end_date = "2024-10-05"
 
 dates_between = get_dates_between(start_date, end_date)
 
@@ -33,7 +33,7 @@ for curr in dates_between:
     # print("Running current layman")
     rooms = get_rooms()
     for room in rooms:
-        if (room["ID"] not in [7]):
+        if (room["ID"] not in [5]):
             continue
         print(curr,room["ID"],room["ROOM_UUID"])
         sleeping_hour,time_in_bed,bed_time,wake_up_time,in_room,sleep_disruption,breath_rate,heart_rate,disrupt_duration, \

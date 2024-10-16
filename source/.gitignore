@@ -1,2 +1,3 @@
 *.pyc
 saverawdata/app/data/
+airflow/logs/*

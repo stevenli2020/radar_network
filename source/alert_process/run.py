@@ -3,24 +3,25 @@ import time
 import mysql.connector
 import json
 from datetime import datetime, timedelta
+import pendulum
 
-broker = '143.198.199.16'
+broker = "143.198.199.16"
 port = 1883
 sub_topic1 = "/GMT/DEV/+/ALERT"
 sub_topic2 = "/GMT/DEV/+/EXTRA_DATA/+/JSON"
 pub_topic1 = "/GMT/DEV/ROOM/ROOM_UUID/ALERT"
 pub_topic2 = "/GMT/DEV/ROOM/ROOM_UUID/BED_ANALYSIS"
 pub_topic3 = "/GMT/DEV/ROOM/ROOM_UUID/HEART_RATE"
-client_id = f'1237'
-username = 'py-client1'
-password = 'c764eb2b5fa2d259dc667e2b9e195218'
+client_id = f"1237"
+username = "py-client1"
+password = "c764eb2b5fa2d259dc667e2b9e195218"
 
 config = {
-    'user': 'flask',
-    'password': 'CrbI1q)KUV1CsOj-',
-    'host': 'db',
-    'port': '3306',
-    'database': 'Gaitmetrics'
+    "user": "flask",
+    "password": "CrbI1q)KUV1CsOj-",
+    "host": "db",
+    "port": "3306",
+    "database": "Gaitmetrics",
     # 'user': 'root',
     # 'password': '14102022',
     # 'host': 'localhost',
@@ -28,21 +29,14 @@ config = {
     # 'database': 'Gaitmetrics'
 }
 
-heart_abnormal = {
+heart_abnormal = {}
 
-}
+sign_of_life = {}
 
-sign_of_life = {
+sign_of_life_2 = {}
 
-}
+occupied = {}
 
-sign_of_life_2 = {
-
-}
-
-occupied = {
-
-}
 
 def get_room_uuid_by_mac(mac):
     global config
@@ -53,10 +47,11 @@ def get_room_uuid_by_mac(mac):
     cursor.execute(sql)
     rooms = cursor.fetchall()
     cursor.close()
-    connection.close()  
+    connection.close()
     return rooms[0]
 
-def insert_alert(room_id,msg):
+
+def insert_alert(room_id, msg):
     global config
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
@@ -75,12 +70,13 @@ def insert_alert(room_id,msg):
     result = cursor.fetchone()
 
     # If there are no matching entries within the last 15 seconds, proceed with insertion
-    if result['count'] == 0:
+    if result["count"] == 0:
         sql = f"""INSERT INTO ALERT (ROOM_ID,URGENCY,TYPE,DETAILS) VALUES ('{room_id}','{msg["URGENCY"]}','{msg["TYPE"]}','{msg["DETAILS"]}');"""
         cursor.execute(sql)
         connection.commit()
     cursor.close()
-    connection.close()  
+    connection.close()
+
 
 def connect_mqtt() -> paho:
     def on_connect(client, userdata, flags, rc):
@@ -95,18 +91,19 @@ def connect_mqtt() -> paho:
     client.connect(broker, port)
     return client
 
+
 def subscribe(client: paho):
     def on_message(client, userdata, msg):
         curr_topic = msg.topic
         msg = msg.payload.decode()
         msg = json.loads(msg)
         print(f"Received `{msg}` from `{curr_topic}` topic")
-        parts = curr_topic.split('/')
+        parts = curr_topic.split("/")
         mac_value = parts[3]
         room_detail = get_room_uuid_by_mac(mac_value)
-        if (parts[-1] == "ALERT"):
-            insert_alert(room_detail["ID"],msg)
-            real_topic = pub_topic1.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+        if parts[-1] == "ALERT":
+            insert_alert(room_detail["ID"], msg)
+            real_topic = pub_topic1.replace("ROOM_UUID", room_detail["ROOM_UUID"])
             result = client.publish(real_topic, "New alert", qos=1)
             # result: [0, 1]
             status = result[0]
@@ -114,7 +111,7 @@ def subscribe(client: paho):
                 print(f"Send `{msg}` to topic `{real_topic}`")
             else:
                 print(f"Failed to send message to topic {real_topic}")
-        elif (parts[-1] == "JSON"):
+        elif parts[-1] == "JSON":
             all_zero = True
             sol = False
 
@@ -124,135 +121,154 @@ def subscribe(client: paho):
             room_status = room_detail.get("STATUS")
             within_period = check_should_sol(room_detail["ID"])
 
-            if (room_status in [1,2] and within_period):
+            if room_status in [1, 2] and within_period:
                 occupied[room_detail["ROOM_UUID"]] = True
 
-            if (not within_period):
-                if (occupied.get(room_detail["ROOM_UUID"])):
+            if not within_period:
+                if occupied.get(room_detail["ROOM_UUID"]):
                     del occupied[room_detail["ROOM_UUID"]]
 
-            for item in msg['DATA']:
-                if item.get('signOfLife') != 0:
+            for item in msg["DATA"]:
+                if item.get("signOfLife") != 0:
                     all_zero = False
-                    
-                    if item.get('signOfLife') == 1:
-                        sol = True
-                
-                if item.get('pointCloudDetected',1) != 0:
-                    mode_2 = True
-                    all_zero_mode_2 = False 
 
-            if (all_zero_mode_2 and within_period and occupied.get(room_detail["ROOM_UUID"],False)):
-                if (sign_of_life_2.get(room_detail["ROOM_UUID"])):
-                    if check_sol_threshold(sign_of_life_2[room_detail["ROOM_UUID"]],msg['DATA'][0]["timeStamp"]):
+                    if item.get("signOfLife") == 1:
+                        sol = True
+
+                if item.get("pointCloudDetected", 1) != 0:
+                    mode_2 = True
+                    all_zero_mode_2 = False
+
+            if (
+                all_zero_mode_2
+                and within_period
+                and occupied.get(room_detail["ROOM_UUID"], False)
+            ):
+                if sign_of_life_2.get(room_detail["ROOM_UUID"]):
+                    if check_sol_threshold(
+                        sign_of_life_2[room_detail["ROOM_UUID"]],
+                        msg["DATA"][0]["timeStamp"],
+                    ):
                         alert_msg = {
-                            "URGENCY":"3",
-                            "TYPE":"1",
-                            "DETAILS":"No Sign of Life! - Mode 2"
+                            "URGENCY": "3",
+                            "TYPE": "1",
+                            "DETAILS": "No Sign of Life! - Mode 2",
                         }
                         print("Insert SOL mode 2 alert")
-                        insert_alert(room_detail["ID"],alert_msg)
+                        insert_alert(room_detail["ID"], alert_msg)
 
                 else:
-                    sign_of_life_2[room_detail["ROOM_UUID"]] = msg['DATA'][0]["timeStamp"]
-            
-            if (mode_2 or not check_should_sol(room_detail["ID"])):
-                if (sign_of_life_2.get(room_detail["ROOM_UUID"])):
+                    sign_of_life_2[room_detail["ROOM_UUID"]] = msg["DATA"][0][
+                        "timeStamp"
+                    ]
+
+            if mode_2 or not check_should_sol(room_detail["ID"]):
+                if sign_of_life_2.get(room_detail["ROOM_UUID"]):
                     del sign_of_life_2[room_detail["ROOM_UUID"]]
 
-                
-            if (all_zero):
-                if (sign_of_life.get(room_detail["ROOM_UUID"])):
-                    if check_sol_threshold(sign_of_life[room_detail["ROOM_UUID"]],msg['DATA'][0]["timeStamp"]):
+            if all_zero:
+                if sign_of_life.get(room_detail["ROOM_UUID"]):
+                    if check_sol_threshold(
+                        sign_of_life[room_detail["ROOM_UUID"]],
+                        msg["DATA"][0]["timeStamp"],
+                    ):
                         alert_msg = {
-                            "URGENCY":"3",
-                            "TYPE":"1",
-                            "DETAILS":"No Sign of Life! - Mode 1"
+                            "URGENCY": "3",
+                            "TYPE": "1",
+                            "DETAILS": "No Sign of Life! - Mode 1",
                         }
                         print("Insert heart rate alert")
-                        insert_alert(room_detail["ID"],alert_msg)
+                        insert_alert(room_detail["ID"], alert_msg)
                 else:
-                    sign_of_life[room_detail["ROOM_UUID"]] = msg['DATA'][0]["timeStamp"]
-                
-            if (sol):
-                if (sign_of_life.get(room_detail["ROOM_UUID"])):
+                    sign_of_life[room_detail["ROOM_UUID"]] = msg["DATA"][0]["timeStamp"]
+
+            if sol:
+                if sign_of_life.get(room_detail["ROOM_UUID"]):
                     del sign_of_life[room_detail["ROOM_UUID"]]
 
-            BED_ANALYSIS = {
-                "IN_BED":False
-            }
-            any_bed_occupied = any(item.get('bedOccupancy') for item in msg['DATA'])
+            BED_ANALYSIS = {"IN_BED": False}
+            any_bed_occupied = any(item.get("bedOccupancy") for item in msg["DATA"])
 
             if any_bed_occupied:
                 BED_ANALYSIS["IN_BED"] = True
                 print("At least one bed is occupied.")
-                real_topic = pub_topic2.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+                real_topic = pub_topic2.replace("ROOM_UUID", room_detail["ROOM_UUID"])
                 result = client.publish(real_topic, json.dumps(BED_ANALYSIS), qos=1)
             else:
                 print("No beds are occupied.")
 
-            heart_rates = [item.get('heartRate') for item in msg['DATA'] if item.get('heartRate') is not None]
-            if (room_detail["ROOM_UUID"] not in heart_abnormal):
-                heart_abnormal[room_detail["ROOM_UUID"]] = {
-                    "alert": False,
-                    "data":[]
-                }
-            if (len(heart_rates) > 0):
+            heart_rates = [
+                item.get("heartRate")
+                for item in msg["DATA"]
+                if item.get("heartRate") is not None
+            ]
+            if room_detail["ROOM_UUID"] not in heart_abnormal:
+                heart_abnormal[room_detail["ROOM_UUID"]] = {"alert": False, "data": []}
+            if len(heart_rates) > 0:
                 abnormal = False
-                print("HEART",heart_rates, room_detail["ROOM_UUID"] )
+                print("HEART", heart_rates, room_detail["ROOM_UUID"])
                 for rate in heart_rates:
-                    if (rate >= 110 or rate <= 45):
+                    if rate >= 110 or rate <= 45:
                         abnormal = True
                         heart_abnormal[room_detail["ROOM_UUID"]]["data"].append(rate)
                         # print(heart_abnormal)
 
-                    real_topic = pub_topic3.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+                    real_topic = pub_topic3.replace(
+                        "ROOM_UUID", room_detail["ROOM_UUID"]
+                    )
 
                     room_data = {
-                        "HEART_RATE":rate,
-                        "STATUS":get_room_status(room_detail["ROOM_UUID"])
+                        "HEART_RATE": rate,
+                        "STATUS": get_room_status(room_detail["ROOM_UUID"]),
                     }
 
                     client.publish(real_topic, json.dumps(room_data), qos=1)
                     break
 
-                if (abnormal):
-                    if (len(heart_abnormal[room_detail["ROOM_UUID"]]["data"]) > 3 and not heart_abnormal[room_detail["ROOM_UUID"]]["alert"]):
+                if abnormal:
+                    if (
+                        len(heart_abnormal[room_detail["ROOM_UUID"]]["data"]) > 3
+                        and not heart_abnormal[room_detail["ROOM_UUID"]]["alert"]
+                    ):
                         heart_abnormal[room_detail["ROOM_UUID"]]["alert"] = True
 
                         alert_msg = {
-                            "URGENCY":"2",
-                            "TYPE":"1",
-                            "DETAILS":"Abnormal heart rate detected!"
+                            "URGENCY": "2",
+                            "TYPE": "1",
+                            "DETAILS": "Abnormal heart rate detected!",
                         }
                         print("Insert heart rate alert")
-                        insert_alert(room_detail["ID"],alert_msg)
-                        real_topic = pub_topic1.replace("ROOM_UUID",room_detail["ROOM_UUID"])
+                        insert_alert(room_detail["ID"], alert_msg)
+                        real_topic = pub_topic1.replace(
+                            "ROOM_UUID", room_detail["ROOM_UUID"]
+                        )
                         client.publish(real_topic, "New alert", qos=1)
                 else:
                     print("reset")
                     heart_abnormal[room_detail["ROOM_UUID"]] = {
                         "alert": False,
-                        "data":[]
+                        "data": [],
                     }
-
 
     client.subscribe(sub_topic1)
     client.subscribe(sub_topic2)
     client.on_message = on_message
 
+
 def check_sol_threshold(first_ts, curr_ts):
     first_dt = datetime.fromtimestamp(float(first_ts))
     curr_dt = datetime.fromtimestamp(float(curr_ts))
-    
+
     difference = curr_dt - first_dt
-    
+
     return difference > timedelta(seconds=60)
+
 
 def run():
     client = connect_mqtt()
     subscribe(client)
     client.loop_forever()
+
 
 def get_room_status(room_uuid):
     global config
@@ -261,34 +277,39 @@ def get_room_status(room_uuid):
     sql = f"SELECT STATUS FROM ROOMS_DETAILS WHERE ROOM_UUID='{room_uuid}';"
     cursor.execute(sql)
     records = cursor.fetchall()
-    if (records and len(records) > 0):
+    if records and len(records) > 0:
         return int(records[0]["STATUS"])
-    
+
     return 0
+
 
 def check_should_sol(room_id):
     global config
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
-    sql = f"SELECT START_TIME, END_TIME FROM ALERT_TIME_RANGE WHERE ROOM_ID='{room_id}';"
+    sql = (
+        f"SELECT START_TIME, END_TIME FROM ALERT_TIME_RANGE WHERE ROOM_ID='{room_id}';"
+    )
     cursor.execute(sql)
     records = cursor.fetchall()
     cursor.close()
-    connection.close()  
+    connection.close()
     if records and len(records) > 0:
         start_time = records[0].get("START_TIME")
         end_time = records[0].get("END_TIME")
-        if within_time_range(start_time,end_time):
+        if within_time_range(start_time, end_time):
             return True
         return False
 
     return False
 
+
 def within_time_range(start_time_str, end_time_str):
     start_time = datetime.strptime(start_time_str, "%H:%M").time()
     end_time = datetime.strptime(end_time_str, "%H:%M").time()
 
-    current_time = datetime.now().time()
+    singapore_tz = pendulum.timezone("Asia/Singapore")
+    current_time = datetime.now(singapore_tz).time()
 
     if start_time < end_time:
         is_within_range = start_time <= current_time <= end_time
@@ -298,5 +319,5 @@ def within_time_range(start_time_str, end_time_str):
     return is_within_range
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

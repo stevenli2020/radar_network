@@ -1,0 +1,34 @@
+import datetime
+
+NAP_START_LIMIT = datetime.time(6, 0, 0)
+NAP_END_LIMIT = datetime.time(20, 0, 0)
+
+DEFAULT_NIGHT_START = "18:00"
+DEFAULT_NIGHT_END = "06:00"
+
+THRESHOLD = 60 * 45
+SLEEPING_THRESHOLD = 60 * 45
+DISRUPTION_THRESHOLD = 60 * 2.5
+DISRUPTION_RESTORE_THRESHOLD = 60 * 10
+
+MIN_BREATH_RATE = 8
+MIN_HEART_RATE = 40
+
+DOMAIN_URL = "https://aswelfarehome.gaitmetrics.org"
+SERVER_NAME = "Aswelfarehome"
+
+config = {
+    "user": "flask",
+    "password": "CrbI1q)KUV1CsOj-",
+    "host": "143.198.199.16",
+    "port": "2203",
+    "database": "Gaitmetrics",
+}
+
+vernemq = {
+    "user": "flask",
+    "password": "CrbI1q)KUV1CsOj-",
+    "host": "143.198.199.16",
+    "port": "2203",
+    "database": "vernemq_db",
+}

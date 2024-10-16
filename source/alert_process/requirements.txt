@@ -1,2 +1,3 @@
 mysql.connector
 paho-mqtt<2
+pendulum

@@ -3917,23 +3917,23 @@ def on_message2(mosq, obj, msg):
     #     print("Error Processing")
         if devicesTbl[devName]["TYPE"] == '1':
             if devName in wallStateParam:
-                pool.apply_async(decode_process_publish_wall, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:wallStateParam[devName]}, mqttc, algoCfg, devicesTbl,))
+                pool1.apply_async(decode_process_publish_wall(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:wallStateParam[devName]}, mqttc, algoCfg, devicesTbl))
             else:
-                pool.apply_async(decode_process_publish_wall, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,))
+                pool1.apply_async(decode_process_publish_wall(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
             # p1.start()
             # p1.join()
         elif devicesTbl[devName]["TYPE"] == '2':
             if devName in ceilStateParam:
-                pool.apply_async(decode_process_publish_ceil, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:ceilStateParam[devName]}, mqttc, algoCfg, devicesTbl,))
+                pool1.apply_async(decode_process_publish_ceil(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:ceilStateParam[devName]}, mqttc, algoCfg, devicesTbl))
             else:
-                pool.apply_async(decode_process_publish_ceil, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,))
+                pool1.apply_async(decode_process_publish_ceil(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
             # p2.start()
             # p2.join()
         elif devicesTbl[devName]["TYPE"] == '3':
             if devName in vitalStateParam:
-                pool.apply_async(decode_process_publish_vital, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:vitalStateParam[devName]}, mqttc, algoCfg, devicesTbl,))
+                pool1.apply_async(decode_process_publish_vital(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:vitalStateParam[devName]}, mqttc, algoCfg, devicesTbl))
             else:
-                pool.apply_async(decode_process_publish_vital, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,))
+                pool1.apply_async(decode_process_publish_vital(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
             # p3.start()
             # p3.join()
         devicesTbl[devName]["DATA_QUEUE"]={}
@@ -3980,13 +3980,12 @@ def WatchDog1(dataBuf):
             dataBuf[:]=[]
           
 if __name__ == '__main__':
-    # pool = Pool()
-    # print("Starting a pool of processes ...")
-    # time.sleep(300)  
+    pool1 = Pool()
+    print("Starting a pool of processes ...")
     atexit.register(cleanup)
     mqttc = mqtt.Client(clientID)
     mqttc.username_pw_set(userName, password=userPassword)
-    mqttc.on_message = on_message1
+    mqttc.on_message = on_message2
     mqttc.on_connect = on_connect
     mqttc.on_publish = on_publish
     mqttc.will_set("/GMT/USVC/DECODE_PUBLISH/STATUS","DISCONNECTED",qos=1, retain=True)

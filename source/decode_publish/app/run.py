@@ -36,8 +36,8 @@ SpecialSensors={}
 #userPassword = "c764eb2b5fa2d259dc667e2b9e195218"
 
 # brokerAddress="vernemq" 
-# clientID="1013"
-# userName="decode-publish-dbg-ojb1"  
+# clientID="0015"
+# userName="decode-publish-dbg-steven"  
 # userPassword="/-K3tuBhod3-FIzv"
 # dataBuffer=[]
 # SpecialSensors={}
@@ -3478,7 +3478,6 @@ def decode_process_publish_ceil(stateParamQueue, mac, data, ceilStateParam, mqtt
 def process_dataQueue(stateParamQueue, dataBufferQueue):
     global wallStateParam, ceilStateParam, vitalStateParam, dataBuffer
     while 1:
-        # time.sleep(1)
         try:
             while stateParamQueue.empty():
                 time.sleep(0.1)
@@ -3495,6 +3494,14 @@ def process_dataQueue(stateParamQueue, dataBufferQueue):
             dataBuffer.append(jsonData)
         except Exception as e:
             print(e)
+
+def createProcess(radarType, stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl):
+    if radarType == '1':
+        pool1.apply_async(decode_process_publish_wall(stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl))
+    elif radarType == '2':
+        pool1.apply_async(decode_process_publish_ceil(stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl))
+    elif radarType == '3':
+        pool1.apply_async(decode_process_publish_vital(stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl))    
 
 def on_message(mosq, obj, msg):
     global devicesTbl,config,aggregate_period,algoCfg
@@ -3763,24 +3770,24 @@ def on_message1(mosq, obj, msg):
     #     print("Error Processing")
         if devicesTbl[devName]["TYPE"] == '1':
             if devName in wallStateParam:
-                Process(target=decode_process_publish_wall, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:wallStateParam[devName]}, mqttc, algoCfg, devicesTbl,)).start()
+                p1 = Process(target=decode_process_publish_wall, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:wallStateParam[devName]}, mqttc, algoCfg, devicesTbl,))
             else:
-                Process(target=decode_process_publish_wall, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,)).start()
-            # p1.start()
+                p1 = Process(target=decode_process_publish_wall, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,))
+            p1.start()
             # p1.join()
         elif devicesTbl[devName]["TYPE"] == '2':
             if devName in ceilStateParam:
-                Process(target=decode_process_publish_ceil, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:ceilStateParam[devName]}, mqttc, algoCfg, devicesTbl,)).start()
+                p2 = Process(target=decode_process_publish_ceil, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:ceilStateParam[devName]}, mqttc, algoCfg, devicesTbl,))
             else:
-                Process(target=decode_process_publish_ceil, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,)).start()
-            # p2.start()
+                p2 = Process(target=decode_process_publish_ceil, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,))
+            p2.start()
             # p2.join()
         elif devicesTbl[devName]["TYPE"] == '3':
             if devName in vitalStateParam:
-                Process(target=decode_process_publish_vital, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:vitalStateParam[devName]}, mqttc, algoCfg, devicesTbl,)).start()
+                p3 = Process(target=decode_process_publish_vital, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:vitalStateParam[devName]}, mqttc, algoCfg, devicesTbl,))
             else:
-                Process(target=decode_process_publish_vital, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,)).start()
-            # p3.start()
+                p3 = Process(target=decode_process_publish_vital, args=(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl,))
+            p3.start()
             # p3.join()
         devicesTbl[devName]["DATA_QUEUE"]={}
 
@@ -3915,27 +3922,28 @@ def on_message2(mosq, obj, msg):
         # Process(target=decode_process_publish, args=(devName, devicesTbl[devName]["DATA_QUEUE"],)).start()
     # except:
     #     print("Error Processing")
-        if devicesTbl[devName]["TYPE"] == '1':
+        radarType = devicesTbl[devName]["TYPE"]
+        if radarType == '1':
             if devName in wallStateParam:
-                pool1.apply_async(decode_process_publish_wall(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:wallStateParam[devName]}, mqttc, algoCfg, devicesTbl))
+                # pool1.apply_async(decode_process_publish_wall(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:wallStateParam[devName]}, mqttc, algoCfg, devicesTbl))
+                threading.Thread(target=createProcess, args=(radarType, stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:wallStateParam[devName]}, mqttc, algoCfg, devicesTbl)).start()
             else:
-                pool1.apply_async(decode_process_publish_wall(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
-            # p1.start()
-            # p1.join()
-        elif devicesTbl[devName]["TYPE"] == '2':
+                # pool1.apply_async(decode_process_publish_wall(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
+                threading.Thread(target=createProcess, args=(radarType, stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl)).start()
+        elif radarType == '2':
             if devName in ceilStateParam:
-                pool1.apply_async(decode_process_publish_ceil(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:ceilStateParam[devName]}, mqttc, algoCfg, devicesTbl))
+                # pool1.apply_async(decode_process_publish_ceil(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:ceilStateParam[devName]}, mqttc, algoCfg, devicesTbl))
+                threading.Thread(target=createProcess, args=(radarType, stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:ceilStateParam[devName]}, mqttc, algoCfg, devicesTbl)).start()
             else:
-                pool1.apply_async(decode_process_publish_ceil(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
-            # p2.start()
-            # p2.join()
-        elif devicesTbl[devName]["TYPE"] == '3':
+                # pool1.apply_async(decode_process_publish_ceil(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
+                threading.Thread(target=createProcess, args=(radarType, stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl)).start()
+        elif radarType == '3':
             if devName in vitalStateParam:
-                pool1.apply_async(decode_process_publish_vital(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:vitalStateParam[devName]}, mqttc, algoCfg, devicesTbl))
+                # pool1.apply_async(decode_process_publish_vital(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:vitalStateParam[devName]}, mqttc, algoCfg, devicesTbl))
+                threading.Thread(target=createProcess, args=(radarType, stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {devName:vitalStateParam[devName]}, mqttc, algoCfg, devicesTbl)).start()
             else:
-                pool1.apply_async(decode_process_publish_vital(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
-            # p3.start()
-            # p3.join()
+                # pool1.apply_async(decode_process_publish_vital(stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl))
+                threading.Thread(target=createProcess, args=(radarType, stateParamQueue, devName, devicesTbl[devName]["DATA_QUEUE"], {}, mqttc, algoCfg, devicesTbl)).start()
         devicesTbl[devName]["DATA_QUEUE"]={}
 
 def on_connect(client, userdata, flags, rc):
@@ -3981,7 +3989,7 @@ def WatchDog1(dataBuf):
           
 if __name__ == '__main__':
     pool1 = Pool()
-    print("Starting a pool of processes ...")
+    print("Starting a pool of processes ...")        
     atexit.register(cleanup)
     mqttc = mqtt.Client(clientID)
     mqttc.username_pw_set(userName, password=userPassword)

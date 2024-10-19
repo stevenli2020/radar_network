@@ -3497,14 +3497,12 @@ def process_dataQueue(stateParamQueue, dataBufferQueue):
             print(e)
 
 def createProcess(radarType, stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl):
-    startTime = time.time()
     if radarType == '1':
         pool1.apply_async(decode_process_publish_wall(stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl))
     elif radarType == '2':
         pool1.apply_async(decode_process_publish_ceil(stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl))
     elif radarType == '3':
         pool1.apply_async(decode_process_publish_vital(stateParamQueue, mac, data, stateParamDict, mqttc, algoCfg, devicesTbl))    
-    print("Time lapsed: ", time.time() - startTime)
 
 def on_message(mosq, obj, msg):
     global devicesTbl,config,aggregate_period,algoCfg
@@ -3640,7 +3638,7 @@ def on_message(mosq, obj, msg):
         devicesTbl[devName]["DATA_QUEUE"]={}
     # print(devicesTbl)
 
-def on_message_obsolete(mosq, obj, msg):
+def on_message1(mosq, obj, msg):
     global devicesTbl,config,aggregate_period,algoCfg
     # print(msg.payload)
     in_data = ''

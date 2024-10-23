@@ -35,6 +35,8 @@ sign_of_life = {}
 
 sign_of_life_2 = {}
 
+last_data = {}
+
 occupied = {}
 
 
@@ -127,6 +129,14 @@ def subscribe(client: paho):
             if not within_period:
                 if occupied.get(room_detail["ROOM_UUID"]):
                     del occupied[room_detail["ROOM_UUID"]]
+
+            if last_data.get(room_detail["ROOM_UUID"]):
+                if check_sol_threshold(
+                    last_data.get(room_detail["ROOM_UUID"]),
+                    msg["DATA"][0]["timeStamp"],
+                    3 * 60,
+                ):
+                    del last_data[room_detail["ROOM_UUID"]]
 
             for item in msg["DATA"]:
                 if item.get("signOfLife") != 0:
@@ -250,18 +260,20 @@ def subscribe(client: paho):
                         "data": [],
                     }
 
+            last_data[room_detail["ROOM_UUID"]] = msg["DATA"][0]["timeStamp"]
+
     client.subscribe(sub_topic1)
     client.subscribe(sub_topic2)
     client.on_message = on_message
 
 
-def check_sol_threshold(first_ts, curr_ts):
+def check_sol_threshold(first_ts, curr_ts, threshold=60):
     first_dt = datetime.fromtimestamp(float(first_ts))
     curr_dt = datetime.fromtimestamp(float(curr_ts))
 
     difference = curr_dt - first_dt
 
-    return difference > timedelta(seconds=60)
+    return difference > timedelta(seconds=threshold)
 
 
 def run():

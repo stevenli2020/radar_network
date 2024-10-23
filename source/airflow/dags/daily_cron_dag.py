@@ -274,13 +274,17 @@ def getLaymanData(date, room_uuid):
 
 
 def analyse_position_data(data):
+    date_format = "%Y-%m-%d %H:%M"
     in_room_min = 0
     laying_min = 0
     upright_min = 0
     moving_min = 0
     social_min = 0
     unknown = 0
+    cache = []
+
     for row in data:
+        row["MINUTE"] = dt.strptime(row["MINUTE"], date_format)
 
         if (
             row["IN_ROOM"] == 1
@@ -305,6 +309,14 @@ def analyse_position_data(data):
                 social_min += 1
             else:
                 unknown += 1
+
+            if len(cache) > 0:
+                diff = cache[-1]["MINUTE"] - cache[0]["MINUTE"]
+                if diff.total_seconds() <= constants.NOT_IN_ROOM_THRESHOLD:
+                    unknown += len(cache)
+                cache = []
+        else:
+            cache.append(row)
 
     return (
         seconds_to_text(social_min * 60),

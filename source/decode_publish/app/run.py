@@ -76,7 +76,6 @@ manager = Manager()
 # sharedList.append(ceilStateParam)
 # sharedList.append(vitalStateParam)
 # sharedDataBuffer = manager.list()
-mqttClient_sharedList = manager.list()
 stateParam_sharedDict = manager.dict()
 algoCfg_sharedDict = manager.dict()
 devicesTbl_sharedDict = manager.dict()
@@ -2633,7 +2632,8 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                             wall_Dict['state'] = 3
 
                                             # Publish alert via MQTT communication channel
-                                            # pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"FALL"}
+                                            pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"FALL", "MAC":mac}
+                                            processDataQueue.put(pubPayload)
                                             # jsonData = json.dumps(pubPayload)
                                             # mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
 
@@ -4026,19 +4026,30 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
     elif devicesTbl[mac]["TYPE"] == '3':
       if mac in vitalStateParam:
         stateParam_sharedDict[mac] = vitalStateParam[mac]
+    # print("my_list: ", my_list)
 
-    pubPayload = {
+    if len(my_list) > 0:
+
+      pubPayload = {
+            "MAC": mac,
             "DATA": my_list,
             "TYPE": radarType
         }
-    processDataQueue.put(pubPayload)
+      processDataQueue.put(pubPayload)
 
-    """
+def publishProcessData(processDataList):
+  global mqttc
+  for n in range(len(processDataList)-1):
+    pubPayload = processDataList[n]
+    radarType = pubPayload["TYPE"]
+    mac = pubPayload["MAC"]
+
     try: 
-        print("my_list: ", my_list)
-        pubPayload = {
-            "DATA": my_list
-        }
+      if "URGENCY" in pubPayload:
+        jsonData = json.dumps(pubPayload)
+        mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
+      elif "DATA" in pubPayload:  
+        print("my_list: ", pubPayload["DATA"])
         op = len(pubPayload["DATA"])
         if len(pubPayload["DATA"]) > 0:
             print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
@@ -4065,48 +4076,10 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
             print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")              
             time.sleep(0.1)
             # dataBuffer.append(jsonData)
-            dataBufferQueue.put(jsonData)
+            # dataBufferQueue.put(jsonData)
     except Exception as e:
         print(e)
-    """
 
-def publishProcessData(mqttc, processDataQueue, dataBufferQueue):
-
-  while 1: 
-    if processDataQueue.empty():
-        time.sleep(0.1)
-    pubPayload = processDataQueue.get()
-    radarType = pubPayload["TYPE"]
-
-    try: 
-            print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
-            print(f"on message {op}", radarType)
-        
-            if radarType == 'wall':
-                pubPayload["TYPE"]="WALL"
-                jsonData = json.dumps(pubPayload)
-                print("publishing...")
-                result = mqttc.publish("/GMT/DEV/"+mac+"/DATA/WALL/JSON", jsonData)
-                print(result)
-            elif radarType == 'ceil':
-                pubPayload["TYPE"]="CEIL"
-                jsonData = json.dumps(pubPayload)
-                print("publishing...")
-                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/CEIL/JSON", jsonData)
-                print(result)
-            elif radarType == 'vital':
-                pubPayload["TYPE"]="VITAL"
-                jsonData = json.dumps(pubPayload)
-                print("publishing...")
-                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/VITAL/JSON", jsonData)
-                print(result)
-            print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")              
-            time.sleep(0.1)
-            # dataBuffer.append(jsonData)
-            dataBufferQueue.put(jsonData)
-    except Exception as e:
-        print(e)
-    
 
 def decode_process_publish_wall(stateParamQueue, mac, data, wallStateParam, mqttc, algoCfg, devicesTbl):
 
@@ -5996,11 +5969,13 @@ def on_message2(mosq, obj, msg):
         devicesTbl[devName]["DATA_QUEUE"]={}
 
 multiprocess_count = 0
+processDataList = []
 def on_message3(mosq, obj, msg):
-    global devicesTbl,config,aggregate_period,algoCfg,multiprocess_count
+    global mqttc, devicesTbl,config,aggregate_period,algoCfg,multiprocess_count, processDataList
     # print(msg.payload)
-    in_data = ''
     topicList = msg.topic.split('/')
+    in_data = ''
+
     if topicList[-1] == "UPDATE_DEV_CONF":
         print("=====================================================================")
         print("Received device setting update request for: " + msg.payload.decode("utf-8"))
@@ -6009,9 +5984,11 @@ def on_message3(mosq, obj, msg):
         if DEV in devicesTbl:
             print(DEV)
             del devicesTbl[DEV]
-            del stateParam_sharedDict[DEV]
+        if DEV in devicesTbl_sharedDict:
             del devicesTbl_sharedDict[DEV]
+            del stateParam_sharedDict[DEV]
         return
+
     # if topicList[-1] == "ALGO_CONFIG":
     #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
@@ -6085,15 +6062,21 @@ def on_message3(mosq, obj, msg):
         cursor.execute(sql)
         connection.commit()        
         cursor.close()
-        connection.close()        
-    # print(devicesTbl)
-    # if not devName == 'F412FAE261A4':
-    #     return
+        connection.close()
 
     if multiprocess_count == 0:
-        for n in range(1):
-            Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
+      for n in range(1):
+        Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
+    #     Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
         multiprocess_count = 1
+    
+    while not processDataQueue.empty():
+        processDataList.append(processDataQueue.get())
+    if len(processDataList) > 0:
+        # th = threading.Thread(target=publishProcessData, args=(processDataList,))
+        # th.start()
+        publishProcessData(processDataList)
+        processDataList = []
 
     in_data = str(msg.payload).replace("b'", "").split(',')
     # print(topicList[-1])
@@ -6199,9 +6182,11 @@ def WatchDog2(dataBufferQueue):
         else:
             dataBuf[:]=[]
           
+def createMultiProcess(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue):
+    for n in range(1):
+        Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()   
+
 if __name__ == '__main__':
-    # pool1 = Pool(multiprocessing.cpu_count()-2)
-    # print("Starting a pool of processes ...")
     atexit.register(cleanup)
     mqttc = mqtt.Client(clientID)
     mqttc.username_pw_set(userName, password=userPassword)
@@ -6215,15 +6200,15 @@ if __name__ == '__main__':
     print("Subscribe to topic: "+ "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
     mqttc.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
     mqttc.subscribe("/GMT/DEV/ALGO_CONFIG")
-    # for n in range(multiprocessing.cpu_count()-3):
-    #     Process(target=decode_multiProcess_publish, args=(mqttClient_sharedList, stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, macQueue, dataBufferQueue,)).start()
+
+    # for n in range(1):
+    #     Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
+    # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
+    # _thread.start_new_thread( WatchDog2, (dataBufferQueue,))
+
     time.sleep(1)
     print("Start mqtt receiving loop")
-    # threading.Thread(target=process_dataQueue, args=(stateParamQueue, dataBufferQueue, )).start()
-    # _thread.start_new_thread( WatchDog1, (sharedDataBuffer,))
-    _thread.start_new_thread( WatchDog2, (dataBufferQueue,))
-    _thread.start_new_thread(publishProcessData, (mqttc, processDataQueue, dataBufferQueue,))
-    # _thread.start_new_thread( WatchDog, ())
     mqttc.loop_forever()
 
-
+    # createMultiProcess(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue)
+    # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()

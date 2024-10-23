@@ -1,0 +1,145 @@
+<div class="modal fade" id="room-add-modal" tabindex="-1" aria-labelledby="room-add-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="room-add-modalLabel">Add New Room</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="room-add-name" class="col-form-label">Room Name:</label>
+                            <input type="text" class="form-control" id="room-add-name" required>
+                            <p id="room-add-name-error"></p>
+                        </div> 
+                        <div class="mb-1 col">
+                            <label for="room-add-loc" class="col-form-label">Room Location:</label>
+                            <input type="text" class="form-control" id="room-add-loc" required>
+                            <p id="room-add-loc-error"></p>
+                        </div>                       
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="room-x-add" class="col-form-label">Room X(Length):</label>
+                            <input type="number" class="form-control" id="room-x-add" required>
+                            <p id="room-x-add-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="room-y-add" class="col-form-label">Room Y(Width):</label>
+                            <input type="number" class="form-control" id="room-y-add" required>
+                            <p id="room-y-add-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="room-info" class="col-form-label">Description:</label>
+                            <textarea class="form-control" id="room-info" rows="3"></textarea>
+                        </div>                        
+                    </div>
+                    <!-- <div class="row">
+                        <div class="mb-1 col">
+                            <label for="pos-detect-dev-x" class="col-form-label">Device Position X(m):</label>
+                            <input type="number" class="form-control" id="pos-detect-dev-x" required>
+                            <p id="pos-detect-dev-x-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="pos-detect-dev-y" class="col-form-label">Device Position Y(m):</label>
+                            <input type="number" class="form-control" id="pos-detect-dev-y" required>
+                            <p id="pos-detect-dev-y-error"></p>
+                        </div>
+                    </div> -->
+                    <!-- <div class="row">
+                        <div class="mb-1 col">
+                            <label for="vital-detect-dev" class="col-form-label">Vital detect device:</label>
+                            <input type="text" class="form-control" id="vital-detect-dev" required>
+                            <div id="vital-detect-dev-suggest" class="autocomplete-items"></div>
+                            <p id="vital-detect-dev-error"></p>
+                        </div>                        
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="vital-detect-dev-x" class="col-form-label">Device Position X(m):</label>
+                            <input type="number" class="form-control" id="vital-detect-dev-x" required>
+                            <p id="vital-detect-dev-x-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="vital-detect-dev-y" class="col-form-label">Device Position Y(m):</label>
+                            <input type="number" class="form-control" id="vital-detect-dev-y" required>
+                            <p id="vital-detect-dev-y-error"></p>
+                        </div>
+                    </div> -->
+                    <div class="row">
+                        <label for="add-room-img-upload" class="form-label">Upload Room Image</label>
+                        <input class="form-control" type="file" id="add-room-img-upload" name="add-room-img" onchange="load_file('add-room-img-upload', 'add-room-img', 'addRoomImgUploadError', 'add-room-image-link')">
+                        <p id="addRoomImgUploadError"></p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="close-add-modal" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addNewRoom()"
+                    id="room-submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="room-update-modal" tabindex="-1" aria-labelledby="room-update-modalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="room-update-modalLabel">Update Room</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-room-name-p"></p>
+                <form id="update-room-form">
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="room-update-name" class="col-form-label">Room Name:</label>
+                            <input type="text" class="form-control" id="room-update-name" required>
+                            <p id="room-update-name-error"></p>
+                        </div> 
+                        <div class="mb-1 col">
+                            <label for="room-update-loc" class="col-form-label">Room Location:</label>
+                            <input type="text" class="form-control" id="room-update-loc" required>
+                            <p id="room-update-loc-error"></p>
+                        </div>                       
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="room-x-update" class="col-form-label">Room X(Length):</label>
+                            <input type="number" class="form-control" id="room-x-update" required>
+                            <p id="room-x-update-error"></p>
+                        </div>
+                        <div class="mb-1 col">
+                            <label for="room-y-update" class="col-form-label">Room Y(Width):</label>
+                            <input type="number" class="form-control" id="room-y-update" required>
+                            <p id="room-y-update-error"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-1 col">
+                            <label for="room-info" class="col-form-label">Description:</label>
+                            <textarea class="form-control" id="update-room-info" rows="3"></textarea>
+                        </div>                        
+                    </div>
+                    <div class="row">
+                        <label for="update-room-img-upload" class="form-label">Upload Room Image</label>
+                        <input class="form-control" type="file" id="update-room-img-upload" name="update-room-img" onchange="load_file('update-room-img-upload', 'update-room-img', 'updateRoomImgUploadError', 'update-room-image-link')">
+                        <p id="updateRoomImgUploadError"></p>
+                    </div>
+                </form>                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="close-update-modal" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="updateRoom()"
+                    id="update-room-submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+

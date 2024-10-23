@@ -1,0 +1,14 @@
+flask
+flask_cors
+numpy
+pandas
+redis
+mysql-connector
+paho-mqtt<2
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+pytz
+tzlocal
+flask-jwt-extended

@@ -21,10 +21,11 @@ const Devices = props => {
 
   const [deviceConfMac,setDeviceMac] = useState(null)
   const [isActive, setIsActive] = useState(true);
+  const [clientId, setClientId] = useState(null);
 
   useEffect(() => {
 
-    if (getItem("LOGIN_TOKEN") && props.client_id == null){
+    if (getItem("LOGIN_TOKEN") && clientId == null){
 			props.getMQTTClientID()
 		}
     
@@ -63,10 +64,14 @@ const Devices = props => {
           requestSuccess("Process Status: "+ message.payloadString)
         }    
       }
-      if(deviceConfMac){
-        if(message.destinationName.includes(`GMT/DEV/${deviceConfMac}/R`)){
-          requestSuccess("Process Status: "+ message.payloadString)
-        }
+      if(message.destinationName.includes(`/C/SAVECFG`)){
+        let mac = message.destinationName.split("/")[3]
+        requestSuccess(`Publishing ${mac} data for configuration`)
+      }
+
+      if(message.destinationName.includes(`GMT/DEV/${deviceConfMac}/R`)){
+        let mac = message.destinationName.split("/")[3]
+        requestSuccess(`Process Status for ${mac}: `+ message.payloadString)
       }
 
     } catch (error) {
@@ -77,7 +82,6 @@ const Devices = props => {
   useEffect(() => {
     const connectToBroker = async () => {
       try {
-        const clientId = props.client_id;
         const brokerUrl = getWebsocketServer();  // Include the path if required
         client = new Paho.Client(brokerUrl, clientId);
         
@@ -87,6 +91,7 @@ const Devices = props => {
             console.log("Connected");
             client.subscribe("/GMT/DEV/+/DATA/+/JSON");
             client.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF");
+            client.subscribe("/GMT/DEV/+/C/SAVECFG");
             client.subscribe("/GMT/#");
             client.onMessageArrived = onMessageArrived;
           },
@@ -99,7 +104,7 @@ const Devices = props => {
       }
     };
 
-    if (getItem("LOGIN_TOKEN") && props.client_id != null){
+    if (getItem("LOGIN_TOKEN") && clientId != null){
       connectToBroker();
 
       let intervalId;
@@ -126,7 +131,7 @@ const Devices = props => {
         stopInterval();
       };
     }
-  }, [deviceConfMac,isActive, props.client_id]); // Include dependencies if needed
+  }, [deviceConfMac,isActive, clientId]); // Include dependencies if needed
 
   useEffect(() => {
     return () => {
@@ -282,8 +287,15 @@ const Devices = props => {
 	}, [])
 
   useEffect(() => {
-		if (getItem("LOGIN_TOKEN") && props.client_id){
-			props.setClientConnection(props.client_id)
+    if (props.client_id){
+      setClientId(props.client_id)
+    }
+    
+	}, [props.client_id])
+
+  useEffect(() => {
+		if (getItem("LOGIN_TOKEN") && clientId){
+			props.setClientConnection(clientId)
 			let intervalId;
       const startInterval = () => {
         intervalId = setInterval(() => {

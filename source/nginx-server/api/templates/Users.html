@@ -1,0 +1,25 @@
+{% include 'base.html' %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css">
+  </style>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css">
+  </style>
+  <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+  
+<div class="container mt-5">
+    <ul class="nav nav-tabs" id="userTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="admin-user-tab" data-bs-toggle="tab" data-bs-target="#admin-user-data" type="button" role="tab" aria-controls="admin-user-data" aria-selected="true">Admins</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="user-tab" data-bs-toggle="tab" data-bs-target="#user-data" type="button" role="tab" aria-controls="user-tab" aria-selected="false">Users</button>
+        </li>
+    </ul>
+    <div class="tab-content" id="userTabContent">
+        {% include 'usersTable.html' %}
+    </div>
+    
+</div>
+<script src="{{ url_for('static', filename='js/utils.js')}}"></script>
+<script src="{{ url_for('static', filename='js/main.js')}}"></script>
+<script src="{{ url_for('static', filename='js/userPage.js')}}"></script>

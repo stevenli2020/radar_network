@@ -1,0 +1,59 @@
+<form>
+    <div class="row">
+        <!-- <div class="col"></div> -->
+        <div class="mb-1 col-3">
+            <label for="home-device-mac" class="col-form-label">MAC Address:</label>
+            <select class="form-select" id="home-device-mac" aria-label="Default select example">
+                <!-- <option value="F412FACB880C" selected>F412FACB880C</option>
+                <option value="F412FACB8884">F412FACB8884</option>
+                <option value="F412FACBF738">F412FACBF738</option>                 -->
+            </select>
+            <p id="mac-address-error"></p>
+        </div>
+        <div class="mb-1 col-3">
+            <label for="home-time-select" class="col-form-label">TIME:</label>
+            <select class="form-select" id="home-time-select" aria-label="Default select example" >
+                <option value="REAL TIME" selected>REAL TIME</option>
+                <!-- <option value="5 MINUTE">Last 5 Mins</option>
+                <option value="30 MINUTE">Last 30 Mins</option> -->
+                <option value="1 HOUR">Last 1 Hour</option>
+                <option value="6 HOUR">Last 6 Hours</option>
+                <option value="1 DAY">1 Day</option>
+                <!-- <option value="1 WEEK">1 Week</option>
+                <option value="1 MONTH">1 Month</option> -->
+                <option value="CUSTOM">Custom Time</option>
+            </select>
+            <p id="time-select-error"></p>
+        </div>
+        <div class="mb-1 col-5" id="home-date-time-row" style="display: none;">
+            <label for="datetimes" class="col-form-label">CUSTOM TIME:</label>
+            <input type="text" class="form-control" name="datetimes" id="date-range-picker" />
+            <div class="mt-1" style="text-align: right;"><button type="button" class="btn btn-primary" onclick="getSelectedData()" id="home-time-select-submit-btn">Submit</button></div>
+        </div>
+        <!-- <div class="mb-1 mt-4 col-1" style="display: none;" id="home-time-select-submit-row">
+            <label for="home-time-select-submit-btn"></label>
+            <div class="col-1"><button type="button" class="btn btn-primary" onclick="getSelectedData()" id="home-time-select-submit-btn">Submit</button></div>
+        </div> -->
+        <!-- <div class="col"></div> -->
+    </div>
+    <!-- <div class="row" id="home-date-time-row" style="display: none;">
+        <div class="col-3"></div>
+        <div class="mb-1 col-6">
+            <input type="text" class="form-control" name="datetimes" id="date-range-picker" />
+        </div>
+        <div class="col-3"></div> -->
+        <!-- <div class="mb-1 col">
+            <div id="start"><input type="hidden" class="date_output" id="start-date" value="1987-05-22"></div>
+        </div>
+        <div class="mb-1 col">
+            <div id="end"><input type="hidden" class="date_output" id="end-date" value="2030-05-22T10:00:00"></div>
+        </div> -->
+    <!-- </div> -->
+    <!-- <div class="row" style="display: none;" id="home-time-select-submit-row">
+        <div class="col-8"></div>
+        <div class="col-3"></div>
+        <div class="col-1"><button type="button" class="btn btn-primary" onclick="getSelectedData()" id="home-time-select-submit-btn">Submit</button></div>
+        
+    </div> -->
+    
+</form>

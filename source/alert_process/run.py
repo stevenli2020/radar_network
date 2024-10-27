@@ -83,6 +83,7 @@ def insert_alert(room_id, msg):
 def connect_mqtt() -> paho:
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
+            subscribe(client)
             print("Connected to MQTT Broker!")
         else:
             print("Failed to connect, return code %d\n", rc)
@@ -278,7 +279,7 @@ def check_sol_threshold(first_ts, curr_ts, threshold=60):
 
 def run():
     client = connect_mqtt()
-    subscribe(client)
+    # subscribe(client)
     client.loop_forever()
 
 

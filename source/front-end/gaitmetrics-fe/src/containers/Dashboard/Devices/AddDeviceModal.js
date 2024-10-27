@@ -130,6 +130,7 @@ const AddDeviceModal = (props) => {
                 <Select.Option value={1}>Wall</Select.Option>
                 <Select.Option value={2}>Ceiling</Select.Option>
                 <Select.Option value={3}>Vital</Select.Option>
+                <Select.Option value={4}>Alarm</Select.Option>
               </Select>
             </Form.Item>
           </Col>

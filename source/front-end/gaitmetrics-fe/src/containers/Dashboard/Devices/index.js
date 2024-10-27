@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import WithHOC from './actions'
-import { Table, Typography, Button, Row, Col, Modal, Space } from 'antd'
+import { Table, Typography, Button, Row, Col, Modal, Space, Input } from 'antd'
 import { PlusOutlined, CheckCircleFilled,CloseCircleFilled, EditTwoTone, DeleteTwoTone, SettingTwoTone } from '@ant-design/icons'
 import LoadingOverlay from 'components/LoadingOverlay'
 
@@ -22,6 +22,13 @@ const Devices = props => {
   const [deviceConfMac,setDeviceMac] = useState(null)
   const [isActive, setIsActive] = useState(true);
   const [clientId, setClientId] = useState(null);
+  const [searchText, setSearchText] = useState("");
+
+  const onSearch = (value) => setSearchText(value.toLowerCase());
+
+  const filteredDevices = props.devices.filter((device) =>
+    device.MAC.toLowerCase().includes(searchText)
+  );
 
   useEffect(() => {
 
@@ -176,7 +183,8 @@ const Devices = props => {
       render: (_, device) => (
         device.TYPE==="1"?('Wall'):
         device.TYPE==="2"?('Ceil'):
-        device.TYPE==="3"?('Vital'):  ('None')
+        device.TYPE==="3"?('Vital'):
+        device.TYPE==="4"?('Alarm'):  ('None')
       ),
     },
     { 
@@ -330,9 +338,19 @@ const Devices = props => {
           </Button>
         </Col>
       </Row>
+
+      <Row style={{ margin: '16px 0' }}>
+        <Col sm={12}>
+          <Input.Search 
+            placeholder="Search devices" 
+            enterButton 
+            onSearch={onSearch} 
+          />
+        </Col>
+      </Row>
       
 			<Table 
-        dataSource={props.devices} 
+        dataSource={filteredDevices} 
         columns={columns} 
         rowKey={"Id"}
         pagination={{

@@ -14,21 +14,59 @@ DISRUPTION_RESTORE_THRESHOLD = 60 * 10
 MIN_BREATH_RATE = 8
 MIN_HEART_RATE = 40
 
-DOMAIN_URL = "https://aswelfarehome.gaitmetrics.org"
-SERVER_NAME = "Aswelfarehome"
+NOT_IN_ROOM_THRESHOLD = 60 * 3
 
-config = {
-    "user": "flask",
-    "password": "CrbI1q)KUV1CsOj-",
-    "host": "143.198.199.16",
-    "port": "2203",
-    "database": "Gaitmetrics",
+data = {
+    "aswelfarehome": {
+        "host": "143.198.199.16",
+        "port": "2203",
+        "domain_url": "https://aswelfarehome.gaitmetrics.org",
+        "server_name": "Aswelfarehome",
+    },
+    "htx": {
+        "host": "128.199.240.137",
+        "port": "2203",
+        "domain_url": "https://htx.gaitmetrics.org",
+        "server_name": "HTX",
+    },
+    "testbed": {
+        "host": "139.59.254.201",
+        "port": "2203",
+        "domain_url": "https://testbed.gaitmetrics.org",
+        "server_name": "Testbed",
+    },
+    "nec": {
+        "host": "54.64.188.137",
+        "port": "2203",
+        "domain_url": "http://nec.gaitmetrics.org",
+        "server_name": "NEC",
+    },
 }
 
-vernemq = {
-    "user": "flask",
-    "password": "CrbI1q)KUV1CsOj-",
-    "host": "143.198.199.16",
-    "port": "2203",
-    "database": "vernemq_db",
-}
+
+def config(key):
+    return {
+        "user": "flask",
+        "password": "CrbI1q)KUV1CsOj-",
+        "host": data[key]["host"],
+        "port": data[key]["port"],
+        "database": "Gaitmetrics",
+    }
+
+
+def vernemq(key):
+    return {
+        "user": "flask",
+        "password": "CrbI1q)KUV1CsOj-",
+        "host": data[key]["host"],
+        "port": data[key]["port"],
+        "database": "vernemq_db",
+    }
+
+
+def domain_url(key):
+    return data[key]["domain_url"]
+
+
+def server_name(key):
+    return data[key]["server_name"]

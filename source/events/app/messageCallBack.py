@@ -36,7 +36,7 @@ def on_message(client, obj, msg):
             PAYLOAD = msg.payload.decode("utf-8")
             print("Received device request for: " + REQ + "\r\n" + PAYLOAD)
             connection = mysql.connector.connect(**config)
-            cursor = connection.cursor(dictionary=True)
+            cursor = connection.cursor(dictionary=True, buffered=True)
             sql = (
                 "UPDATE `DEVICES` SET `HWINFO`='"
                 + PAYLOAD
@@ -55,7 +55,7 @@ def on_message(client, obj, msg):
         MAC = TOPIC[3]
         PAYLOAD = msg.payload.decode("utf-8")
         connection = mysql.connector.connect(**config)
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor(dictionary=True, buffered=True)
         sql = "UPDATE `DEVICES` SET `STATUS`='" + PAYLOAD + "' WHERE MAC='" + MAC + "';"
         print(sql)
         cursor.execute(sql)
@@ -66,7 +66,7 @@ def on_message(client, obj, msg):
     PAYLOAD = json.loads(msg.payload.decode("utf-8"))
     MAC = TOPIC[3]
     connection = mysql.connector.connect(**config)
-    cursor = connection.cursor(dictionary=True)
+    cursor = connection.cursor(dictionary=True, buffered=True)
     table_name = get_table_name(connection, cursor)
     check_table_exist(connection, cursor, table_name)
     sql = (
@@ -217,7 +217,7 @@ def on_message(client, obj, msg):
                     SIGN_OF_LIFE,
                 )
             )
-        # print(sql)
+        print(sql)
         cursor.execute(sql)
 
     if ROOM_STATUS is not None:

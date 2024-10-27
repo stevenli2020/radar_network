@@ -161,7 +161,7 @@ def check_disconnected_devices():
     global config
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True)
-    sql = f"SELECT r.ID,r.ROOM_NAME,d.MAC FROM DEVICES d left join RL_ROOM_MAC rrm on rrm.MAC=d.MAC left join ROOMS_DETAILS r on rrm.ROOM_UUID=r.ROOM_UUID WHERE d.STATUS='DISCONNECTED' AND r.ACTIVE=1;"
+    sql = f"SELECT r.ID,r.ROOM_NAME,d.MAC FROM DEVICES d left join RL_ROOM_MAC rrm on rrm.MAC=d.MAC left join ROOMS_DETAILS r on rrm.ROOM_UUID=r.ROOM_UUID WHERE d.STATUS='DISCONNECTED' AND r.ACTIVE=1 AND d.`TYPE` <> '4';"
     cursor.execute(sql)
     result = cursor.fetchall()
     table_content = ""

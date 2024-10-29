@@ -24,7 +24,7 @@ import multiprocessing
 from multiprocessing import Process, Queue, Pool, Manager
 ##while 1: #time.sleep(10)
 
-brokerAddress="vernemq" 
+brokerAddress="128.199.240.137"
 clientID="0002"
 userName="decode-publish"  
 userPassword="/-K3tuBhod3-FIzv"
@@ -45,8 +45,8 @@ SpecialSensors={}
 config = {
     'user': 'flask',
     'password': 'CrbI1q)KUV1CsOj-',
-    'host': 'db',
-    'port': '3306',
+    'host': '128.199.240.137',
+    'port': '2203',
     'database': 'Gaitmetrics'
 }
 
@@ -69,6 +69,7 @@ mac = '123456'
 aggregate_period = 2 # seconds
 breathRate_MA = 0 
 heartRate_MA = 0
+API_link = "https://aswelfarehome.gaitmetrics.org/api/algo-config"
 
 manager = Manager()
 # sharedList = manager.list()
@@ -80,7 +81,6 @@ stateParam_sharedDict = manager.dict()
 algoCfg_sharedDict = manager.dict()
 devicesTbl_sharedDict = manager.dict()
 macQueue = Queue()
-stateParamQueue = Queue()
 dataBufferQueue = Queue()
 processDataQueue = Queue()
 
@@ -4038,7 +4038,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
       processDataQueue.put(pubPayload)
 
 def publishProcessData(processDataList):
-  global mqttc
+  global mqttc, dataBuffer
   for n in range(len(processDataList)-1):
     pubPayload = processDataList[n]
     radarType = pubPayload["TYPE"]
@@ -4075,7 +4075,7 @@ def publishProcessData(processDataList):
                 print(result)
             print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")              
             time.sleep(0.1)
-            # dataBuffer.append(jsonData)
+            dataBuffer.append(jsonData)
             # dataBufferQueue.put(jsonData)
     except Exception as e:
         print(e)
@@ -5541,23 +5541,23 @@ def on_message(mosq, obj, msg):
             del devicesTbl[DEV]
         return
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
           print("algoCfg updating 1\n")
           try:
             while _algoCfg.status_code != 200:
               print("API call 1\n")
-              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+              _algoCfg = requests.get(API_link)
             algoCfg = _algoCfg.json()
             pubPayload = {"STATUS":"UPDATED"}
             jsonData = json.dumps(pubPayload)
@@ -5568,13 +5568,13 @@ def on_message(mosq, obj, msg):
         return
     elif bool(algoCfg) == 0:
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
             print("algoCfg updating 0\n")
             try:
               while _algoCfg.status_code != 200:
                 print("API call 0\n")
-                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+                _algoCfg = requests.get(API_link)
               algoCfg = _algoCfg.json()
               algoCfg_updated = 1
             except Exception as e:
@@ -5674,23 +5674,23 @@ def on_message_obsolete(mosq, obj, msg):
             del devicesTbl[DEV]
         return
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
           print("algoCfg updating 1\n")
           try:
             while _algoCfg.status_code != 200:
               print("API call 1\n")
-              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+              _algoCfg = requests.get(API_link)
             algoCfg = _algoCfg.json()
             pubPayload = {"STATUS":"UPDATED"}
             jsonData = json.dumps(pubPayload)
@@ -5701,13 +5701,13 @@ def on_message_obsolete(mosq, obj, msg):
         return
     elif bool(algoCfg) == 0:
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
             print("algoCfg updating 0\n")
             try:
               while _algoCfg.status_code != 200:
                 print("API call 0\n")
-                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+                _algoCfg = requests.get(API_link)
               algoCfg = _algoCfg.json()
               algoCfg_updated = 1
             except Exception as e:
@@ -5828,23 +5828,23 @@ def on_message2(mosq, obj, msg):
             del devicesTbl[DEV]
         return
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
           print("algoCfg updating 1\n")
           try:
             while _algoCfg.status_code != 200:
               print("API call 1\n")
-              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+              _algoCfg = requests.get(API_link)
             algoCfg = _algoCfg.json()
             pubPayload = {"STATUS":"UPDATED"}
             jsonData = json.dumps(pubPayload)
@@ -5855,13 +5855,13 @@ def on_message2(mosq, obj, msg):
         return
     elif bool(algoCfg) == 0:
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
             print("algoCfg updating 0\n")
             try:
               while _algoCfg.status_code != 200:
                 print("API call 0\n")
-                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+                _algoCfg = requests.get(API_link)
               algoCfg = _algoCfg.json()
               algoCfg_updated = 1
             except Exception as e:
@@ -5971,6 +5971,7 @@ def on_message2(mosq, obj, msg):
 multiprocess_count = 0
 processDataList = []
 def on_message3(mosq, obj, msg):
+    startTime = time.time()
     global mqttc, devicesTbl,config,aggregate_period,algoCfg,multiprocess_count, processDataList
     # print(msg.payload)
     topicList = msg.topic.split('/')
@@ -5996,23 +5997,23 @@ def on_message3(mosq, obj, msg):
         return
 
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get(API_link)
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
           print("algoCfg updating 1\n")
           try:
             while _algoCfg.status_code != 200:
               print("API call 1\n")
-              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+              _algoCfg = requests.get(API_link)
             algoCfg = _algoCfg.json()
             pubPayload = {"STATUS":"UPDATED"}
             jsonData = json.dumps(pubPayload)
@@ -6024,13 +6025,13 @@ def on_message3(mosq, obj, msg):
         return
     elif bool(algoCfg) == 0:
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get(API_link)
         while algoCfg_updated == 0:
             print("algoCfg updating 0\n")
             try:
               while _algoCfg.status_code != 200:
                 print("API call 0\n")
-                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
+                _algoCfg = requests.get(API_link)
               algoCfg = _algoCfg.json()
               algoCfg_sharedDict["DATA"] = algoCfg["DATA"]
               algoCfg_updated = 1
@@ -6071,13 +6072,15 @@ def on_message3(mosq, obj, msg):
         connection.close()
 
     # if multiprocess_count == 0:
-    #   for n in range(1):
+    #   for n in range(2):
     #     Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
-    #     Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
+    #     # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
     #     multiprocess_count = 1
-    
+
     # while not processDataQueue.empty():
-    #     processDataList.append(processDataQueue.get())
+    #     processDataDummy = processDataQueue.get()
+    #     processDataList.append(processDataDummy)
+    #     # dataBuffer.append(processDataDummy)
     # if len(processDataList) > 0:
     #     # th = threading.Thread(target=publishProcessData, args=(processDataList,))
     #     # th.start()
@@ -6129,6 +6132,7 @@ def on_message3(mosq, obj, msg):
         # devicesTbl_sharedDict[devName] = devicesTbl[devName]
         # macQueue.put(devName)
         devicesTbl[devName]["DATA_QUEUE"]={}
+    print("Time Lapsed: ", time.time()-startTime)
 
 def on_connect(client, userdata, flags, rc):
     print("MQTT server connected")
@@ -6187,7 +6191,7 @@ def WatchDog2(dataBufferQueue):
             os._exit(2)
         else:
             dataBuf[:]=[]
-          
+
 def createMultiProcess(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue):
     for n in range(1):
         Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()   
@@ -6206,8 +6210,9 @@ if __name__ == '__main__':
     print("Subscribe to topic: "+ "/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
     mqttc.subscribe("/GMT/USVC/DECODE_PUBLISH/C/UPDATE_DEV_CONF")
     mqttc.subscribe("/GMT/DEV/ALGO_CONFIG")
+    mqttc.subscribe("/GMT/DEV/+/DATA/+/JSON")
 
-    # for n in range(1):
+    # for n in range(2):
     #     Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
     # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
     # _thread.start_new_thread( WatchDog2, (dataBufferQueue,))

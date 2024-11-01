@@ -169,6 +169,11 @@ def decode_process_publish(mac, data):
             else:
                 minZVel_threshold = algoCfg["DATA"]["fall_minZVel"]
 
+            if "fall_minXYVel_" + mac in algoCfg["DATA"]:
+                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel_"+mac]
+            else:
+                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel"]
+
             if "fall_numFrames_" + mac in algoCfg["DATA"]:
                 numFrames_threshold = int(algoCfg["DATA"]["fall_numFrames_"+mac])
             else:
@@ -261,7 +266,9 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['rollingY'] = []
                     wallStateParam[mac]['rollingZ'] = []
                     wallStateParam[mac]['rollingZVel'] = []
+                    wallStateParam[mac]['rollingXYVel'] = []
                     wallStateParam[mac]['minZVel'] = []
+                    wallStateParam[mac]['minXYVel'] = []
                     wallStateParam[mac]['rollingHeight'] = []
                     wallStateParam[mac]['averageX'] = []
                     wallStateParam[mac]['averageY'] = []
@@ -496,7 +503,9 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingY'].append([])
                                 wallStateParam[mac]['rollingZ'].append([])
                                 wallStateParam[mac]['rollingZVel'].append([])
+                                wallStateParam[mac]['rollingXYVel'].append([])
                                 wallStateParam[mac]['minZVel'].append([])
+                                wallStateParam[mac]['minXYVel'].append([])
                                 wallStateParam[mac]['rollingHeight'].append([])
                                 wallStateParam[mac]['averageX'].append([])
                                 wallStateParam[mac]['averageY'].append([])
@@ -569,6 +578,7 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingY'][minDistIdx].append(y_pos)
                                 wallStateParam[mac]['rollingZ'][minDistIdx].append(z_pos)
                                 wallStateParam[mac]['rollingZVel'][minDistIdx].append(z_vel)
+                                wallStateParam[mac]['rollingXYVel'][minDistIdx].append(np.sqrt(x_vel**2 + y_vel**2))
 
                                 if len(wallStateParam[mac]['rollingX'][minDistIdx]) >= 10:
                                     wallStateParam[mac]['averageX'][minDistIdx].append(np.average(wallStateParam[mac]['rollingX'][minDistIdx]))
@@ -580,9 +590,12 @@ def decode_process_publish(mac, data):
 
                                 if len(wallStateParam[mac]['rollingZVel'][minDistIdx]) >= numFrames_threshold:
                                     wallStateParam[mac]['minZVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingZVel'][minDistIdx], 5))
+                                    wallStateParam[mac]['minXYVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingXYVel'][minDistIdx], 95))
                                     del wallStateParam[mac]['rollingZVel'][minDistIdx][0]
+                                    del wallStateParam[mac]['rollingXYVel'][minDistIdx][0]
                                     if len(wallStateParam[mac]['minZVel'][minDistIdx]) >= 10:
                                         del wallStateParam[mac]['minZVel'][minDistIdx][0]
+                                        del wallStateParam[mac]['minXYVel'][minDistIdx][0]
 
                                 if len(wallStateParam[mac]['averageX'][minDistIdx]) > numFrames_threshold:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
@@ -635,7 +648,7 @@ def decode_process_publish(mac, data):
                                           deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-numFrames_threshold]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
-                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:
+                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold and wallStateParam[mac]['minXYVel'][minDistIdx][-1] > minXYVel_threshold:
                                           # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
                                           # if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
@@ -815,7 +828,9 @@ def decode_process_publish(mac, data):
                             wallStateParam[mac]['rollingY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZ'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZVel'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['rollingXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['minZVel'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['minXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingHeight'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageY'].pop(trackerInvalidIdx[Idx])

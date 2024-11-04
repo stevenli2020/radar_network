@@ -5973,11 +5973,12 @@ multiprocess_count = 0
 processDataList = []
 def on_message3(mosq, obj, msg):
     startTime = time.time()
-    global mqttc, devicesTbl,config,aggregate_period,algoCfg,multiprocess_count, processDataList
+    global devicesTbl,config,aggregate_period,algoCfg,multiprocess_count, processDataList
     print(msg.payload)
     topicList = msg.topic.split('/')
     in_data = ''
 
+    """
     if topicList[-1] == "UPDATE_DEV_CONF":
         print("=====================================================================")
         print("Received device setting update request for: " + msg.payload.decode("utf-8"))
@@ -6082,15 +6083,15 @@ def on_message3(mosq, obj, msg):
     #     # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
     #     multiprocess_count = 1
 
-    # while not processDataQueue.empty():
-    #     processDataDummy = processDataQueue.get()
-    #     processDataList.append(processDataDummy)
-    #     # dataBuffer.append(processDataDummy)
-    # if len(processDataList) > 0:
-    #     # th = threading.Thread(target=publishProcessData, args=(processDataList,))
-    #     # th.start()
-    #     publishProcessData(processDataList)
-    #     processDataList = []
+    while not processDataQueue.empty():
+        processDataDummy = processDataQueue.get()
+        processDataList.append(processDataDummy)
+        # dataBuffer.append(processDataDummy)
+    if len(processDataList) > 0:
+        # th = threading.Thread(target=publishProcessData, args=(processDataList,))
+        # th.start()
+        publishProcessData(processDataList)
+        processDataList = []
 
     in_data = str(msg.payload).replace("b'", "").split(',')
     # print(topicList[-1])
@@ -6134,10 +6135,11 @@ def on_message3(mosq, obj, msg):
     # except:
     #     print("Error Processing")
         # print("MAC: ", devicesTbl[devName])
-        # devicesTbl_sharedDict[devName] = devicesTbl[devName]
-        # macQueue.put(devName)
-        decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
+        devicesTbl_sharedDict[devName] = devicesTbl[devName]
+        macQueue.put(devName)
+        # decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
         devicesTbl[devName]["DATA_QUEUE"]={}
+    """
     print("Time Lapsed: ", time.time()-startTime)
 
 def on_connect(client, userdata, flags, rc):
@@ -6209,6 +6211,7 @@ if __name__ == '__main__':
     mqttc.on_message = on_message3
     mqttc.on_connect = on_connect
     mqttc.on_publish = on_publish
+    mqttc.on_disconnect = on_disconnect
     mqttc.will_set("/GMT/USVC/DECODE_PUBLISH/STATUS","DISCONNECTED",qos=1, retain=True)
     mqttc.connect(brokerAddress,1883,10)
     print("Subscribe to topic: "+ "/GMT/DEV/+/DATA/+/RAW/#")
@@ -6224,7 +6227,7 @@ if __name__ == '__main__':
     # _thread.start_new_thread( WatchDog2, (dataBufferQueue,))
 
     time.sleep(1)
-    _thread.start_new_thread( WatchDog, ())
+    # _thread.start_new_thread( WatchDog, ())
     print("Start mqtt receiving loop")
     mqttc.loop_forever()
 

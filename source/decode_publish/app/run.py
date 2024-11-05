@@ -24,7 +24,7 @@ import multiprocessing
 from multiprocessing import Process, Queue, Pool, Manager
 ##while 1: #time.sleep(10)
 
-brokerAddress="128.199.240.137"
+brokerAddress="vernemq"
 clientID="0002"
 userName="decode-publish"  
 userPassword="/-K3tuBhod3-FIzv"
@@ -45,8 +45,8 @@ SpecialSensors={}
 config = {
     'user': 'flask',
     'password': 'CrbI1q)KUV1CsOj-',
-    'host': '128.199.240.137',
-    'port': '2203',
+    'host': 'db',
+    'port': '3306',
     'database': 'Gaitmetrics'
 }
 
@@ -5978,7 +5978,6 @@ def on_message3(mosq, obj, msg):
     topicList = msg.topic.split('/')
     in_data = ''
 
-    """
     if topicList[-1] == "UPDATE_DEV_CONF":
         print("=====================================================================")
         print("Received device setting update request for: " + msg.payload.decode("utf-8"))
@@ -5999,13 +5998,13 @@ def on_message3(mosq, obj, msg):
         return
 
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
@@ -6139,7 +6138,6 @@ def on_message3(mosq, obj, msg):
         macQueue.put(devName)
         # decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
         devicesTbl[devName]["DATA_QUEUE"]={}
-    """
     print("Time Lapsed: ", time.time()-startTime)
 
 def on_connect(client, userdata, flags, rc):
@@ -6221,13 +6219,13 @@ if __name__ == '__main__':
     mqttc.subscribe("/GMT/DEV/ALGO_CONFIG")
     mqttc.subscribe("/GMT/DEV/+/DATA/+/JSON")
 
-    # for n in range(1):
-    #     Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
+    for n in range(1):
+        Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
     # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
     # _thread.start_new_thread( WatchDog2, (dataBufferQueue,))
 
     time.sleep(1)
-    # _thread.start_new_thread( WatchDog, ())
+    _thread.start_new_thread( WatchDog, ())
     print("Start mqtt receiving loop")
     mqttc.loop_forever()
 

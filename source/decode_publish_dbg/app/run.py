@@ -6128,15 +6128,15 @@ def on_message3(mosq, obj, msg):
         # print("Chunk time: ", float(DQ[-1])-float(DQ[0]))
     # try:
     if topicList[-1] == "LF" or topicList[-1] == "RAW":
-        th = threading.Thread(target=decode_process_publish, args=(devName, devicesTbl[devName]["DATA_QUEUE"],))
-        th.start()
+        # th = threading.Thread(target=decode_process_publish, args=(devName, devicesTbl[devName]["DATA_QUEUE"],))
+        # th.start()
         # Process(target=decode_process_publish, args=(devName, devicesTbl[devName]["DATA_QUEUE"],)).start()
     # except:
     #     print("Error Processing")
         # print("MAC: ", devicesTbl[devName])
         # devicesTbl_sharedDict[devName] = devicesTbl[devName]
         # macQueue.put(devName)
-        # decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
+        decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
         devicesTbl[devName]["DATA_QUEUE"]={}
     print("Time Lapsed: ", time.time()-startTime)
 

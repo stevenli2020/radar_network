@@ -14,6 +14,7 @@ import { getItem } from 'utils/tokenStore'
 import getWebsocketServer from 'utils/websocket'
 import AlertsModal from '../Summary/AlertsModal';
 import Paho from 'paho-mqtt'
+import WallSign from './WallSign';
 
 
 const dashCircleFill = 'path://M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z'
@@ -364,6 +365,11 @@ const History = props => {
           </Col>
           <Col span={24} lg={12}>
             <OccupancyHistory data={props.occupancyHistoryData}/>
+          </Col>
+        </Row>
+        <Row gutter={[16, 16]} className='mt-2'>
+          <Col span={24} lg={12}>
+            <WallSign action={props.getWallHistory} room_uuid={props.room_uuid} data={props.wallHistoryData}/>
           </Col>
         </Row>
       </div>

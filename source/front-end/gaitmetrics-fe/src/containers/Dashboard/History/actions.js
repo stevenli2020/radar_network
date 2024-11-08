@@ -25,6 +25,7 @@ const HOC = (WrappedComponent) => {
       realtimeLocationData:null,
       locationHistoryData:null,
       vitalHistoryData:null,
+      wallHistoryData:null,
       occupancyHistoryData:null,
       room_empty:true,
       vital_data:null,
@@ -290,6 +291,34 @@ const HOC = (WrappedComponent) => {
       this.setState({vitalHistoryData:payload})
     }
 
+    getWallHistory = (room_uuid,type, start=null,end=null) => {
+      let payload = {
+        ROOM_UUID: room_uuid
+      }
+      if (type == "CUSTOM"){
+        payload.CUSTOM = 1
+        payload.TIMESTART = start
+        payload.TIMEEND = end
+      }else{
+        payload.CUSTOM = 0
+        payload.TIME = type
+      }
+      Post(
+        `/api/getHistOfWall`,
+        payload,
+        this.getWallHistorySuccess,
+        error => {
+          console.log(error)
+          this.setState({wallHistoryData:null})
+        },
+        this.temp
+      )
+    }
+
+    getWallHistorySuccess = payload => {
+      this.setState({wallHistoryData:payload})
+    }
+
     updatePersonsLocation = (data) => {
       if (data.length > 0){
         this.setState({room_empty:false})
@@ -313,6 +342,7 @@ const HOC = (WrappedComponent) => {
       this.getRoomSensors(room_id)
       this.getOccupancyHistory(room_id)
       this.getVitalHistory(room_id,"1 WEEK")
+      this.getWallHistory(room_id,"1 WEEK")
       this.getRoomAlerts(room_id)
     }
 
@@ -356,6 +386,7 @@ const HOC = (WrappedComponent) => {
           onChangeHOC={this.onChangeHOC}
           getLocationHistory={this.getLocationHistory}
           getVitalHistory={this.getVitalHistory}
+          getWallHistory={this.getWallHistory}
           updatePersonsLocation={this.updatePersonsLocation}
           addVitalData={this.addVitalData}
           getRoomAlerts={this.getRoomAlerts}

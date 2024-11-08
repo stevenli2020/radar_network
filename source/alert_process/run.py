@@ -39,6 +39,8 @@ last_data = {}
 
 occupied = {}
 
+first_occupied_ts = {}
+
 
 def get_room_uuid_by_mac(mac):
     global config
@@ -125,11 +127,28 @@ def subscribe(client: paho):
             within_period = check_should_sol(room_detail["ID"])
 
             if room_status in [1, 2] and within_period:
-                occupied[room_detail["ROOM_UUID"]] = True
+                if not first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                    first_occupied_ts[room_detail["ROOM_UUID"]] = msg["DATA"][0][
+                        "timeStamp"
+                    ]
+            else:
+                if first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                    del first_occupied_ts[room_detail["ROOM_UUID"]]
+
+            if first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                if check_sol_threshold(
+                    first_occupied_ts.get(room_detail["ROOM_UUID"]),
+                    msg["DATA"][0]["timeStamp"],
+                    3 * 60,
+                ):
+                    occupied[room_detail["ROOM_UUID"]] = True
 
             if not within_period:
                 if occupied.get(room_detail["ROOM_UUID"]):
                     del occupied[room_detail["ROOM_UUID"]]
+
+                if first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                    del first_occupied_ts[room_detail["ROOM_UUID"]]
 
             if last_data.get(room_detail["ROOM_UUID"]):
                 if check_sol_threshold(
@@ -159,6 +178,7 @@ def subscribe(client: paho):
                     if check_sol_threshold(
                         sign_of_life_2[room_detail["ROOM_UUID"]],
                         msg["DATA"][0]["timeStamp"],
+                        threshold=120,
                     ):
                         alert_msg = {
                             "URGENCY": "3",
@@ -167,6 +187,10 @@ def subscribe(client: paho):
                         }
                         print("Insert SOL mode 2 alert")
                         insert_alert(room_detail["ID"], alert_msg)
+                        if occupied.get(room_detail["ROOM_UUID"]):
+                            del occupied[room_detail["ROOM_UUID"]]
+                        if sign_of_life_2.get(room_detail["ROOM_UUID"]):
+                            del sign_of_life_2[room_detail["ROOM_UUID"]]
 
                 else:
                     sign_of_life_2[room_detail["ROOM_UUID"]] = msg["DATA"][0][

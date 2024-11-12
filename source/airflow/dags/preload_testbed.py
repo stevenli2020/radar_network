@@ -2,6 +2,10 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.email import send_email
+from pytz import timezone
+import datetime as dtm
+import pandas as pd
+from datetime import datetime as dt, timedelta
 import requests
 import mysql.connector
 import time
@@ -140,6 +144,182 @@ def get_notifier():
     return data
 
 
+def get_current_date():
+    print(dtm.datetime.now())
+    return str(dtm.datetime.now(timezone("Asia/Singapore"))).split(" ")[0]
+
+
+def get_interval_tables(cursor, date):
+    end_date = dt.strptime(date, "%Y-%m-%d")
+    start_date = end_date - timedelta(days=1)
+
+    return get_table_dates_between(
+        cursor, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+    )
+
+
+def get_table_dates_between(cursor, start_date_str, end_date_str):
+    print(start_date_str, end_date_str)
+    start_date = dt.strptime(start_date_str, "%Y-%m-%d")
+    end_date = dt.strptime(end_date_str, "%Y-%m-%d")
+
+    tables = []
+    current_date = start_date
+
+    while current_date <= end_date:
+        table_name = "PROCESSED_DATA_" + current_date.strftime("%Y_%m_%d")
+        if check_table_exist(cursor, table_name):
+            tables.append("PROCESSED_DATA_" + current_date.strftime("%Y_%m_%d"))
+        current_date += timedelta(days=1)
+
+    return tables
+
+
+def check_table_exist(cursor, table_name):
+    table_exists_query = f"SHOW TABLES LIKE '{table_name}'"
+    cursor.execute(table_exists_query)
+    table_exists = cursor.fetchone()
+
+    if not table_exists:
+        return False
+    return True
+
+
+def check_wall_data_count():
+    connection = mysql.connector.connect(**config(env))
+    cursor = connection.cursor(dictionary=True)
+    sql = "SELECT ROOMS_DETAILS.ROOM_NAME, GROUP_CONCAT(DEVICES.MAC) AS MACS FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID LEFT JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC WHERE DEVICES.`TYPE` IN ('1','2') AND ROOMS_DETAILS.ACTIVE=1 GROUP BY ROOMS_DETAILS.ROOM_UUID;"
+    cursor.execute(sql)
+    dbresult = cursor.fetchall()
+
+    curr = get_current_date()
+    tables = get_interval_tables(cursor, curr)
+
+    result = []
+
+    for room in dbresult:
+        room_name = room["ROOM_NAME"]
+        print(room_name)
+        try:
+            db = room["MACS"].split(",")
+            MAC_LIST = ""
+            for MAC in db:
+                if MAC_LIST != "":
+                    MAC_LIST += ","
+                MAC_LIST += f"""'{MAC}'"""
+            List = f"IN ({MAC_LIST})"
+        except Exception as e:
+            print(e)
+
+        dbresult = []
+
+        for table in tables:
+            try:
+                sql = f"SELECT `TIMESTAMP`, 1 AS `WALL_DATA_COUNT` FROM Gaitmetrics.{table} WHERE MAC {List} AND `TIMESTAMP` >= NOW() - INTERVAL 60 MINUTE;"
+                cursor.execute(sql)
+                db_data = cursor.fetchall()
+                if db_data:
+                    dbresult += db_data
+            except Exception as e:
+                print("No data in", table)
+
+        if not dbresult:
+            print("No data")
+
+        df = pd.DataFrame(dbresult, columns=["TIMESTAMP", "WALL_DATA_COUNT"])
+
+        df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
+
+        # Localize timestamps to the local timezone
+        df["TIMESTAMP"] = df["TIMESTAMP"].dt.tz_localize("Asia/Singapore")
+
+        # # Subtract 8 hours from each timestamp
+        df["TIMESTAMP"] = df["TIMESTAMP"].dt.tz_convert("UTC")
+
+        df.set_index("TIMESTAMP", inplace=True)
+
+        df_resampled = df.resample("1Min").count()
+
+        df_resampled.fillna(0, inplace=True)
+
+        data_obj = {}
+        for index, row in df_resampled.iterrows():
+            t = int(index.timestamp())
+            data_obj[t] = [round(row["WALL_DATA_COUNT"], 1)]
+
+        new_query_data = []
+        for t, d in data_obj.items():
+            new_query_data.append(int(d[0]))
+
+        if len(new_query_data) > 0:
+            average = sum(new_query_data) / len(new_query_data)
+            if average < 20:
+                result.append({"ROOM_NAME": room_name, "AVERAGE": average})
+        # else:
+        #     result.append({"ROOM_NAME": room_name, "AVERAGE": "No Data!"})
+
+    cursor.close()
+    connection.close()
+
+    table_content = ""
+
+    for row in result:
+        room_name = row["ROOM_NAME"]
+        average = row["AVERAGE"]
+
+        table_content += f"""
+            <tr>
+                <td>{room_name}</td>
+                <td>{average}</td>
+            </tr>
+        """
+
+    if len(result) > 0:
+        print(result)
+        recipients = get_notifier()
+        body = (
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                table {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+                }
+                
+                td, th {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+                }
+                
+                tr:nth-child(even) {
+                background-color: #dddddd;
+                }
+                </style>
+            </head>
+            <body>
+                <p>There are some active room do not have enough wall data. Please check it out! Below are the details:</p>
+                <table>
+                <tr>
+                    <th>Room Name</th>
+                    <th>Device</th>
+                </tr>
+                """
+            + table_content
+            + """
+                </table>
+            </body>
+            </html>
+        """
+        )
+        sentMail(
+            recipients, constants.server_name(env) + " wall data insufficient!", body
+        )
+
+
 def check_disconnected_devices():
     recipients = get_notifier()
 
@@ -245,6 +425,12 @@ with DAG(
     check_devices_task = PythonOperator(
         task_id="CHECK_DEVICES",
         python_callable=check_disconnected_devices,
+        on_failure_callback=notify_email,
+    )
+
+    check_wall_data_count_task = PythonOperator(
+        task_id="CHECK_WALL_DATA",
+        python_callable=check_wall_data_count,
         on_failure_callback=notify_email,
     )
 

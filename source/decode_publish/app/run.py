@@ -6055,6 +6055,11 @@ def on_message3(mosq, obj, msg):
     # print(f"{msg.topic}, {msg.payload}")
     devName = topicList[3]
     # print(topicList)
+
+    # Lab Demo (remember to restart "events" container)
+    # if not devName == '84FCE67354C8' and not devName == '84FCE6739B38':
+    #     return
+
     if devName not in devicesTbl:
         print("+++++++++++++++++++++++++++++")
         print(devName)
@@ -6134,9 +6139,9 @@ def on_message3(mosq, obj, msg):
     # except:
     #     print("Error Processing")
         # print("MAC: ", devicesTbl[devName])
-        devicesTbl_sharedDict[devName] = devicesTbl[devName]
-        macQueue.put(devName)
-        # decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
+        # devicesTbl_sharedDict[devName] = devicesTbl[devName]
+        # macQueue.put(devName)
+        decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
         devicesTbl[devName]["DATA_QUEUE"]={}
     print("Time Lapsed: ", time.time()-startTime)
 
@@ -6219,8 +6224,8 @@ if __name__ == '__main__':
     mqttc.subscribe("/GMT/DEV/ALGO_CONFIG")
     mqttc.subscribe("/GMT/DEV/+/DATA/+/JSON")
 
-    for n in range(1):
-        Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
+    # for n in range(1):
+    #     Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
     # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
     # _thread.start_new_thread( WatchDog2, (dataBufferQueue,))
 

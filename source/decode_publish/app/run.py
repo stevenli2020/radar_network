@@ -1661,6 +1661,8 @@ def decode_process_publish(mac, data):
                     vitalStateParam[mac]['label_list'] = []
                     vitalStateParam[mac]['rollingVelY'] = []
                     vitalStateParam[mac]['rollingHeight'] = []
+                    vitalStateParam[mac]['rollingBreathRate'] = []
+                    vitalStateParam[mac]['rollingHeartRate'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
                     vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife','pointCloudDetected'])
@@ -1707,14 +1709,14 @@ def decode_process_publish(mac, data):
                         #     Heartbeatsignal = Heartbeatsignal[15:]
                         #     count_vitalSign = 16
 
-                        curBreathRate = float(vitalsDict["breathRate"])
-                        curHeartRate = float(vitalsDict["heartRate"])
+                        # curBreathRate = float(vitalsDict["breathRate"])
+                        # curHeartRate = float(vitalsDict["heartRate"])
 
-                        if vitalStateParam[mac]['prevBreathRate'] > 0:
-                            if curBreathRate - vitalStateParam[mac]['prevBreathRate'] > 1:
-                                curBreathRate = vitalStateParam[mac]['prevBreathRate'] + np.random.uniform(0, 0.5, 1)[0]
-                            elif vitalStateParam[mac]['prevBreathRate'] - curBreathRate > 1:
-                                curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
+                        # if vitalStateParam[mac]['prevBreathRate'] > 0:
+                        #     if curBreathRate - vitalStateParam[mac]['prevBreathRate'] > 1:
+                        #         curBreathRate = vitalStateParam[mac]['prevBreathRate'] + np.random.uniform(0, 0.5, 1)[0]
+                        #     elif vitalStateParam[mac]['prevBreathRate'] - curBreathRate > 1:
+                        #         curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
 
                         # if curBreathRate > 25:
                             # curBreathRate = None
@@ -1741,6 +1743,26 @@ def decode_process_publish(mac, data):
                         #         heartRate_MA = (heartRate_MA + curHeartRate)/2     
                         # else:
                         #     heartRate_MA = curHeartRate                          
+
+                        vitalStateParam[mac]['rollingBreathRate'].append(float(vitalsDict["breathRate"]))
+                        vitalStateParam[mac]['rollingHeartRate'].append(float(vitalsDict["heartRate"]))
+
+                        if len(vitalStateParam[mac]['rollingBreathRate']) > 5:
+                            curBreathRate = np.percentile(np.array(vitalStateParam[mac]['rollingBreathRate']), 50)
+                            curHeartRate = np.percentile(np.array(vitalStateParam[mac]['rollingHeartRate']), 50)
+                            if len(vitalStateParam[mac]['rollingBreathRate']) > 10:
+                                del vitalStateParam[mac]['rollingBreathRate'][0]
+                                del vitalStateParam[mac]['rollingHeartRate'][0]
+
+                        if curBreathRate > 30:
+                            curBreathRate = None
+                        elif curBreathRate < 6:
+                            curBreathRate = None
+
+                        if curHeartRate > 100:
+                            curHeartRate = None
+                        elif curHeartRate < 60:
+                            curHeartRate = None
 
                         vital_dict['breathRate'] = curBreathRate
                         vital_dict['heartRate'] = curHeartRate

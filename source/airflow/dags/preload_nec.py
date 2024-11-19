@@ -185,10 +185,10 @@ def check_table_exist(cursor, table_name):
     return True
 
 
-def check_wall_data_count():
+def check_insufficient_data_by_sensor_type(data_type):
     connection = mysql.connector.connect(**config(env))
     cursor = connection.cursor(dictionary=True)
-    sql = "SELECT ROOMS_DETAILS.ROOM_NAME, GROUP_CONCAT(DEVICES.MAC) AS MACS FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID LEFT JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC WHERE DEVICES.`TYPE` IN ('1','2') AND ROOMS_DETAILS.ACTIVE=1 GROUP BY ROOMS_DETAILS.ROOM_UUID;"
+    sql = f"SELECT ROOMS_DETAILS.ROOM_NAME, GROUP_CONCAT(DEVICES.MAC) AS MACS FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID LEFT JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC WHERE DEVICES.`TYPE` IN {data_type} AND ROOMS_DETAILS.ACTIVE=1 GROUP BY ROOMS_DETAILS.ROOM_UUID;"
     cursor.execute(sql)
     dbresult = cursor.fetchall()
 
@@ -261,21 +261,43 @@ def check_wall_data_count():
     cursor.close()
     connection.close()
 
+    return result
+
+
+def check_data_count():
+
     table_content = ""
 
-    for row in result:
+    result1 = check_insufficient_data_by_sensor_type("(3)")
+
+    for row in result1:
         room_name = row["ROOM_NAME"]
         average = row["AVERAGE"]
 
         table_content += f"""
             <tr>
                 <td>{room_name}</td>
+                <td>Vital</td>
                 <td>{average}</td>
             </tr>
         """
 
-    if len(result) > 0:
-        print(result)
+    result2 = check_insufficient_data_by_sensor_type("(1,2)")
+
+    for row in result2:
+        room_name = row["ROOM_NAME"]
+        average = row["AVERAGE"]
+
+        table_content += f"""
+            <tr>
+                <td>{room_name}</td>
+                <td>Wall</td>
+                <td>{average}</td>
+            </tr>
+        """
+
+    if table_content != "":
+        print(result1, result2)
         recipients = get_notifier()
         body = (
             """
@@ -301,10 +323,11 @@ def check_wall_data_count():
                 </style>
             </head>
             <body>
-                <p>There are some active room do not have enough wall data. Please check it out! Below are the details:</p>
+                <p>There are some active room do not have enough data. Please check it out! Below are the details:</p>
                 <table>
                 <tr>
                     <th>Room Name</th>
+                    <th>Type</th>
                     <th>Device</th>
                 </tr>
                 """
@@ -429,7 +452,7 @@ with DAG(
     )
 
     check_wall_data_count_task = PythonOperator(
-        task_id="CHECK_WALL_DATA",
-        python_callable=check_wall_data_count,
+        task_id="CHECK_DATA",
+        python_callable=check_data_count,
         on_failure_callback=notify_email,
     )

@@ -127,7 +127,9 @@ def subscribe(client: paho):
             within_period = check_should_sol(room_detail["ID"])
 
             if room_status in [1, 2] and within_period:
-                if not first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                if not first_occupied_ts.get(
+                    room_detail["ROOM_UUID"]
+                ) and not occupied.get(room_detail["ROOM_UUID"]):
                     first_occupied_ts[room_detail["ROOM_UUID"]] = msg["DATA"][0][
                         "timeStamp"
                     ]
@@ -142,6 +144,8 @@ def subscribe(client: paho):
                     3 * 60,
                 ):
                     occupied[room_detail["ROOM_UUID"]] = True
+                    if first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                        del first_occupied_ts[room_detail["ROOM_UUID"]]
 
             if not within_period:
                 if occupied.get(room_detail["ROOM_UUID"]):
@@ -156,6 +160,12 @@ def subscribe(client: paho):
                     msg["DATA"][0]["timeStamp"],
                     3 * 60,
                 ):
+                    if first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                        del first_occupied_ts[room_detail["ROOM_UUID"]]
+                    if occupied.get(room_detail["ROOM_UUID"]):
+                        del occupied[room_detail["ROOM_UUID"]]
+                    if sign_of_life_2.get(room_detail["ROOM_UUID"]):
+                        del sign_of_life_2[room_detail["ROOM_UUID"]]
                     del last_data[room_detail["ROOM_UUID"]]
 
             for item in msg["DATA"]:
@@ -185,8 +195,10 @@ def subscribe(client: paho):
                             "TYPE": "1",
                             "DETAILS": "No Sign of Life! - Mode 2",
                         }
-                        print("Insert SOL mode 2 alert")
+                        print("Insert SOL mode 2 alert", alert_msg)
                         insert_alert(room_detail["ID"], alert_msg)
+                        if first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                            del first_occupied_ts[room_detail["ROOM_UUID"]]
                         if occupied.get(room_detail["ROOM_UUID"]):
                             del occupied[room_detail["ROOM_UUID"]]
                         if sign_of_life_2.get(room_detail["ROOM_UUID"]):
@@ -212,7 +224,7 @@ def subscribe(client: paho):
                             "TYPE": "1",
                             "DETAILS": "No Sign of Life! - Mode 1",
                         }
-                        print("Insert heart rate alert")
+                        print("Insert heart rate alert", alert_msg)
                         insert_alert(room_detail["ID"], alert_msg)
                 else:
                     sign_of_life[room_detail["ROOM_UUID"]] = msg["DATA"][0]["timeStamp"]

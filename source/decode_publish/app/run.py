@@ -1754,20 +1754,20 @@ def decode_process_publish(mac, data):
                                 del vitalStateParam[mac]['rollingBreathRate'][0]
                                 del vitalStateParam[mac]['rollingHeartRate'][0]
 
-                        if curBreathRate > 30:
-                            curBreathRate = None
-                        elif curBreathRate < 6:
-                            curBreathRate = None
+                            if curBreathRate > 30:
+                                curBreathRate = None
+                            elif curBreathRate < 6:
+                                curBreathRate = None
+   
+                            if curHeartRate > 100:
+                                curHeartRate = None
+                            elif curHeartRate < 60:
+                                curHeartRate = None
 
-                        if curHeartRate > 100:
-                            curHeartRate = None
-                        elif curHeartRate < 60:
-                            curHeartRate = None
-
-                        vital_dict['breathRate'] = curBreathRate
-                        vital_dict['heartRate'] = curHeartRate
-                        vitalStateParam[mac]['prevBreathRate'] = curBreathRate
-                        # print("\n*******************\nvital_dict: ", vital_dict)
+                            vital_dict['breathRate'] = curBreathRate
+                            vital_dict['heartRate'] = curHeartRate
+                            vitalStateParam[mac]['prevBreathRate'] = curBreathRate
+                            # print("\n*******************\nvital_dict: ", vital_dict)
 
                       elif vitalStateParam[mac]['periodStationary'] <= periodStationary_threshold:  # count_subjectStationary <= 100:
                         # print("\n*******************\nvital_dict: X", )

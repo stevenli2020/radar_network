@@ -1,3 +1,4 @@
 *.pyc
 saverawdata/app/data/
 airflow/logs/*
+nginx-server/build/*

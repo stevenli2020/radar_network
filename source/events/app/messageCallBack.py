@@ -12,6 +12,7 @@ config = {
 }
 
 devicesTbl = {}
+dataBuffer = []
 
 
 def on_message(client, obj, msg):
@@ -64,6 +65,7 @@ def on_message(client, obj, msg):
         connection.close()
         return
     PAYLOAD = json.loads(msg.payload.decode("utf-8"))
+    dataBuffer.append(PAYLOAD)
     MAC = TOPIC[3]
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor(dictionary=True, buffered=True)
@@ -119,9 +121,13 @@ def on_message(client, obj, msg):
         if abs(time.time() - TIME) > 3600:
             TIME = time.time()
         if Type == "1" or Type == "2":
+            OBJECT_COUNT = 0 if D["numSubjects"] == None else D["numSubjects"]
+            OBJECT_LOCATION = (
+                0 if D["roomOccupancy"] == None else int(D["roomOccupancy"])
+            )
             if D["state"] == None:
                 STATE = 4
-                if D["numSubjects"] == None or D["numSubjects"] == 0:
+                if OBJECT_COUNT == 0 and OBJECT_LOCATION == 0:
                     if ROOM_STATUS is None:
                         ROOM_STATUS = 0
             elif D["state"] == "Moving":
@@ -140,10 +146,6 @@ def on_message(client, obj, msg):
                 STATE = 3
                 if ROOM_STATUS is None:
                     ROOM_STATUS = 255
-            OBJECT_COUNT = 0 if D["numSubjects"] == None else D["numSubjects"]
-            OBJECT_LOCATION = (
-                0 if D["roomOccupancy"] == None else int(D["roomOccupancy"])
-            )
             PX = "NULL" if D["posX"] == None else str(round(D["posX"], 3))
             PY = "NULL" if D["posY"] == None else str(round(D["posY"], 3))
             PZ = "NULL" if D["posZ"] == None else str(round(D["posZ"], 3))
@@ -156,9 +158,14 @@ def on_message(client, obj, msg):
             SIGN_OF_LIFE = (
                 "NULL" if D.get("signOfLife") == None else str(D.get("signOfLife"))
             )
+            pointCloudDetected = (
+                "NULL"
+                if D.get("pointCloudDetected") == None
+                else str(D.get("pointCloudDetected"))
+            )
             # print(STATE,OBJECT_COUNT,OBJECT_LOCATION)
             sql = (
-                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`, `SIGN_OF_LIFE`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`, `SIGN_OF_LIFE`, `pointCloudDetected`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 % (
                     TIME,
                     ROOM_UUID,
@@ -177,6 +184,7 @@ def on_message(client, obj, msg):
                     AY,
                     AZ,
                     SIGN_OF_LIFE,
+                    pointCloudDetected,
                 )
             )
             if OBJECT_COUNT > 0 and STATE == 4:
@@ -190,6 +198,11 @@ def on_message(client, obj, msg):
             SIGN_OF_LIFE = (
                 "NULL" if D.get("signOfLife") == None else str(D.get("signOfLife"))
             )
+            pointCloudDetected = (
+                "NULL"
+                if D.get("pointCloudDetected") == None
+                else str(D.get("pointCloudDetected"))
+            )
             if D["bedOccupancy"]:
                 STATE = 2
                 OBJECT_LOCATION = 1
@@ -202,7 +215,7 @@ def on_message(client, obj, msg):
                 "NULL" if D["breathRate"] == None else str(round(D["breathRate"], 1))
             )
             sql = (
-                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`, `SIGN_OF_LIFE`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s)"
+                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`, `SIGN_OF_LIFE`, `pointCloudDetected`) VALUES (FROM_UNIXTIME(%s),'%s','%s',%s,%d,%d,%d,%s,%s,%s,%s,%s)"
                 % (
                     TIME,
                     ROOM_UUID,
@@ -215,6 +228,7 @@ def on_message(client, obj, msg):
                     BREATH_RATE,
                     IN_BED_MOVING,
                     SIGN_OF_LIFE,
+                    pointCloudDetected,
                 )
             )
         print(sql)
@@ -257,7 +271,7 @@ def on_message(client, obj, msg):
 def check_room_empty(cursor, table_name, room_uuid):
     sql = f"""SELECT *
         FROM {table_name}
-        WHERE ROOM_UUID='{room_uuid}' AND TIMESTAMP >= NOW() - INTERVAL 5 SECOND AND `STATE` IN (0,1,2,3) AND OBJECT_LOCATION=1;
+        WHERE ROOM_UUID='{room_uuid}' AND TIMESTAMP >= NOW() - INTERVAL 30 SECOND AND OBJECT_COUNT>0 AND OBJECT_LOCATION=1;
     """
     cursor.execute(sql)
     result = cursor.fetchall()
@@ -306,6 +320,7 @@ def check_table_exist(connection, cursor, table_name):
           `AX` float DEFAULT NULL,
           `AY` float DEFAULT NULL,
           `AZ` float DEFAULT NULL,
+          `pointCloudDetected` tinyint(1) DEFAULT NULL,
           PRIMARY KEY (`ID`),
           KEY `TIMESTAMP` (`TIMESTAMP`)
         ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_cs;

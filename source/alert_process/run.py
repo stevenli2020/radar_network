@@ -41,6 +41,8 @@ occupied = {}
 
 first_occupied_ts = {}
 
+connected_device = {}
+
 
 def get_room_uuid_by_mac(mac):
     global config
@@ -53,6 +55,21 @@ def get_room_uuid_by_mac(mac):
     cursor.close()
     connection.close()
     return rooms[0]
+
+
+def get_connected_devices(room_id):
+    global config
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(dictionary=True)
+
+    check_sql = f"""
+        SELECT d.* FROM DEVICES d LEFT JOIN RL_ROOM_MAC rl ON d.MAC=rl.MAC WHERE rl.ROOM_UUID = '{room_id}' AND d.STATUS = 'CONNECTED';
+    """
+
+    cursor.execute(check_sql)
+    result = cursor.fetchall()
+
+    return len(result)
 
 
 def insert_alert(room_id, msg):
@@ -125,6 +142,23 @@ def subscribe(client: paho):
 
             room_status = room_detail.get("STATUS")
             within_period = check_should_sol(room_detail["ID"])
+
+            current_connected_devices_count = get_connected_devices(
+                room_detail["ROOM_UUID"]
+            )
+
+            if (
+                connected_device.get(room_detail["ROOM_UUID"], 0)
+                > current_connected_devices_count
+            ):
+                if first_occupied_ts.get(room_detail["ROOM_UUID"]):
+                    del first_occupied_ts[room_detail["ROOM_UUID"]]
+                if occupied.get(room_detail["ROOM_UUID"]):
+                    del occupied[room_detail["ROOM_UUID"]]
+                if sign_of_life_2.get(room_detail["ROOM_UUID"]):
+                    del sign_of_life_2[room_detail["ROOM_UUID"]]
+
+            connected_device[room_detail["ROOM_UUID"]] = current_connected_devices_count
 
             if room_status in [1, 2] and within_period:
                 if not first_occupied_ts.get(

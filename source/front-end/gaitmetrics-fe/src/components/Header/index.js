@@ -34,7 +34,7 @@ const Header = () => {
 
   useEffect(()=>{
     if (getItem("LOGIN_TOKEN") && getItem("TYPE")){
-      if (getItem("TYPE") == "1"){
+      if (getItem("TYPE") == "1" || getItem("TYPE") == "2"){
         updateMenuItems(_.find( router, { label: "Dashboard" } ).children.slice(0, 3))
       }else{
         updateMenuItems(_.find( router, { label: "Dashboard" } ).children.slice(0, 1))

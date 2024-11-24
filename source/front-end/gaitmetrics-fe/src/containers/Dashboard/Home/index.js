@@ -147,12 +147,42 @@ const Home = (props) => {
 		}
 	}, [props.rooms]);
 
+	function clearHeartRate() {
+		const currentTimestamp = Date.now(); // Get current timestamp in milliseconds
+
+		const updatedRooms = [...props.rooms]; 
+		let change = false
+				
+		updatedRooms.forEach(room => {
+				if (room.LAST_HEART_TS && (currentTimestamp - room.LAST_HEART_TS > 30000)) {
+						// More than 1 minute has passed since the heart rate timestamp
+						room.HEART_RATE = null; // Clear heart rate
+						room.LAST_HEART_TS = null; // Clear heart rate timestamp
+						room.IN_BED = false; // Clear heart rate
+						room.LAST_IN_BED_TS = null; // Clear heart rate timestamp
+						change = true
+				}
+
+				if (room.LAST_IN_BED_TS && (currentTimestamp - room.LAST_IN_BED_TS > 30000)) {
+					// More than 1 minute has passed since the heart rate timestamp
+					room.IN_BED = false; // Clear heart rate
+					room.LAST_IN_BED_TS = null; // Clear heart rate timestamp
+					change = true
+			}
+		});
+
+		if (change){
+			props.onChangeHOC('rooms',updatedRooms)
+		}
+
+	}
+
 	const [connected, setConnected] = useState(false);
 
   useEffect(() => {
 
 		if (getItem("LOGIN_TOKEN") && getItem("TYPE")){
-      if (getItem("TYPE") == "1"){
+      if (getItem("TYPE") == "1" || getItem("TYPE") == "2"){
         props.onChangeHOC('isAdmin',true)
       }
     }
@@ -168,6 +198,7 @@ const Home = (props) => {
           onSuccess: () => {
             console.log("Connected");
 						setConnected(true)
+						setInterval(clearHeartRate, 1000);
             client.subscribe("/GMT/DEV/ROOM/+/ALERT");
 						client.subscribe("/GMT/DEV/ROOM/+/BED_ANALYSIS");
 						client.subscribe("/GMT/DEV/ROOM/+/HEART_RATE");

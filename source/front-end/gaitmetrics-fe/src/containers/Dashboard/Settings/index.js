@@ -621,7 +621,7 @@ const Settings = props => {
         </Row>
       </Form>
 
-      <Form
+      {getItem("TYPE") == "2" && <Form
         form={algoForm}
         onFinish={onAlgoFinish}
         layout="vertical" // Set the form layout
@@ -702,7 +702,7 @@ const Settings = props => {
 						</Card>
           </Col>
         </Row>
-      </Form>
+      </Form>}
       <Form
         form={notifierForm}
         layout="vertical" // Set the form layout

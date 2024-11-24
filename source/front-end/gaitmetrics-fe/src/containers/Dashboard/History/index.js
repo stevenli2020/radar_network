@@ -279,7 +279,7 @@ const History = props => {
 
 	useEffect(() => {
     if (getItem("LOGIN_TOKEN") && getItem("TYPE")){
-      if (getItem("TYPE") == "1"){
+      if (getItem("TYPE") == "1" || getItem("TYPE") == "2"){
         props.onChangeHOC("is_admin",true)
       }
 

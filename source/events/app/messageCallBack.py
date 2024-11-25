@@ -271,7 +271,7 @@ def on_message(client, obj, msg):
 def check_room_empty(cursor, table_name, room_uuid):
     sql = f"""SELECT *
         FROM {table_name}
-        WHERE ROOM_UUID='{room_uuid}' AND TIMESTAMP >= NOW() - INTERVAL 30 SECOND AND OBJECT_COUNT>0 AND OBJECT_LOCATION=1;
+        WHERE ROOM_UUID='{room_uuid}' AND TIMESTAMP >= NOW() - INTERVAL 30 SECOND AND (OBJECT_COUNT>0 OR IN_BED>0) AND OBJECT_LOCATION=1;
     """
     cursor.execute(sql)
     result = cursor.fetchall()

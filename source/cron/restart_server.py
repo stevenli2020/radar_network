@@ -27,7 +27,7 @@ def restart_nginx():
             ["docker", "compose", "restart"],
             check=True,
             cwd="/app/nginx-server",  # Set the working directory
-            env=os.environ.copy(),   # Pass environment variables to the subprocess
+            env=os.environ.copy(),  # Pass environment variables to the subprocess
         )
         print("Nginx service restarted successfully.")
     except subprocess.CalledProcessError as e:

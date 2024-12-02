@@ -1377,6 +1377,8 @@ with DAG(
         python_callable=analyse_rooms,
         provide_context=True,
         on_failure_callback=notify_email,
+        retries=99,  # Number of retries (24 retries for 24 hours)
+        retry_delay=timedelta(hours=1),
     )
 
     get_date_task >> get_room_task >> analyse_room_task

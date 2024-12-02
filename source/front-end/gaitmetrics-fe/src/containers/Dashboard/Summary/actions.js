@@ -2,7 +2,7 @@
 
 import React, { Component } from "react";
 import { requestError } from "utils/requestHandler";
-import { Post } from "utils/axios";
+import { Get, Post } from "utils/axios";
 import { getItem } from 'utils/tokenStore'
 import moment from 'moment';
 import alertSound from "../../../assets/alert.wav"
@@ -40,7 +40,8 @@ const HOC = (WrappedComponent) => {
       breath_rate_options:null,
       receivedAlert:0,
       in_bed: false,
-      client_id: null
+      client_id: null,
+      components:{}
     };
 
     barColors = ['#35A29F', '#088395', '#071952'];
@@ -727,6 +728,19 @@ const HOC = (WrappedComponent) => {
       this.setState({client_id:payload.DATA.client_id})
     }
 
+    getComponentsEnablement = (page) => {
+      Get(
+        `/api/componentenablement/${page}`,
+        this.getComponentsEnablementSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getComponentsEnablementSuccess = payload => {
+      this.setState({components:payload})
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -740,6 +754,7 @@ const HOC = (WrappedComponent) => {
           initView={this.initView}
           getMQTTClientID={this.getMQTTClientID}
           setClientConnection={this.setClientConnection}
+          getComponentsEnablement={this.getComponentsEnablement}
         />
       );
     };

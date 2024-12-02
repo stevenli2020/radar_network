@@ -49,7 +49,7 @@ from user.passwordManager import addPassword
 # login
 from user.authManager import signIn
 from user.authManager import signOut
-from user.authManager import auth
+from user.authManager import auth, is_superadmin
 from user.config import config
 
 # sent Mail manager
@@ -96,6 +96,11 @@ from user.algo_configs import (
     delete_algo_config,
 )
 from user.notifier_manager import get_notifier, add_notifier, delete_notifier
+from user.settings_manager import (
+    get_all_component_enablement,
+    get_component_enablement,
+    edit_component_enablement,
+)
 
 import os
 import json
@@ -1220,6 +1225,40 @@ def delete_notifier_api(email):
         login, admin = auth(current_user)
         if login and admin:
             return delete_notifier(email)
+        else:
+            return {"ERROR": "Not authorized!"}
+
+
+@app.route("/api/componentenablement", methods=["GET"])
+@jwt_required()
+def get_all_component_enablement_api():
+    if request.method == "GET":
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login and admin and is_superadmin(current_user):
+            return get_all_component_enablement()
+        else:
+            return {"ERROR": "Not authorized!"}
+
+
+@app.route("/api/componentenablement/<page>", methods=["GET"])
+@jwt_required()
+def get_component_enablement_api(page):
+    if request.method == "GET":
+        current_user = get_jwt_identity()
+        return get_component_enablement(page, current_user)
+
+
+@app.route("/api/componentenablement", methods=["PUT"])
+@jwt_required()
+def edit_component_enablement_api():
+    if request.method == "PUT":
+        data = request.json
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login and admin and is_superadmin(current_user):
+            print(data)
+            return edit_component_enablement(data.get("data", []))
         else:
             return {"ERROR": "Not authorized!"}
 

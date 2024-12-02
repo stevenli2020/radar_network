@@ -28,10 +28,13 @@ const Summary = props => {
 	const [maxDate,setMaxDate] = useState(new Date())
 	const [isActive, setIsActive] = useState(true);
 
+	const [items, setItems] = useState([]);
+
   useEffect(() => {
 
 		if (getItem("LOGIN_TOKEN") && props.client_id == null){
 			props.getMQTTClientID()
+			props.getComponentsEnablement('summary')
 		}
 		
     const handleVisibilityChange = () => {
@@ -239,413 +242,427 @@ const Summary = props => {
 		}
 	},[props.receivedAlert,props.alerts])
 
-	const items = [
-		{
-			key: 'sleep_analysis',
-			label: 'Sleep Analysis',
-			children: <Row gutter={[16, 16]} >
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsCloudMoonFill size={40} style={{color:"#2f54eb"}}/> Bed Time
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.bed_time.average}</Title>
-													{
-														props.bed_time_options ? <ReactECharts option={props.bed_time_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Latest</p>
-														<Title level={4}>{props.bed_time.max}</Title>
+	useEffect(() => {
+		var temp = []
+		if (props.components?.sleep_analysis){
+			temp.push(
+			{
+				key: 'sleep_analysis',
+				label: 'Sleep Analysis',
+				children: <Row gutter={[16, 16]} >
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsCloudMoonFill size={40} style={{color:"#2f54eb"}}/> Bed Time
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.bed_time.average}</Title>
+														{
+															props.bed_time_options ? <ReactECharts option={props.bed_time_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Latest</p>
+															<Title level={4}>{props.bed_time.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Earliest</p>
+															<Title level={4}>{props.bed_time.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.bed_time.previous_average}</span> 
 													</div>
-													<div className='min-max-container'>
-														<p>Earliest</p>
-														<Title level={4}>{props.bed_time.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.bed_time.previous_average}</span> 
 												</div>
-											</div>
-											
-										</Card>
-									</Col>
+												
+											</Card>
+										</Col>
+	
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsCloudSunFill size={40} style={{color:"#2f54eb"}}/> Wake Up Time
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.wake_up_time.average}</Title>
+														{
+															props.wake_up_time_options ? <ReactECharts option={props.wake_up_time_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Latest</p>
+															<Title level={4}>{props.wake_up_time.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Earliest</p>
+															<Title level={4}>{props.wake_up_time.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.wake_up_time.previous_average}</span> 
+													</div>
+												</div>
+												
+											</Card>
+										</Col>
+	
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsFillSunsetFill size={40} style={{color:"#2f54eb"}}/> Sleeping Hour
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.sleeping_hour.average}</Title>
+														{
+															props.sleeping_hour_options ? <ReactECharts option={props.sleeping_hour_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Maximum</p>
+															<Title level={4}>{props.sleeping_hour.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Minimum</p>
+															<Title level={4}>{props.sleeping_hour.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.sleeping_hour.previous_average}</span> 
+													</div>
+												</div>
+												
+											</Card>
+										</Col>
+	
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsTruckFlatbed size={40} style={{color:"#2f54eb"}}/> Time In Bed
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.time_in_bed.average}</Title>
+														{
+															props.time_in_bed_options ? <ReactECharts option={props.time_in_bed_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Maximum</p>
+															<Title level={4}>{props.time_in_bed.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Minimum</p>
+															<Title level={4}>{props.time_in_bed.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.time_in_bed.previous_average}</span> 
+													</div> 
+												</div>
+												
+											</Card>
+										</Col>
+	
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Disrupt Duration
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.disrupt_duration.average}</Title>
+														{
+															props.disrupt_duration_options ? <ReactECharts option={props.disrupt_duration_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Maximum</p>
+															<Title level={4}>{props.disrupt_duration.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Minimum</p>
+															<Title level={4}>{props.disrupt_duration.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.disrupt_duration.previous_average}</span> 
+													</div>
+												</div>
+												
+											</Card>
+										</Col>
+	
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Sleep Disruption
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.sleep_disruption.average}</Title>
+														{
+															props.sleep_disruption_options ? <ReactECharts option={props.sleep_disruption_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Maximum</p>
+															<Title level={4}>{props.sleep_disruption.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Minimum</p>
+															<Title level={4}>{props.sleep_disruption.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.sleep_disruption.previous_average}</span> 
+													</div>
+												</div>
+												
+											</Card>
+										</Col>
+									</Row>,
+			})
+		}
+	
+		if (props.components?.inroom_analysis){
+			temp.push(
+			{
+				key: 'inroom_analysis',
+				label: 'In Room Analysis',
+				children: <Row gutter={[16, 16]} >
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsDoorClosedFill size={40} style={{color:"#2f54eb"}}/> In Room
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.in_room.average}</Title>
+														{
+															props.in_room_options ? <ReactECharts option={props.in_room_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Maximum</p>
+															<Title level={4}>{props.in_room.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Minimum</p>
+															<Title level={4}>{props.in_room.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.in_room.previous_average}</span> 
+													</div>
+												</div>
+												
+											</Card>
+										</Col>
+										{props.in_room_posture_options && 
+										<Col xl={16} xxl={16} lg={16} md={16} sm={24} xs={24} style={{}}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														In Room Posture Analysis
+													</>  } 
+												style={{
+													height:'100%'
+												}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={24}>
+														<ReactECharts option={props.in_room_posture_options}/>
+													</Col>
+												</Row>
+											</Card>
+										</Col>
+										}
+										{props.in_room_series_posture_options && 
+										<Col xl={24} xxl={24} lg={24} md={24} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														In Room Posture Time Series Analysis (In Minutes)
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={24}>
+														<ReactECharts option={props.in_room_series_posture_options}/>
+													</Col>
+												</Row>
+											</Card>
+										</Col>
+										}
+									</Row>,
+			})
+		}
+	
+		if (props.components?.vital_analysis){
+			temp.push(
+			{
+				key: 'vital_analysis',
+				label: 'Vital Analysis',
+				children: <Row gutter={[16, 16]} >
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsHeartFill size={40} style={{color:"#2f54eb"}}/> Heart Rate
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.heart_rate.average}</Title>
+														{
+															props.heart_rate_options ? <ReactECharts option={props.heart_rate_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Maximum</p>
+															<Title level={4}>{props.heart_rate.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Minimum</p>
+															<Title level={4}>{props.heart_rate.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.heart_rate.previous_average}</span> 
+													</div>
+												</div>
+												
+											</Card>
+										</Col>
+	
+										<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
+											<Card 
+												headStyle={{textAlign:'center'}}
+												title={ 
+													<>
+														<BsFillLungsFill size={40} style={{color:"#2f54eb"}}/> Breath Rate
+													</>  } 
+												style={{}} 
+												className='content-card'
+											>
+												<Row style={{textAlign:'center'}}>
+													<Col span={16}>
+														<p>Week's Average</p>
+														<Title level={2}>{props.breath_rate.average}</Title>
+														{
+															props.breath_rate_options ? <ReactECharts option={props.breath_rate_options}/>: null
+														}
+													</Col>
+													<Col span={8} className='my-auto'>
+														<div className='min-max-container'>
+															<p>Maximum</p>
+															<Title level={4}>{props.breath_rate.max}</Title>
+														</div>
+														<div className='min-max-container'>
+															<p>Minimum</p>
+															<Title level={4}>{props.breath_rate.min}</Title>
+														</div>
+													</Col>
+												</Row>
+												<div>
+													<Divider/>
+													<div style={{textAlign:'center'}}>
+														Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.breath_rate.previous_average}</span> 
+													</div>
+												</div>
+											</Card>
+										</Col>
+									</Row>,
+			})
+		}
 
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsCloudSunFill size={40} style={{color:"#2f54eb"}}/> Wake Up Time
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.wake_up_time.average}</Title>
-													{
-														props.wake_up_time_options ? <ReactECharts option={props.wake_up_time_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Latest</p>
-														<Title level={4}>{props.wake_up_time.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Earliest</p>
-														<Title level={4}>{props.wake_up_time.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.wake_up_time.previous_average}</span> 
-												</div>
-											</div>
-											
-										</Card>
-									</Col>
-
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsFillSunsetFill size={40} style={{color:"#2f54eb"}}/> Sleeping Hour
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.sleeping_hour.average}</Title>
-													{
-														props.sleeping_hour_options ? <ReactECharts option={props.sleeping_hour_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Maximum</p>
-														<Title level={4}>{props.sleeping_hour.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Minimum</p>
-														<Title level={4}>{props.sleeping_hour.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.sleeping_hour.previous_average}</span> 
-												</div>
-											</div>
-											
-										</Card>
-									</Col>
-
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsTruckFlatbed size={40} style={{color:"#2f54eb"}}/> Time In Bed
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.time_in_bed.average}</Title>
-													{
-														props.time_in_bed_options ? <ReactECharts option={props.time_in_bed_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Maximum</p>
-														<Title level={4}>{props.time_in_bed.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Minimum</p>
-														<Title level={4}>{props.time_in_bed.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.time_in_bed.previous_average}</span> 
-												</div> 
-											</div>
-											
-										</Card>
-									</Col>
-
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Disrupt Duration
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.disrupt_duration.average}</Title>
-													{
-														props.disrupt_duration_options ? <ReactECharts option={props.disrupt_duration_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Maximum</p>
-														<Title level={4}>{props.disrupt_duration.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Minimum</p>
-														<Title level={4}>{props.disrupt_duration.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.disrupt_duration.previous_average}</span> 
-												</div>
-											</div>
-											
-										</Card>
-									</Col>
-
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsSignStopFill size={40} style={{color:"#2f54eb"}}/> Sleep Disruption
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.sleep_disruption.average}</Title>
-													{
-														props.sleep_disruption_options ? <ReactECharts option={props.sleep_disruption_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Maximum</p>
-														<Title level={4}>{props.sleep_disruption.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Minimum</p>
-														<Title level={4}>{props.sleep_disruption.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.sleep_disruption.previous_average}</span> 
-												</div>
-											</div>
-											
-										</Card>
-									</Col>
-								</Row>,
-		},
-		{
-			key: 'inroom_analysis',
-			label: 'In Room Analysis',
-			children: <Row gutter={[16, 16]} >
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsDoorClosedFill size={40} style={{color:"#2f54eb"}}/> In Room
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.in_room.average}</Title>
-													{
-														props.in_room_options ? <ReactECharts option={props.in_room_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Maximum</p>
-														<Title level={4}>{props.in_room.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Minimum</p>
-														<Title level={4}>{props.in_room.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.in_room.previous_average}</span> 
-												</div>
-											</div>
-											
-										</Card>
-									</Col>
-									{props.in_room_posture_options && 
-									<Col xl={16} xxl={16} lg={16} md={16} sm={24} xs={24} style={{}}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													In Room Posture Analysis
-												</>  } 
-											style={{
-												height:'100%'
-											}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={24}>
-													<ReactECharts option={props.in_room_posture_options}/>
-												</Col>
-											</Row>
-										</Card>
-									</Col>
-									}
-									{props.in_room_series_posture_options && 
-									<Col xl={24} xxl={24} lg={24} md={24} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													In Room Posture Time Series Analysis (In Minutes)
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={24}>
-													<ReactECharts option={props.in_room_series_posture_options}/>
-												</Col>
-											</Row>
-										</Card>
-									</Col>
-									}
-								</Row>,
-		},
-		{
-			key: 'vital_analysis',
-			label: 'Vital Analysis',
-			children: <Row gutter={[16, 16]} >
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsHeartFill size={40} style={{color:"#2f54eb"}}/> Heart Rate
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.heart_rate.average}</Title>
-													{
-														props.heart_rate_options ? <ReactECharts option={props.heart_rate_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Maximum</p>
-														<Title level={4}>{props.heart_rate.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Minimum</p>
-														<Title level={4}>{props.heart_rate.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.heart_rate.previous_average}</span> 
-												</div>
-											</div>
-											
-										</Card>
-									</Col>
-
-									<Col xl={8} xxl={8} lg={8} md={8} sm={24} xs={24}>
-										<Card 
-											headStyle={{textAlign:'center'}}
-											title={ 
-												<>
-													<BsFillLungsFill size={40} style={{color:"#2f54eb"}}/> Breath Rate
-												</>  } 
-											style={{}} 
-											className='content-card'
-										>
-											<Row style={{textAlign:'center'}}>
-												<Col span={16}>
-													<p>Week's Average</p>
-													<Title level={2}>{props.breath_rate.average}</Title>
-													{
-														props.breath_rate_options ? <ReactECharts option={props.breath_rate_options}/>: null
-													}
-												</Col>
-												<Col span={8} className='my-auto'>
-													<div className='min-max-container'>
-														<p>Maximum</p>
-														<Title level={4}>{props.breath_rate.max}</Title>
-													</div>
-													<div className='min-max-container'>
-														<p>Minimum</p>
-														<Title level={4}>{props.breath_rate.min}</Title>
-													</div>
-												</Col>
-											</Row>
-											<div>
-												<Divider/>
-												<div style={{textAlign:'center'}}>
-													Previous Week's Average: <span style={{fontWeight:'bold'}}>{props.breath_rate.previous_average}</span> 
-												</div>
-											</div>
-										</Card>
-									</Col>
-								</Row>,
-		},
-	];
+		setItems(temp)
+	},[props.components, props.init])
 
 	return (
 		<Container>

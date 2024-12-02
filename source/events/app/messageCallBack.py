@@ -165,7 +165,7 @@ def on_message(client, obj, msg):
             )
             # print(STATE,OBJECT_COUNT,OBJECT_LOCATION)
             sql = (
-                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`, `SIGN_OF_LIFE`, `pointCloudDetected`) VALUES (FROM_UNIXTIME(%s),(SELECT ROOM_UUID FROM RL_ROOM_MAC WHERE MAC = '%s' LIMIT 1),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_COUNT`, `OBJECT_LOCATION`, `PX`, `PY`, `PZ`, `VX`, `VY`, `VZ`, `AX`, `AY`, `AZ`, `SIGN_OF_LIFE`, `pointCloudDetected`) VALUES (FROM_UNIXTIME(%s),(SELECT ROOM_UUID FROM RL_ROOM_MAC WHERE MAC = '%s' ORDER BY RL_ID DESC LIMIT 1),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 % (
                     TIME,
                     MAC,
@@ -208,6 +208,12 @@ def on_message(client, obj, msg):
                 OBJECT_LOCATION = 1
                 if ROOM_STATUS is None:
                     ROOM_STATUS = 2
+            elif D.get("heartRate") and D.get("heartRate", 0) < 110 and D.get("heartRate", 0) > 45:
+                STATE = 2
+                OBJECT_LOCATION = 1
+                if ROOM_STATUS is None:
+                    ROOM_STATUS = 2
+
             HEART_RATE = (
                 "NULL" if D["heartRate"] == None else str(round(D["heartRate"], 1))
             )
@@ -215,7 +221,7 @@ def on_message(client, obj, msg):
                 "NULL" if D["breathRate"] == None else str(round(D["breathRate"], 1))
             )
             sql = (
-                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`, `SIGN_OF_LIFE`, `pointCloudDetected`) VALUES (FROM_UNIXTIME(%s),(SELECT ROOM_UUID FROM RL_ROOM_MAC WHERE MAC = '%s' LIMIT 1),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s)"
+                f"INSERT INTO `{table_name}`(`TIMESTAMP`, `ROOM_UUID`, `MAC`, `TYPE`, `STATE`, `OBJECT_LOCATION`, `IN_BED`, `HEART_RATE`, `BREATH_RATE`, `IN_BED_MOVING`, `SIGN_OF_LIFE`, `pointCloudDetected`) VALUES (FROM_UNIXTIME(%s),(SELECT ROOM_UUID FROM RL_ROOM_MAC WHERE MAC = '%s' ORDER BY RL_ID DESC LIMIT 1),'%s',%s,%d,%d,%d,%s,%s,%s,%s,%s)"
                 % (
                     TIME,
                     MAC,

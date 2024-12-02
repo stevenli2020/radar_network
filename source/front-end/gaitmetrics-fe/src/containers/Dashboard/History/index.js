@@ -43,6 +43,7 @@ const History = props => {
 
     if (getItem("LOGIN_TOKEN") && props.client_id == null){
 			props.getMQTTClientID()
+      props.getComponentsEnablement('history')
 		}
     
     const handleVisibilityChange = () => {
@@ -351,26 +352,34 @@ const History = props => {
 				</Row>
         <Row gutter={[16, 16]} style={{justifyContent:'center'}}>
           {
-            props.is_admin?(<Col span={24} lg={12}>
+            props.components?.realtime_location && <Col span={24} lg={12}>
               <RealtimeLocation is_admin={props.is_admin} room={props.room} room_empty={props.room_empty} sensors={props.sensors} persons={props.persons} data={props.realtimeLocationData}/>
-            </Col>):null
+            </Col>
           }
-          <Col span={24} lg={12}>
-            <LocationHistory is_admin={props.is_admin} action={props.getLocationHistory} macPos={props.macPos} macVital={props.macVital} room={props.room} data={props.locationHistoryData}/>
-          </Col>
+          {
+            props.components?.location_history && <Col span={24} lg={12}>
+              <LocationHistory is_admin={props.is_admin} action={props.getLocationHistory} macPos={props.macPos} macVital={props.macVital} room={props.room} data={props.locationHistoryData}/>
+            </Col>
+          }
         </Row>
         <Row gutter={[16, 16]} className='mt-2'>
-          <Col span={24} lg={12}>
-            <VitalSign action={props.getVitalHistory} macPos={props.macPos} macVital={props.macVital} vital_data={props.vital_data} room_uuid={props.room_uuid} data={props.vitalHistoryData}/>
-          </Col>
-          <Col span={24} lg={12}>
-            <OccupancyHistory data={props.occupancyHistoryData}/>
-          </Col>
+          {
+            props.components?.vital_sign && <Col span={24} lg={12}>
+              <VitalSign action={props.getVitalHistory} macPos={props.macPos} macVital={props.macVital} vital_data={props.vital_data} room_uuid={props.room_uuid} data={props.vitalHistoryData}/>
+            </Col>
+          }
+          {
+            props.components?.occupancy_history && <Col span={24} lg={12}>
+              <OccupancyHistory data={props.occupancyHistoryData}/>
+            </Col>
+          }
         </Row>
         <Row gutter={[16, 16]} className='mt-2'>
-          <Col span={24} lg={12}>
-            <WallSign action={props.getWallHistory} room_uuid={props.room_uuid} data={props.wallHistoryData}/>
-          </Col>
+          {
+            props.components?.wall_data && <Col span={24} lg={12}>
+              <WallSign action={props.getWallHistory} room_uuid={props.room_uuid} data={props.wallHistoryData}/>
+            </Col>
+          }
         </Row>
       </div>
     }

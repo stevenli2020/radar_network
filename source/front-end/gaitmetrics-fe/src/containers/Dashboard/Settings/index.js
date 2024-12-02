@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import WithHOC from './actions'
-import { Button, Card, Divider, InputNumber, Modal, Select, Slider, Space, Table, Typography } from 'antd'
+import { Button, Card, Divider, InputNumber, Modal, Select, Slider, Space, Switch, Table, Typography } from 'antd'
 import LoadingOverlay from 'components/LoadingOverlay'
 import { Container } from 'react-bootstrap'
 import { getItem } from 'utils/tokenStore'
@@ -31,6 +31,7 @@ const Settings = props => {
 
 	const { Title } = Typography
   const [form] = Form.useForm();
+  const [enableForm] = Form.useForm();
   const [algoForm] = Form.useForm();
   const [notifierForm] = Form.useForm();
   const { TextArea } = Input;
@@ -39,6 +40,7 @@ const Settings = props => {
   const [threshold, setThreshold] = useState(2);
   const [alertConfigs,setAlertConfigs] = useState([])
   const [algoConfigs,setAlgoConfigs] = useState([])
+  const [componentsEnablement,setComponentsEnablement] = useState([])
   const [dpRange, setDPRange] = useState([15,60])
   const [isActive, setIsActive] = useState(true);
   const [selectedAlgoConfig, setSelectedAlgoConfig] = useState(null)
@@ -173,6 +175,82 @@ const Settings = props => {
     },
   ] 
 
+  const componentsEnablementColumns = [ 
+    { 
+      key: "ID", 
+      title: "ID", 
+      render: (_, __, index) => index + 1, // Render the index as the ID, starting from 1
+    },
+    { 
+      key: "PAGE", 
+      title: "Page", 
+      dataIndex: "PAGE", 
+    },
+    { 
+      key: "COMPONENT", 
+      title: "Component", 
+      dataIndex: "COMPONENT", 
+    },
+    { 
+      key: "USER", 
+      title: "User", 
+      render: (_, component) => (
+        <>
+        <Switch 
+							style={{float:'right'}}
+							className='mb-2'
+							checkedChildren="Enable" 
+							unCheckedChildren="Disable" 
+							checked={component.USER}
+							onChange={ val => {
+                const temp = [...componentsEnablement]; // If it's an array
+          
+                // Find the target component by its ID and update the ADMIN field
+                const index = temp.findIndex((item) => item.ID === component.ID);
+                if (index !== -1) {
+                  temp[index] = {
+                    ...temp[index],
+                    USER: val ? 1 : 0,
+                  };
+                }
+
+                // Update state with the modified array/object
+                setComponentsEnablement(temp);
+              }} />
+        </>
+      ),
+    },
+    { 
+      key: "ADMIN", 
+      title: "Admin", 
+      render: (_, component) => (
+        <>
+        <Switch 
+							style={{float:'right'}}
+							className='mb-2'
+							checkedChildren="Enable" 
+							unCheckedChildren="Disable" 
+							checked={component.ADMIN}
+							onChange={ val => {
+                const temp = [...componentsEnablement]; // If it's an array
+          
+                // Find the target component by its ID and update the ADMIN field
+                const index = temp.findIndex((item) => item.ID === component.ID);
+                if (index !== -1) {
+                  temp[index] = {
+                    ...temp[index],
+                    ADMIN: val ? 1 : 0,
+                  };
+                }
+
+                // Update state with the modified array/object
+                setComponentsEnablement(temp);
+              }} />
+        </>
+      ),
+    },
+  ] 
+
   const notifierColumns = [ 
     { 
       key: "ID", 
@@ -222,12 +300,18 @@ const Settings = props => {
 			props.getAlertConfigurations()
       props.getAlgoConfigurations()
       props.getNotifier()
+      props.getAllComponentsEnablement()
+      props.getComponentsEnablement('settings')
     }
 	}, [])
 
   useEffect(() => {
 		setAlertConfigs(props.alertConfigs)
 	}, [props.alertConfigs])
+
+  useEffect(() => {
+		setComponentsEnablement(props.componentsEnablement)
+	}, [props.componentsEnablement])
 
   useEffect(() => {
     const arrayOfDicts = Object.keys(props.algoConfigs).map(key => {
@@ -375,6 +459,13 @@ const Settings = props => {
     // props.action(values)
     // props.close()
   };
+
+  const onEnableFinish = (values) => {
+    // Handle the form submission logic (e.g., send data to the server)
+    console.log('Received values:', values);
+    // props.action(values)
+    // props.close()
+  };
   
   const clearAlertConfigs = () => {
 		setAlertConfigs([])
@@ -386,6 +477,10 @@ const Settings = props => {
 
   const updateAlgoConfigs = () => {
 		props.setAlgoConfigurations(algoConfigs)
+	}
+
+  const updateComponentsEnablement = () => {
+		props.updateComponentsEnablement(componentsEnablement)
 	}
 
   const addNotifier = () => {
@@ -452,7 +547,7 @@ const Settings = props => {
         initialValues={props.selectedRoom}
         layout="vertical" // Set the form layout
       >
-        <Row gutter={[16,16]}>
+        {props.components?.organization_logo && <Row gutter={[16,16]}>
           <Col span={24}>
             <Card 
               title={ 
@@ -479,9 +574,9 @@ const Settings = props => {
               }
 						</Card>
           </Col>
-        </Row>
+        </Row>}
 
-        <Row className='mt-2' gutter={16}>
+        {props.components?.alert_configurations && <Row className='mt-2' gutter={16}>
           <Col span={24}>
             <Card 
               title={ 
@@ -618,10 +713,10 @@ const Settings = props => {
               </div>
 						</Card>
           </Col>
-        </Row>
+        </Row>}
       </Form>
 
-      {getItem("TYPE") == "2" && <Form
+      {props.components?.algorithm_configurations && <Form
         form={algoForm}
         onFinish={onAlgoFinish}
         layout="vertical" // Set the form layout
@@ -703,7 +798,7 @@ const Settings = props => {
           </Col>
         </Row>
       </Form>}
-      <Form
+      { props.components?.notifier && <Form
         form={notifierForm}
         layout="vertical" // Set the form layout
       >
@@ -756,10 +851,60 @@ const Settings = props => {
                   />
                 </div>
               )}
+            </Card>
+          </Col>
+        </Row>
+      </Form>}
+      {getItem("TYPE") == "2" && <Form
+        form={enableForm}
+        onFinish={onEnableFinish}
+        layout="vertical" // Set the form layout
+      >
+        <Row className='mt-2' gutter={16}>
+          <Col span={24}>
+            <Card 
+              title={ 
+                <>
+                  Component Enablement
+                </>  } 
+              style={{}} 
+              className='content-card'
+            >
+              {componentsEnablement.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <Table 
+                    dataSource={componentsEnablement} 
+                    columns={componentsEnablementColumns} 
+                    rowKey={"ID"}
+                    pagination={{
+                      // Enable pagination
+                      pageSizeOptions: ['10', '20', '50'], // Specify the available page sizes
+                      showSizeChanger: true, // Show the page size changer
+                      defaultPageSize: 10, // Default number of items per page
+                      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`, // Display total number of items
+                    }}
+                  />
+                </div>
+              )}
+              
+              <div>
+                <Divider/>
+                <div style={{textAlign:'center'}}>
+                <Space style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={updateComponentsEnablement}
+                  >
+                    Update
+                  </Button>
+                </Space>
+                </div>
+              </div>
 						</Card>
           </Col>
         </Row>
-      </Form>
+      </Form>}
       { updateVisible && <UpdateAlgoConfigModal visible={updateVisible} close={closeUpdateModal} selectedKey={selectedAlgoConfig.CONFIG_KEY} selectedAlgoConfig={selectedAlgoConfig} algoConfigs={algoConfigs} setAlgoConfigs={setAlgoConfigs}/>}
 			{
 				props.onLoading && <LoadingOverlay/>

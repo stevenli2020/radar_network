@@ -16,6 +16,8 @@ const HOC = (WrappedComponent) => {
       ],
       alertConfigs: [],
       algoConfigs: {},
+      componentsEnablement: [],
+      components: {},
       notifier:[],
       updateConfigFlag: 0
     };
@@ -195,6 +197,49 @@ const HOC = (WrappedComponent) => {
       this.setState({client_id:payload.DATA.client_id})
     }
 
+    getAllComponentsEnablement = () => {
+      Get(
+        `/api/componentenablement`,
+        this.getAllComponentsEnablementSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getAllComponentsEnablementSuccess = payload => {
+      this.setState({componentsEnablement:payload.DATA})
+    }
+
+    getComponentsEnablement = (page) => {
+      Get(
+        `/api/componentenablement/${page}`,
+        this.getComponentsEnablementSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getComponentsEnablementSuccess = payload => {
+      this.setState({components:payload})
+    }
+
+    updateComponentsEnablement = (configs) => {
+      let payload = {
+        data:configs
+      }
+      Put(
+        `/api/componentenablement`,
+        payload,
+        this.updateComponentsEnablementSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    updateComponentsEnablementSuccess = payload => {
+      requestSuccess('Updated successfully!')
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -209,6 +254,9 @@ const HOC = (WrappedComponent) => {
           getNotifier={this.getNotifier}
           addNotifier={this.addNotifier}
           deleteNotifier={this.deleteNotifier}
+          getAllComponentsEnablement={this.getAllComponentsEnablement}
+          getComponentsEnablement={this.getComponentsEnablement}
+          updateComponentsEnablement={this.updateComponentsEnablement}
           getDataTypes={this.getDataTypes}
           upload={this.uploadLogo}
           onLoading={this.state.loading}

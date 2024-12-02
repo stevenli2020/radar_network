@@ -33,6 +33,12 @@ def auth(data):
     return login, admin
 
 
+def is_superadmin(data):
+    if data.get("TYPE") == 2:
+        return True
+    return False
+
+
 def signIn(data):
     result = defaultdict(list)
     if data["LOGIN_NAME"] == "":

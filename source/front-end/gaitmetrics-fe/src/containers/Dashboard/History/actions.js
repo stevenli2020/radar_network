@@ -31,7 +31,8 @@ const HOC = (WrappedComponent) => {
       vital_data:null,
       is_admin:false,
       client_id: null,
-      receivedAlert:0
+      receivedAlert:0,
+      components:{}
     };
 
     sound = new Audio(alertSound);
@@ -377,6 +378,19 @@ const HOC = (WrappedComponent) => {
       this.setState({client_id:payload.DATA.client_id})
     }
 
+    getComponentsEnablement = (page) => {
+      Get(
+        `/api/componentenablement/${page}`,
+        this.getComponentsEnablementSuccess,
+        error => requestError(error),
+        this.load
+      )
+    }
+
+    getComponentsEnablementSuccess = payload => {
+      this.setState({components:payload})
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -394,6 +408,7 @@ const HOC = (WrappedComponent) => {
           initView={this.initView}
           getMQTTClientID={this.getMQTTClientID}
           setClientConnection={this.setClientConnection}
+          getComponentsEnablement={this.getComponentsEnablement}
         />
       );
     };

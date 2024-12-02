@@ -149,7 +149,7 @@ def subscribe(client: paho):
 
             if (
                 connected_device.get(room_detail["ROOM_UUID"], 0)
-                > current_connected_devices_count
+                != current_connected_devices_count
             ):
                 if first_occupied_ts.get(room_detail["ROOM_UUID"]):
                     del first_occupied_ts[room_detail["ROOM_UUID"]]
@@ -219,10 +219,13 @@ def subscribe(client: paho):
                 and occupied.get(room_detail["ROOM_UUID"], False)
             ):
                 if sign_of_life_2.get(room_detail["ROOM_UUID"]):
-                    if check_sol_threshold(
-                        sign_of_life_2[room_detail["ROOM_UUID"]],
-                        msg["DATA"][0]["timeStamp"],
-                        threshold=120,
+                    if (
+                        check_sol_threshold(
+                            sign_of_life_2[room_detail["ROOM_UUID"]],
+                            msg["DATA"][0]["timeStamp"],
+                            threshold=120,
+                        )
+                        and connected_device.get(room_detail["ROOM_UUID"], 0) >= 2
                     ):
                         alert_msg = {
                             "URGENCY": "3",

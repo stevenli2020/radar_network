@@ -114,6 +114,8 @@ const Home = (props) => {
 					roomToUpdate.LAST_IN_BED_TS = Date.now()
 					if (payloadJson["STATUS"] != 0){
 						roomToUpdate.STATUS = payloadJson["STATUS"]
+					}else{
+						roomToUpdate.STATUS = 1	
 					}
 					
 					props.onChangeHOC('rooms',updatedRooms)

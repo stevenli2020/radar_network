@@ -208,7 +208,11 @@ def on_message(client, obj, msg):
                 OBJECT_LOCATION = 1
                 if ROOM_STATUS is None:
                     ROOM_STATUS = 2
-            elif D.get("heartRate") and D.get("heartRate", 0) < 110 and D.get("heartRate", 0) > 45:
+            elif (
+                D.get("heartRate")
+                and D.get("heartRate", 0) < 110
+                and D.get("heartRate", 0) > 45
+            ):
                 STATE = 2
                 OBJECT_LOCATION = 1
                 if ROOM_STATUS is None:

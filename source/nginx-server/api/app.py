@@ -60,6 +60,7 @@ from user.sentMailManager import resetPasswordLink
 from user.roomManager import getRoomData
 from user.roomManager import getSpecificRoomData
 from user.roomManager import getRoomAlertsData
+from user.roomManager import markAlertsAccuracy
 from user.roomManager import getRoomsAlerts
 from user.roomManager import getDeviceConfig
 from user.roomManager import setDeviceConfig
@@ -960,6 +961,28 @@ def getRoomAlerts():
                     )
                 else:
                     return {"ERROR": "Please provide room id!"}
+            else:
+                return {"ERROR": "Not authorized!"}
+        else:
+            return {"ERROR": "Empty json!"}
+
+
+@app.route("/api/setAlertAccuracy", methods=["POST"])
+@jwt_required()
+def setAlertAccuracy():
+    if request.method == "POST":
+        data = request.json
+        if data:
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
+            if login:
+                if "alert_id" in data:
+                    return markAlertsAccuracy(
+                        data.get("alert_id"),
+                        accuracy=data.get("accuracy", True),
+                    )
+                else:
+                    return {"ERROR": "Please provide alert id!"}
             else:
                 return {"ERROR": "Not authorized!"}
         else:

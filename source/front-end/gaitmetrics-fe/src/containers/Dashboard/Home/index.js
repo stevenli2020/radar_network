@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import moment from 'moment';
 import WithHOC from './actions'
 import { useNavigate } from "react-router-dom"
-import { Typography, Card, Row, Col, Divider,Tag, Space, Modal, Button, Popover, Table } from 'antd'
+import { Typography, Card, Row, Col, Divider,Tag, Space, Modal, Button, Popover, Table, Radio } from 'antd'
 import { ArrowRightOutlined, EditTwoTone, DeleteTwoTone, PlusOutlined, AlertFilled, EditOutlined, SendOutlined, LoginOutlined } from '@ant-design/icons'
 
 import LoadingOverlay from 'components/LoadingOverlay'
@@ -457,6 +457,18 @@ const Home = (props) => {
       title: "Date", 
 			render: (_, alert) => (
 				<span>{new Date(alert.TIMESTAMP).toLocaleString()}</span>
+			),
+    },
+		{ 
+      key: "ACCURACY", 
+      title: "Accuracy", 
+      render: (_, alert) => (
+				<Radio.Group onChange={(val) => {
+              props.setAlertAccuracy(alert.ID,val.target.value);
+            }} value={alert.ACCURACY}>
+          <Radio value={1}>True</Radio>
+          <Radio value={0}>False</Radio>
+        </Radio.Group>
 			),
     }
 	]

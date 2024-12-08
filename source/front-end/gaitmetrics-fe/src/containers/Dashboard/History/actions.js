@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Component } from "react";
-import { requestError } from "utils/requestHandler";
+import { requestError, requestSuccess } from "utils/requestHandler";
 import { Get, Post, Put, Delete } from "utils/axios";
 import { getItem } from 'utils/tokenStore'
 import getDomainURL from 'utils/api'
@@ -391,6 +391,28 @@ const HOC = (WrappedComponent) => {
       this.setState({components:payload})
     }
 
+    setAlertAccuracy = async(alert_id,accuracy=true) => {
+      let payload = {
+        alert_id: alert_id,
+        accuracy: accuracy
+      }
+      const updatedAlerts = this.state.alerts.map((alert) =>
+        alert.ID === alert_id ? { ...alert, ACCURACY: accuracy } : alert
+      );
+      this.setState({ alerts: updatedAlerts })
+      await Post(
+        `/api/setAlertAccuracy`,
+        payload,
+        this.setAlertAccuracySuccess,
+        error => requestError(error),
+        this.temp
+      )
+    }
+
+    setAlertAccuracySuccess = payload => {
+      requestSuccess("Accuracy recorded!")
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -404,6 +426,7 @@ const HOC = (WrappedComponent) => {
           updatePersonsLocation={this.updatePersonsLocation}
           addVitalData={this.addVitalData}
           getRoomAlerts={this.getRoomAlerts}
+          setAlertAccuracy={this.setAlertAccuracy}
           readAlert={this.readAlert}
           initView={this.initView}
           getMQTTClientID={this.getMQTTClientID}

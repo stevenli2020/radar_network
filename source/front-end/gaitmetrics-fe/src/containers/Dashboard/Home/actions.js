@@ -319,6 +319,31 @@ const HOC = (WrappedComponent) => {
       this.getRoomDetails()
     }
 
+    setAlertAccuracy = async(alert_id,accuracy=true) => {
+      let payload = {
+        alert_id: alert_id,
+        accuracy: accuracy
+      }
+      const updatedRooms = this.state.rooms.map((room) => ({
+        ...room,
+        ALERTS: room.ALERTS.map((alert) =>
+          alert.ID === alert_id ? { ...alert, ACCURACY: accuracy } : alert
+        ),
+      }));
+      this.setState({rooms:updatedRooms})
+      await Post(
+        `/api/setAlertAccuracy`,
+        payload,
+        this.setAlertAccuracySuccess,
+        error => requestError(error),
+        this.temp
+      )
+    }
+
+    setAlertAccuracySuccess = payload => {
+      requestSuccess("Accuracy recorded!")
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -336,6 +361,7 @@ const HOC = (WrappedComponent) => {
           updateRoomLocationOnMap={this.updateRoomLocationOnMap}
           getMQTTClientID={this.getMQTTClientID}
           setClientConnection={this.setClientConnection}
+          setAlertAccuracy={this.setAlertAccuracy}
           readAlerts={this.readAlerts}
           onChangeHOC={this.onChangeHOC}
         />

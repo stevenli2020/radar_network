@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Component } from "react";
-import { requestError } from "utils/requestHandler";
+import { requestError, requestSuccess } from "utils/requestHandler";
 import { Get, Post } from "utils/axios";
 import { getItem } from 'utils/tokenStore'
 import moment from 'moment';
@@ -741,6 +741,29 @@ const HOC = (WrappedComponent) => {
       this.setState({components:payload})
     }
 
+    setAlertAccuracy = async(alert_id,accuracy=true) => {
+      let payload = {
+        alert_id: alert_id,
+        accuracy: accuracy
+      }
+      const updatedAlerts = this.state.alerts.map((alert) =>
+        alert.ID === alert_id ? { ...alert, ACCURACY: accuracy } : alert
+      );
+      this.setState({ alerts: updatedAlerts })
+      console.log(payload)
+      await Post(
+        `/api/setAlertAccuracy`,
+        payload,
+        this.setAlertAccuracySuccess,
+        error => requestError(error),
+        this.temp
+      )
+    }
+
+    setAlertAccuracySuccess = payload => {
+      requestSuccess("Accuracy recorded!")
+    }
+
     render = () => {
       return (
         <WrappedComponent
@@ -748,6 +771,7 @@ const HOC = (WrappedComponent) => {
           {...this.state}
           getRoomSummary={this.getRoomSummary}
           getRoomAlerts={this.getRoomAlerts}
+          setAlertAccuracy={this.setAlertAccuracy}
           readAlert={this.readAlert}
           onLoading={this.state.loading}
           onChangeHOC={this.onChangeHOC}

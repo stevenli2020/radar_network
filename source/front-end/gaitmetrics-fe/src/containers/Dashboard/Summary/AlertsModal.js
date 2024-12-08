@@ -1,5 +1,5 @@
 import { AlertFilled } from '@ant-design/icons'
-import { Dropdown, Avatar, Space, Modal, Table } from 'antd'
+import { Dropdown, Avatar, Space, Modal, Table, Radio } from 'antd'
 import React from 'react'
 
 const AlertsModal = (props) => {
@@ -31,6 +31,18 @@ const AlertsModal = (props) => {
       title: "Date", 
       render: (_, alert) => (
 				<span>{new Date(alert.TIMESTAMP).toLocaleString()}</span>
+			),
+    },
+    { 
+      key: "ACCURACY", 
+      title: "Accuracy", 
+      render: (_, alert) => (
+				<Radio.Group onChange={(val) => {
+              props.setAlertAccuracy(alert.ID,val.target.value);
+            }} value={alert.ACCURACY}>
+          <Radio value={1}>True</Radio>
+          <Radio value={0}>False</Radio>
+        </Radio.Group>
 			),
     }
 	]

@@ -722,7 +722,7 @@ const Summary = props => {
 			</div>
 		}
 			
-			{alertVisible && <AlertsModal visible={alertVisible} action={props.readAlert} close={closeAlertModal} alerts={props.alerts}></AlertsModal>}
+			{alertVisible && <AlertsModal visible={alertVisible} action={props.readAlert} close={closeAlertModal} alerts={props.alerts} setAlertAccuracy={props.setAlertAccuracy}></AlertsModal>}
 
 			{
 				props.onLoading && <LoadingOverlay/>

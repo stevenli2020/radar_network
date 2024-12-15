@@ -3,7 +3,7 @@ import time
 import mysql.connector
 import json
 from datetime import datetime, timedelta
-import pendulum
+import pytz
 
 broker = "143.198.199.16"
 port = 1883
@@ -394,7 +394,7 @@ def within_time_range(start_time_str, end_time_str):
     start_time = datetime.strptime(start_time_str, "%H:%M").time()
     end_time = datetime.strptime(end_time_str, "%H:%M").time()
 
-    singapore_tz = pendulum.timezone("Asia/Singapore")
+    singapore_tz = pytz.timezone("Asia/Singapore")
     current_time = datetime.now(singapore_tz).time()
 
     if start_time < end_time:

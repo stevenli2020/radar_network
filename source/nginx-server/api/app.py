@@ -20,6 +20,7 @@ from user.DeviceSaveData import updateSaveDeviceDataTime
 from user.DeviceSaveData import deleteSaveDeviceDataTime
 from user.getSaveData import getHistOfVitalData
 from user.getSaveData import getHistOfWallData
+from user.getSaveData import getOccupancyTimeSeriesData
 from user.getSaveData import getAnalyticDataofPosture
 from user.getSaveData import getSummaryDataofPosition
 
@@ -42,6 +43,7 @@ from user.usersManagement import requestAllUsers
 from user.usersManagement import requestSpecificUser
 from user.usersManagement import getMQTTClientID
 from user.usersManagement import setClientConnection
+from user.usersManagement import get_profile
 
 # update Password
 from user.passwordManager import addPassword
@@ -519,6 +521,29 @@ def getWallData():
                 return result
                 # return getHistOfVitalData(data)
                 # return getSaveRawData(data)
+            else:
+                return {"ERROR": "Not authorized!"}
+        else:
+            return {"ERROR": "Empty json!"}
+
+
+@app.route("/api/getOccupancyTimeSeries", methods=["POST"])
+@jwt_required()
+def getOccupancyTimeSeries():
+    if request.method == "POST":
+        data = request.json
+        if data:
+            current_user = get_jwt_identity()
+            login, admin = auth(current_user)
+            if login:
+                data["API"] = "OCCUPANCY_TIME_SERIES_DATA"
+                cached_result = get_data_from_redis(data)
+                if cached_result:
+                    return cached_result
+
+                result = getOccupancyTimeSeriesData(data)
+                cache_data(data, json.dumps(result))
+                return result
             else:
                 return {"ERROR": "Not authorized!"}
         else:
@@ -1207,6 +1232,18 @@ def algo_config_key(key):
         login, admin = auth(current_user)
         if login and admin:
             return delete_algo_config(key)
+        else:
+            return {"ERROR": "Not authorized!"}
+
+
+@app.route("/api/profile", methods=["GET"])
+@jwt_required()
+def get_profile_api():
+    if request.method == "GET":
+        current_user = get_jwt_identity()
+        login, admin = auth(current_user)
+        if login:
+            return get_profile(current_user)
         else:
             return {"ERROR": "Not authorized!"}
 

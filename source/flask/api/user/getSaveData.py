@@ -321,6 +321,95 @@ def getHistOfWallData(data):
     return result
 
 
+def getOccupancyTimeSeriesData(data):
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor()
+    result = defaultdict(list)
+    sql = (
+        "SELECT GROUP_CONCAT(DEVICES.MAC) FROM Gaitmetrics.ROOMS_DETAILS LEFT JOIN Gaitmetrics.RL_ROOM_MAC ON ROOMS_DETAILS.ROOM_UUID = RL_ROOM_MAC.ROOM_UUID LEFT JOIN Gaitmetrics.DEVICES ON RL_ROOM_MAC.MAC=DEVICES.MAC WHERE ROOMS_DETAILS.ROOM_UUID ='%s';"
+        % (data["ROOM_UUID"])
+    )
+    cursor.execute(sql)
+    dbresult = cursor.fetchone()
+
+    try:
+        db = dbresult[0].split(",")
+        MAC_LIST = ""
+        for MAC in db:
+            if MAC_LIST != "":
+                MAC_LIST += ","
+            MAC_LIST += f"""'{MAC}'"""
+        List = f"IN ({MAC_LIST})"
+    except:
+        result["ERROR"].append({"Message": "No data related to room name!"})
+        return result
+    if data["CUSTOM"] != 1:
+        tables = get_interval_tables(cursor, data["TIME"])
+    else:
+        tables = get_table_dates_between(cursor, data["TIMESTART"], data["TIMEEND"])
+
+    dbresult = []
+
+    for table in tables:
+        try:
+            mode = data.get("TIME")
+            conditions = "(OBJECT_COUNT>0 OR IN_BED>0) AND OBJECT_LOCATION=1"
+            if data["CUSTOM"] != 1:
+                sql = f"SELECT `TIMESTAMP`, 1 AS `WALL_DATA_COUNT` FROM Gaitmetrics.{table} WHERE MAC {List} AND {conditions} AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL {mode});"
+            else:
+                sql = f"SELECT `TIMESTAMP`, 1 AS `WALL_DATA_COUNT` FROM Gaitmetrics.{table} WHERE MAC {List} AND {conditions};"
+
+            print(sql)
+
+            cursor.execute(sql)
+            db_data = cursor.fetchall()
+            if db_data:
+                dbresult += db_data
+        except Exception as e:
+            print("No data in", table)
+
+    if not dbresult:
+        result["ERROR"].append({"Message": "No data!"})
+        return result
+
+    df = pd.DataFrame(dbresult, columns=["TIMESTAMP", "WALL_DATA_COUNT"])
+
+    df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
+
+    # Get the local timezone
+    local_timezone = get_localzone()
+
+    # Localize timestamps to the local timezone
+    df["TIMESTAMP"] = df["TIMESTAMP"].dt.tz_localize(local_timezone)
+
+    # # Subtract 8 hours from each timestamp
+    df["TIMESTAMP"] = df["TIMESTAMP"].dt.tz_convert("UTC")
+
+    df.set_index("TIMESTAMP", inplace=True)
+
+    df_resampled = df.resample("1Min").count()
+
+    df_resampled.fillna(0, inplace=True)
+
+    data_obj = {}
+    for index, row in df_resampled.iterrows():
+        t = int(index.timestamp())
+        if not result.get("TIME_START"):
+            result["TIME_START"].append(t)
+        data_obj[t] = [1 if row["WALL_DATA_COUNT"] > 1 else 0]
+
+    new_query_data = []
+    for t, d in data_obj.items():
+        new_query_data.append(str(d[0]))
+
+    result_data = ";".join(new_query_data)
+    result["DATA"].append(result_data)
+
+    cursor.close()
+    connection.close()
+    return result
+
+
 def getAnalyticDataofPosture(data):
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()

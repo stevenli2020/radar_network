@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import moment from 'moment';
 import WithHOC from './actions'
 import { useNavigate } from "react-router-dom"
@@ -149,35 +149,40 @@ const Home = (props) => {
 		}
 	}, [props.rooms]);
 
-	function clearHeartRate() {
-		const currentTimestamp = Date.now(); // Get current timestamp in milliseconds
+	const intervalRef = useRef(null); // Track interval ID
+  const roomsRef = useRef(props.rooms); // Track latest rooms reference
 
-		const updatedRooms = [...props.rooms]; 
-		let change = false
-				
-		updatedRooms.forEach(room => {
-				if (room.LAST_HEART_TS && (currentTimestamp - room.LAST_HEART_TS > 30000)) {
-						// More than 1 minute has passed since the heart rate timestamp
-						room.HEART_RATE = null; // Clear heart rate
-						room.LAST_HEART_TS = null; // Clear heart rate timestamp
-						room.IN_BED = false; // Clear heart rate
-						room.LAST_IN_BED_TS = null; // Clear heart rate timestamp
-						change = true
-				}
+  // Update roomsRef whenever props.rooms changes
+  useEffect(() => {
+    roomsRef.current = props.rooms;
+  }, [props.rooms]);
 
-				if (room.LAST_IN_BED_TS && (currentTimestamp - room.LAST_IN_BED_TS > 30000)) {
-					// More than 1 minute has passed since the heart rate timestamp
-					room.IN_BED = false; // Clear heart rate
-					room.LAST_IN_BED_TS = null; // Clear heart rate timestamp
-					change = true
-			}
-		});
+  // Clear heart rate logic
+  const clearHeartRate = () => {
+    const currentTimestamp = Date.now();
+    const updatedRooms = [...roomsRef.current];
+    let change = false;
 
-		if (change){
-			props.onChangeHOC('rooms',updatedRooms)
-		}
+    updatedRooms.forEach((room) => {
+      if (room.LAST_HEART_TS && currentTimestamp - room.LAST_HEART_TS > 30000) {
+        room.HEART_RATE = null;
+        room.LAST_HEART_TS = null;
+        room.IN_BED = false;
+        room.LAST_IN_BED_TS = null;
+        change = true;
+      }
 
-	}
+      if (room.LAST_IN_BED_TS && currentTimestamp - room.LAST_IN_BED_TS > 30000) {
+        room.IN_BED = false;
+        room.LAST_IN_BED_TS = null;
+        change = true;
+      }
+    });
+
+    if (change) {
+      props.onChangeHOC('rooms', updatedRooms);
+    }
+  };
 
 	const [connected, setConnected] = useState(false);
 
@@ -200,7 +205,6 @@ const Home = (props) => {
           onSuccess: () => {
             console.log("Connected");
 						setConnected(true)
-						setInterval(clearHeartRate, 1000);
             client.subscribe("/GMT/DEV/ROOM/+/ALERT");
 						client.subscribe("/GMT/DEV/ROOM/+/BED_ANALYSIS");
 						client.subscribe("/GMT/DEV/ROOM/+/HEART_RATE");
@@ -239,8 +243,20 @@ const Home = (props) => {
         stopInterval();
       }
 
+			if (intervalRef.current) {
+        clearInterval(intervalRef.current); // Clear existing interval
+      }
+
+      intervalRef.current = setInterval(() => {
+        console.log('Clearing heart rate...');
+        clearHeartRate();
+      }, 1000); // Adjust as needed
+
       return () => {
         stopInterval();
+				if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
       };
 		}
   }, [props.rooms,connected, isActive, props.client_id, props.playing]); // Include dependencies if needed

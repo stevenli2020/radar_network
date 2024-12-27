@@ -26,9 +26,14 @@ const Devices = props => {
 
   const onSearch = (value) => setSearchText(value.toLowerCase());
 
-  const filteredDevices = props.devices.filter((device) =>
-    device.MAC.toLowerCase().includes(searchText)
-  );
+  const filteredDevices = props.devices.filter((device) => {
+    return (
+      device.MAC.toLowerCase().includes(searchText) ||
+      device.NAME?.toLowerCase().includes(searchText) ||
+      device.ROOM_NAME?.toLowerCase().includes(searchText) ||
+      device.DESCRIPTION?.toLowerCase().includes(searchText)
+    );
+  });
 
   useEffect(() => {
 
@@ -342,7 +347,7 @@ const Devices = props => {
       <Row style={{ margin: '16px 0' }}>
         <Col sm={12}>
           <Input.Search 
-            placeholder="Search devices" 
+            placeholder="Search devices (MAC, Name, Location, Description, ...)" 
             enterButton 
             onSearch={onSearch} 
           />

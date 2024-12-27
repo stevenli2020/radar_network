@@ -370,8 +370,11 @@ const Settings = props => {
     try {
       if(message.destinationName.includes("ALGO_CONFIG/R")){
         if(message.payloadString.includes("UPDATED")){
-          requestSuccess("Process Status: "+ message.payloadString)
+          requestSuccess(message.destinationName + ": "+ message.payloadString)
         }    
+      }
+      if (message.destinationName.includes("REQ/UPDATE_CONFIG")){
+        requestSuccess( message.destinationName + ": "+ message.payloadString)
       }
 
     } catch (error) {

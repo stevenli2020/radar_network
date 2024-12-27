@@ -63,7 +63,7 @@ def get_connected_devices(room_id):
     cursor = connection.cursor(dictionary=True)
 
     check_sql = f"""
-        SELECT d.* FROM DEVICES d LEFT JOIN RL_ROOM_MAC rl ON d.MAC=rl.MAC WHERE rl.ROOM_UUID = '{room_id}' AND d.STATUS = 'CONNECTED';
+        SELECT d.* FROM DEVICES d LEFT JOIN RL_ROOM_MAC rl ON d.MAC=rl.MAC WHERE rl.ROOM_UUID = '{room_id}' AND d.STATUS = 'CONNECTED' AND d.LAST_DATA_RECEIVED >= NOW() - INTERVAL 1 MINUTE;
     """
 
     cursor.execute(check_sql)
@@ -209,7 +209,9 @@ def subscribe(client: paho):
                     if item.get("signOfLife") == 1:
                         sol = True
 
-                if item.get("pointCloudDetected", 1) != 0:
+                if item.get("pointCloudDetected", 1) != 0 or (
+                    item.get("numSubjects") != None and item.get("numSubjects") != 0
+                ):
                     mode_2 = True
                     all_zero_mode_2 = False
 

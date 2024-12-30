@@ -41,6 +41,10 @@ occupied = {}
 
 first_occupied_ts = {}
 
+occupied_sol1 = {}
+
+first_occupied_ts_sol1 = {}
+
 connected_device = {}
 
 
@@ -155,6 +159,12 @@ def subscribe(client: paho):
                     del first_occupied_ts[room_detail["ROOM_UUID"]]
                 if occupied.get(room_detail["ROOM_UUID"]):
                     del occupied[room_detail["ROOM_UUID"]]
+                if first_occupied_ts_sol1.get(room_detail["ROOM_UUID"]):
+                    del first_occupied_ts_sol1[room_detail["ROOM_UUID"]]
+                if occupied_sol1.get(room_detail["ROOM_UUID"]):
+                    del occupied_sol1[room_detail["ROOM_UUID"]]
+                if sign_of_life.get(room_detail["ROOM_UUID"]):
+                    del sign_of_life[room_detail["ROOM_UUID"]]
                 if sign_of_life_2.get(room_detail["ROOM_UUID"]):
                     del sign_of_life_2[room_detail["ROOM_UUID"]]
 
@@ -171,6 +181,22 @@ def subscribe(client: paho):
                 if first_occupied_ts.get(room_detail["ROOM_UUID"]):
                     del first_occupied_ts[room_detail["ROOM_UUID"]]
 
+            stationary = False
+            for item in msg["DATA"]:
+                if item.get("stationary"):
+                    stationary = True
+
+            if room_status in [1, 2] and stationary:
+                if not first_occupied_ts_sol1.get(
+                    room_detail["ROOM_UUID"]
+                ) and not occupied_sol1.get(room_detail["ROOM_UUID"]):
+                    first_occupied_ts_sol1[room_detail["ROOM_UUID"]] = msg["DATA"][0][
+                        "timeStamp"
+                    ]
+            else:
+                if first_occupied_ts_sol1.get(room_detail["ROOM_UUID"]):
+                    del first_occupied_ts_sol1[room_detail["ROOM_UUID"]]
+
             if first_occupied_ts.get(room_detail["ROOM_UUID"]):
                 if check_sol_threshold(
                     first_occupied_ts.get(room_detail["ROOM_UUID"]),
@@ -180,6 +206,16 @@ def subscribe(client: paho):
                     occupied[room_detail["ROOM_UUID"]] = True
                     if first_occupied_ts.get(room_detail["ROOM_UUID"]):
                         del first_occupied_ts[room_detail["ROOM_UUID"]]
+
+            if first_occupied_ts_sol1.get(room_detail["ROOM_UUID"]):
+                if check_sol_threshold(
+                    first_occupied_ts_sol1.get(room_detail["ROOM_UUID"]),
+                    msg["DATA"][0]["timeStamp"],
+                    5 * 60,
+                ):
+                    occupied_sol1[room_detail["ROOM_UUID"]] = True
+                    if first_occupied_ts_sol1.get(room_detail["ROOM_UUID"]):
+                        del first_occupied_ts_sol1[room_detail["ROOM_UUID"]]
 
             if not within_period:
                 if occupied.get(room_detail["ROOM_UUID"]):
@@ -200,14 +236,19 @@ def subscribe(client: paho):
                         del occupied[room_detail["ROOM_UUID"]]
                     if sign_of_life_2.get(room_detail["ROOM_UUID"]):
                         del sign_of_life_2[room_detail["ROOM_UUID"]]
+
+                    if first_occupied_ts_sol1.get(room_detail["ROOM_UUID"]):
+                        del first_occupied_ts_sol1[room_detail["ROOM_UUID"]]
+                    if occupied_sol1.get(room_detail["ROOM_UUID"]):
+                        del occupied_sol1[room_detail["ROOM_UUID"]]
+                    if sign_of_life.get(room_detail["ROOM_UUID"]):
+                        del sign_of_life[room_detail["ROOM_UUID"]]
+
                     del last_data[room_detail["ROOM_UUID"]]
 
             for item in msg["DATA"]:
-                if item.get("signOfLife") != 0:
-                    all_zero = False
-
-                    if item.get("signOfLife") == 1:
-                        sol = True
+                if item.get("pointCloudDetected", 1) != 0 and item.get("stationary"):
+                    sol = True
 
                 if item.get("pointCloudDetected", 1) != 0 or (
                     item.get("numSubjects") != None and item.get("numSubjects") != 0
@@ -252,7 +293,7 @@ def subscribe(client: paho):
                 if sign_of_life_2.get(room_detail["ROOM_UUID"]):
                     del sign_of_life_2[room_detail["ROOM_UUID"]]
 
-            if all_zero:
+            if not sol:
                 if sign_of_life.get(room_detail["ROOM_UUID"]):
                     if check_sol_threshold(
                         sign_of_life[room_detail["ROOM_UUID"]],
@@ -265,6 +306,12 @@ def subscribe(client: paho):
                         }
                         print("Insert heart rate alert", alert_msg)
                         insert_alert(room_detail["ID"], alert_msg)
+                        if first_occupied_ts_sol1.get(room_detail["ROOM_UUID"]):
+                            del first_occupied_ts_sol1[room_detail["ROOM_UUID"]]
+                        if occupied_sol1.get(room_detail["ROOM_UUID"]):
+                            del occupied_sol1[room_detail["ROOM_UUID"]]
+                        if sign_of_life.get(room_detail["ROOM_UUID"]):
+                            del sign_of_life[room_detail["ROOM_UUID"]]
                 else:
                     sign_of_life[room_detail["ROOM_UUID"]] = msg["DATA"][0]["timeStamp"]
 

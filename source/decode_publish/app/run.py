@@ -545,7 +545,7 @@ def decode_process_publish(mac, data):
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
                                                 wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
                                                 if wallStateParam[mac]['period_noSignOfLife'] > 60 and wallStateParam[mac]['period_stationary'] > 60:
-                                                    wall_Dict['signOfLife'] = 0
+                                                    wall_Dict['signOfLife'] = None
                                                     
                                                     # Publish alert via MQTT communication channel
                                                     # pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}
@@ -2555,7 +2555,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
                                                 wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
                                                 if wallStateParam[mac]['period_noSignOfLife'] > 60 and wallStateParam[mac]['period_stationary'] > 60:
-                                                    wall_Dict['signOfLife'] = 0
+                                                    wall_Dict['signOfLife'] = None
                                                     
                                                     # Publish alert via MQTT communication channel
                                                     # pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}
@@ -4551,7 +4551,7 @@ def decode_process_publish_wall(stateParamQueue, mac, data, wallStateParam, mqtt
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
                                                 wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
                                                 if wallStateParam[mac]['period_noSignOfLife'] > 60 and wallStateParam[mac]['period_stationary'] > 60:
-                                                    wall_Dict['signOfLife'] = 0
+                                                    wall_Dict['signOfLife'] = None
                                                     
                                                     # Publish alert via MQTT communication channel
                                                     # pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}

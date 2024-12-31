@@ -293,7 +293,7 @@ def subscribe(client: paho):
                 if sign_of_life_2.get(room_detail["ROOM_UUID"]):
                     del sign_of_life_2[room_detail["ROOM_UUID"]]
 
-            if not sol:
+            if not sol and occupied_sol1.get(room_detail["ROOM_UUID"], False):
                 if sign_of_life.get(room_detail["ROOM_UUID"]):
                     if check_sol_threshold(
                         sign_of_life[room_detail["ROOM_UUID"]],

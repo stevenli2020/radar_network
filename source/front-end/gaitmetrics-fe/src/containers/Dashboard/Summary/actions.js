@@ -105,6 +105,7 @@ const HOC = (WrappedComponent) => {
         error => requestError(error),
         this.load
       )
+      this.setState({init:false})
     }
 
     timeStringToMinutes = (timeString) => {

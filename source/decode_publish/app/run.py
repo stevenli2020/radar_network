@@ -169,6 +169,11 @@ def decode_process_publish(mac, data):
             else:
                 minZVel_threshold = algoCfg["DATA"]["fall_minZVel"]
 
+            if "fall_minXYVel_" + mac in algoCfg["DATA"]:
+                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel_"+mac]
+            else:
+                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel"]
+
             if "fall_numFrames_" + mac in algoCfg["DATA"]:
                 numFrames_threshold = int(algoCfg["DATA"]["fall_numFrames_"+mac])
             else:
@@ -184,6 +189,11 @@ def decode_process_publish(mac, data):
             else:
                 distanceMoved_threshold = algoCfg["DATA"]["vital_distanceMoved"]
 
+            if "wall_distanceMoved_" + mac in algoCfg["DATA"]:
+                distanceMoved_threshold = algoCfg["DATA"]["wall_distanceMoved_"+mac]
+            else:
+                distanceMoved_threshold = algoCfg["DATA"]["wall_distanceMoved"]
+
             if "vital_xPos_" + mac in algoCfg["DATA"]:
                 xPos_threshold = algoCfg["DATA"]["vital_xPos_"+mac]
             else:
@@ -198,6 +208,16 @@ def decode_process_publish(mac, data):
                 aggregatePeriod_threshold = algoCfg["DATA"]["aggregatePeriod_"+mac]
             else:
                 aggregatePeriod_threshold = algoCfg["DATA"]["aggregatePeriod"]
+
+            if "vital_pointCloudThreshold_" + mac in algoCfg["DATA"]:
+                vital_pointCloud_threshold = algoCfg["DATA"]["vital_pointCloudThreshold_"+mac]
+            else:
+                vital_pointCloud_threshold = algoCfg["DATA"]["vital_pointCloudThreshold"]
+
+            if "wall_pointCloudThreshold_" + mac in algoCfg["DATA"]:
+                wall_pointCloud_threshold = algoCfg["DATA"]["wall_pointCloudThreshold_"+mac]
+            else:
+                wall_pointCloud_threshold = algoCfg["DATA"]["wall_pointCloudThreshold"]
 
             if radarType == 'wall':
                 global wallStateParam
@@ -261,8 +281,11 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['rollingY'] = []
                     wallStateParam[mac]['rollingZ'] = []
                     wallStateParam[mac]['rollingZVel'] = []
+                    wallStateParam[mac]['rollingXYVel'] = []
                     wallStateParam[mac]['minZVel'] = []
+                    wallStateParam[mac]['minXYVel'] = []
                     wallStateParam[mac]['rollingHeight'] = []
+                    wallStateParam[mac]['rollingBodyWidth'] = []
                     wallStateParam[mac]['averageX'] = []
                     wallStateParam[mac]['averageY'] = []
                     wallStateParam[mac]['averageZ'] = []
@@ -274,7 +297,7 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['trackIDs'] = np.zeros((0))  # trackers ID
                     wallStateParam[mac]['previous_pointClouds'] = np.zeros((0, 7))  # previous point clouds
                     wallStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy',
+                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy', 'stationary',
                                                                             'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ', 'accX', 'accY', 'accZ', 
                                                                             'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult', 'signOfLife', 'pointCloudDetected'])
 
@@ -421,7 +444,7 @@ def decode_process_publish(mac, data):
 
                             # Point Cloud Detected ?
                             if 'pointCloud' in outputDict:
-                              if len(outputDict['pointCloud']) > 0:
+                              if len(outputDict['pointCloud']) > wall_pointCloud_threshold:
                                 wall_Dict['pointCloudDetected'] = 1
                               else:
                                 wall_Dict['pointCloudDetected'] = 0 
@@ -496,8 +519,11 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingY'].append([])
                                 wallStateParam[mac]['rollingZ'].append([])
                                 wallStateParam[mac]['rollingZVel'].append([])
+                                wallStateParam[mac]['rollingXYVel'].append([])
                                 wallStateParam[mac]['minZVel'].append([])
+                                wallStateParam[mac]['minXYVel'].append([])
                                 wallStateParam[mac]['rollingHeight'].append([])
+                                wallStateParam[mac]['rollingBodyWidth'].append([])
                                 wallStateParam[mac]['averageX'].append([])
                                 wallStateParam[mac]['averageY'].append([])
                                 wallStateParam[mac]['averageZ'].append([])
@@ -569,6 +595,7 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingY'][minDistIdx].append(y_pos)
                                 wallStateParam[mac]['rollingZ'][minDistIdx].append(z_pos)
                                 wallStateParam[mac]['rollingZVel'][minDistIdx].append(z_vel)
+                                wallStateParam[mac]['rollingXYVel'][minDistIdx].append(np.sqrt(x_vel**2 + y_vel**2))
 
                                 if len(wallStateParam[mac]['rollingX'][minDistIdx]) >= 10:
                                     wallStateParam[mac]['averageX'][minDistIdx].append(np.average(wallStateParam[mac]['rollingX'][minDistIdx]))
@@ -580,9 +607,12 @@ def decode_process_publish(mac, data):
 
                                 if len(wallStateParam[mac]['rollingZVel'][minDistIdx]) >= numFrames_threshold:
                                     wallStateParam[mac]['minZVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingZVel'][minDistIdx], 5))
+                                    wallStateParam[mac]['minXYVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingXYVel'][minDistIdx], 95))
                                     del wallStateParam[mac]['rollingZVel'][minDistIdx][0]
+                                    del wallStateParam[mac]['rollingXYVel'][minDistIdx][0]
                                     if len(wallStateParam[mac]['minZVel'][minDistIdx]) >= 10:
                                         del wallStateParam[mac]['minZVel'][minDistIdx][0]
+                                        del wallStateParam[mac]['minXYVel'][minDistIdx][0]
 
                                 if len(wallStateParam[mac]['averageX'][minDistIdx]) > numFrames_threshold:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
@@ -624,10 +654,15 @@ def decode_process_publish(mac, data):
                                         wall_Dict['bodyWidth'] = body_width[0]
 
                                         wallStateParam[mac]['rollingHeight'][minDistIdx].append(z_height)
+                                        wallStateParam[mac]['rollingBodyWidth'][minDistIdx].append(body_width)
 
                                         if len(wallStateParam[mac]['rollingHeight'][minDistIdx]) == 10:
                                             wallStateParam[mac]['averageHeight'][minDistIdx].append(np.average(wallStateParam[mac]['rollingHeight'][minDistIdx]))
                                             del(wallStateParam[mac]['rollingHeight'][minDistIdx][0])
+
+                                        if len(wallStateParam[mac]['rollingBodyWidth'][minDistIdx]) == numFrames_threshold:
+                                            maxBodyWidth = np.percentile(wallStateParam[mac]['rollingBodyWidth'][minDistIdx], 95)
+                                            del(wallStateParam[mac]['rollingBodyWidth'][minDistIdx][0])
 
                                         # if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 47:
                                         if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == numFrames_threshold:
@@ -635,7 +670,8 @@ def decode_process_publish(mac, data):
                                           deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-numFrames_threshold]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
-                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:
+                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and maxBodyWidth > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold and wallStateParam[mac]['minXYVel'][minDistIdx][-1] > minXYVel_threshold:
+                                          # if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:
                                           # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
                                           # if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
@@ -815,8 +851,11 @@ def decode_process_publish(mac, data):
                             wallStateParam[mac]['rollingY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZ'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZVel'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['rollingXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['minZVel'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['minXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingHeight'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['rollingBodyWidth'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageZ'].pop(trackerInvalidIdx[Idx])
@@ -837,7 +876,7 @@ def decode_process_publish(mac, data):
 
                     # Point Cloud Detected ?
                     if 'pointCloud' in outputDict:
-                      if len(outputDict['pointCloud']) > 0:
+                      if len(outputDict['pointCloud']) > wall_pointCloud_threshold:
                         wall_Dict['pointCloudDetected'] = 1
                       else:
                         wall_Dict['pointCloudDetected'] = 0                    
@@ -1672,7 +1711,7 @@ def decode_process_publish(mac, data):
                 # print("============================\n", outputDict,"\n------------------------------\n",vitalStateParam, "\n==============================")
                 if outputDict is not None:
                   if 'pointCloud' in outputDict:
-                    if len(outputDict['pointCloud']) > 0:
+                    if len(outputDict['pointCloud']) > vital_pointCloud_threshold:
                       vital_dict['pointCloudDetected'] = 1
                     else:
                       vital_dict['pointCloudDetected'] = 0 
@@ -1747,10 +1786,12 @@ def decode_process_publish(mac, data):
                         vitalStateParam[mac]['rollingBreathRate'].append(float(vitalsDict["breathRate"]))
                         vitalStateParam[mac]['rollingHeartRate'].append(float(vitalsDict["heartRate"]))
 
-                        if len(vitalStateParam[mac]['rollingBreathRate']) > 5:
-                            curBreathRate = np.percentile(np.array(vitalStateParam[mac]['rollingBreathRate']), 50)
-                            curHeartRate = np.percentile(np.array(vitalStateParam[mac]['rollingHeartRate']), 50)
-                            if len(vitalStateParam[mac]['rollingBreathRate']) > 10:
+                        if len(vitalStateParam[mac]['rollingBreathRate']) > 1:
+                            # curBreathRate = np.percentile(np.array(vitalStateParam[mac]['rollingBreathRate']), 50)
+                            # curHeartRate = np.percentile(np.array(vitalStateParam[mac]['rollingHeartRate']), 50)
+                            curBreathRate = np.percentile(np.array(vitalStateParam[mac]['rollingBreathRate']), 50) # * 5.5/7
+                            curHeartRate = np.percentile(np.array(vitalStateParam[mac]['rollingHeartRate']), 95) # * 80/65
+                            if len(vitalStateParam[mac]['rollingBreathRate']) > 6:
                                 del vitalStateParam[mac]['rollingBreathRate'][0]
                                 del vitalStateParam[mac]['rollingHeartRate'][0]
 
@@ -1773,6 +1814,8 @@ def decode_process_publish(mac, data):
                         # print("\n*******************\nvital_dict: X", )
                         # count_vitalSign = 0
                         vitalStateParam[mac]['prevBreathRate'] = 0
+                        vitalStateParam[mac]['rollingBreathRate'] = []
+                        vitalStateParam[mac]['rollingHeartRate'] = []
                         # vital_dict['breathRate'] = []
                         # vital_dict['heartRate'] = []
 
@@ -1960,15 +2003,15 @@ def decode_process_publish(mac, data):
                         vitalStateParam[mac]['trackerInvalid'] = vitalStateParam[mac]['trackerInvalid'][vitalStateParam[mac]['trackerInvalid'] == 0]
                         vitalStateParam[mac]['trackerInvalid'] = vitalStateParam[mac]['trackerInvalid'] + 1
 
-                if len(vitalStateParam[mac]['label_list']) >= 10:
-                    if statistics.mode(vitalStateParam[mac]['label_list']) == 2:
+                # if len(vitalStateParam[mac]['label_list']) >= 10:
+                    # if statistics.mode(vitalStateParam[mac]['label_list']) == 2:
                         
                         # Publish alert via MQTT communication channel
-                        pubPayload = {"TIMESTAMP":ts, "URGENCY":2, "TYPE":3, "DETAILS":"IMMINENT BED EXIT"}
-                        jsonData = json.dumps(pubPayload)
-                        mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
+                        # pubPayload = {"TIMESTAMP":ts, "URGENCY":2, "TYPE":3, "DETAILS":"IMMINENT BED EXIT"}
+                        # jsonData = json.dumps(pubPayload)
+                        # mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
 
-                    vitalStateParam[mac]['label_list'] = []
+                    # vitalStateParam[mac]['label_list'] = []
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 if outputDict is not None:

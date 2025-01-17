@@ -198,7 +198,7 @@ def check_insufficient_data_by_sensor_type(data_type):
 
         if len(new_query_data) > 0:
             average = sum(new_query_data) / len(new_query_data)
-            if average < 20:
+            if average < 10:
                 result.append({"ROOM_NAME": room_name, "AVERAGE": average})
         # else:
         #     result.append({"ROOM_NAME": room_name, "AVERAGE": "No Data!"})

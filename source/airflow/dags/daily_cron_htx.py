@@ -8,6 +8,8 @@ from datetime import datetime as dt, timedelta
 import pandas as pd
 import numpy as np
 import re
+import smtplib
+from email.mime.text import MIMEText
 
 import constants
 from constants import config
@@ -1355,6 +1357,101 @@ def notify_email(context):
     send_email("mvplcw97@gmail.com", subject, body)
 
 
+sender_email = "www.gaitmetric.com.sg@gmail.com"
+sender_password = "wolryshamgswgvzu"
+
+
+def sentMail(recipient, subject, body):
+    html_message = MIMEText(body, "html")
+    html_message["Subject"] = subject
+    html_message["From"] = sender_email
+    html_message["To"] = ",".join(recipient)
+    server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+    server.login(sender_email, sender_password)
+    server.sendmail(sender_email, recipient, html_message.as_string())
+    server.quit()
+
+
+def check_notified_alert():
+    recipients = ["limcheewei4727_@hotmail.com", "tuantong@gaitmetrics.com"]
+
+    connection = mysql.connector.connect(**config(env))
+    cursor = connection.cursor(dictionary=True)
+    sql = f"""SELECT a.TIMESTAMP, a.DETAILS, a.NOTIFY_TIMESTAMP, a.ROOM_ID, r.ROOM_NAME
+        FROM `ALERT` a
+        LEFT JOIN ROOMS_DETAILS r ON a.ROOM_ID = r.ID
+        WHERE a.DETAILS = 'FALL'
+        AND a.NOTIFY = 1
+        AND a.ACCURACY IS NULL
+        AND (a.NOTIFY_TIMESTAMP IS NULL OR a.NOTIFY_TIMESTAMP < NOW() - INTERVAL 1 DAY)
+        AND r.ID IS NOT NULL
+        ORDER BY r.ROOM_NAME, a.ID;"""
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    table_content = ""
+    for row in result:
+        room_name = row["ROOM_NAME"]
+        details = row["DETAILS"]
+        timestamp = row["TIMESTAMP"]
+        notified_timestamp = row["NOTIFY_TIMESTAMP"]
+
+        table_content += f"""
+            <tr>
+                <td>{room_name}</td>
+                <td>{details}</td>
+                <td>{timestamp}</td>
+                <td>{notified_timestamp}</td>
+            </tr>
+        """
+
+    if len(result) > 0:
+        body = (
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                table {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+                }
+
+                td, th {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+                }
+
+                tr:nth-child(even) {
+                background-color: #dddddd;
+                }
+                </style>
+            </head>
+            <body>
+                <p>There are some alerts are being notified but it's accuracy not yet mark. Please check it out! Below are the details:</p>
+                <table>
+                <tr>
+                    <th>Room Name</th>
+                    <th>Details</th>
+                    <th>Alert Time</th>
+                    <th>Alert Notify Time</th>
+                </tr>
+                """
+            + table_content
+            + """
+                </table>
+            </body>
+            </html>
+        """
+        )
+        sentMail(
+            recipients,
+            "Reminder - " + constants.server_name(env) + " - Mark Alert Accuracy!",
+            body,
+        )
+
+
 with DAG(
     dag_id="daily_cron_dag_htx",
     start_date=dt(2024, 10, 12),
@@ -1379,6 +1476,10 @@ with DAG(
         on_failure_callback=notify_email,
         retries=99,  # Number of retries (24 retries for 24 hours)
         retry_delay=timedelta(hours=1),
+    )
+
+    check_notified_alert_task = PythonOperator(
+        task_id="CHECK_ALERT_NOTIFIED", python_callable=check_notified_alert, on_failure_callback=notify_email
     )
 
     get_date_task >> get_room_task >> analyse_room_task

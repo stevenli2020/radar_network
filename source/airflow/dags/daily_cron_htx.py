@@ -1384,11 +1384,13 @@ def check_notified_alert():
         AND a.NOTIFY = 1
         AND a.ACCURACY IS NULL
         AND (a.NOTIFY_TIMESTAMP IS NULL OR a.NOTIFY_TIMESTAMP < NOW() - INTERVAL 1 DAY)
+        AND a.TIMESTAMP >= NOW() - INTERVAL 2 WEEK
         AND r.ID IS NOT NULL
         ORDER BY r.ROOM_NAME, a.ID;"""
     cursor.execute(sql)
     result = cursor.fetchall()
     table_content = ""
+    print("Result:",result)
     for row in result:
         room_name = row["ROOM_NAME"]
         details = row["DETAILS"]
@@ -1429,7 +1431,7 @@ def check_notified_alert():
                 </style>
             </head>
             <body>
-                <p>There are some alerts are being notified but it's accuracy not yet mark. Please check it out! Below are the details:</p>
+                <p>There are some alerts are being notified but it's % of verified "True" alerts not yet mark. Please check it out! Below are the details:</p>
                 <table>
                 <tr>
                     <th>Room Name</th>
@@ -1447,7 +1449,7 @@ def check_notified_alert():
         )
         sentMail(
             recipients,
-            "Reminder - " + constants.server_name(env) + " - Mark Alert Accuracy!",
+            "Reminder - " + constants.server_name(env) + " - Mark Alert % of verified \"True\" alerts!",
             body,
         )
 

@@ -1373,7 +1373,7 @@ def sentMail(recipient, subject, body):
 
 
 def check_notified_alert():
-    recipients = ["limcheewei4727_@hotmail.com", "tuantong@gaitmetrics.com"]
+    recipients = ["tuantong@gaitmetrics.com"]
 
     connection = mysql.connector.connect(**config(env))
     cursor = connection.cursor(dictionary=True)
@@ -1431,7 +1431,7 @@ def check_notified_alert():
                 </style>
             </head>
             <body>
-                <p>There are some alerts are being notified but it's % of verified "True" alerts not yet mark. Please check it out! Below are the details:</p>
+                <p>There are some alerts being acknowledged but it's % of verified "True" alerts are not yet mark. Please check it out! Below are the details:</p>
                 <table>
                 <tr>
                     <th>Room Name</th>

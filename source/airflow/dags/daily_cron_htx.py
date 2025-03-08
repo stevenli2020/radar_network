@@ -1377,32 +1377,36 @@ def check_notified_alert():
 
     connection = mysql.connector.connect(**config(env))
     cursor = connection.cursor(dictionary=True)
-    sql = f"""SELECT a.TIMESTAMP, a.DETAILS, a.NOTIFY_TIMESTAMP, a.ROOM_ID, r.ROOM_NAME
+    sql = f"""SELECT a.TIMESTAMP, a.DETAILS, a.NOTIFY, a.NOTIFY_TIMESTAMP, a.ROOM_ID, r.ROOM_NAME 
         FROM `ALERT` a
         LEFT JOIN ROOMS_DETAILS r ON a.ROOM_ID = r.ID
-        WHERE a.DETAILS = 'FALL'
-        AND a.NOTIFY = 1
+        WHERE a.DETAILS = 'FALL' 
+        AND ((a.NOTIFY = 1 AND (a.NOTIFY_TIMESTAMP IS NULL OR a.NOTIFY_TIMESTAMP < NOW() - INTERVAL 1 DAY)) OR a.NOTIFY = 0)  
         AND a.ACCURACY IS NULL
-        AND (a.NOTIFY_TIMESTAMP IS NULL OR a.NOTIFY_TIMESTAMP < NOW() - INTERVAL 1 DAY)
-        AND a.TIMESTAMP >= NOW() - INTERVAL 2 WEEK
+        AND a.TIMESTAMP >= NOW() - INTERVAL 4 WEEK
         AND r.ID IS NOT NULL
         ORDER BY r.ROOM_NAME, a.ID;"""
     cursor.execute(sql)
     result = cursor.fetchall()
     table_content = ""
-    print("Result:",result)
+    print("Result:", result)
     for row in result:
         room_name = row["ROOM_NAME"]
         details = row["DETAILS"]
         timestamp = row["TIMESTAMP"]
-        notified_timestamp = row["NOTIFY_TIMESTAMP"]
+
+        if row["NOTIFY"] == 1:
+            notified_status = "Acknowledged"
+        else:
+            notified_status = "Unacknowledged"
 
         table_content += f"""
             <tr>
                 <td>{room_name}</td>
                 <td>{details}</td>
                 <td>{timestamp}</td>
-                <td>{notified_timestamp}</td>
+                <td>{notified_status}</td>
+                <td>Unverified</td>
             </tr>
         """
 
@@ -1418,26 +1422,27 @@ def check_notified_alert():
                 border-collapse: collapse;
                 width: 100%;
                 }
-
+                
                 td, th {
                 border: 1px solid #dddddd;
                 text-align: left;
                 padding: 8px;
                 }
-
+                
                 tr:nth-child(even) {
                 background-color: #dddddd;
                 }
                 </style>
             </head>
             <body>
-                <p>There are some alerts being acknowledged but it's % of verified "True" alerts are not yet mark. Please check it out! Below are the details:</p>
+                <p>There are some alerts generated, please acknowledge and verify the "True/False" status of the alerts listed. Please check it out! Below are the details:</p>
                 <table>
                 <tr>
                     <th>Room Name</th>
                     <th>Details</th>
                     <th>Alert Time</th>
-                    <th>Alert Notify Time</th>
+                    <th>Acknowledge Status</th>
+                    <th>Verification (True/False)</th>
                 </tr>
                 """
             + table_content
@@ -1449,7 +1454,9 @@ def check_notified_alert():
         )
         sentMail(
             recipients,
-            "Reminder - " + constants.server_name(env) + " - Mark Alert % of verified \"True\" alerts!",
+            "Reminder - "
+            + constants.server_name(env)
+            + ' - Acknowledgement & Verification of "True/False" alerts!',
             body,
         )
 

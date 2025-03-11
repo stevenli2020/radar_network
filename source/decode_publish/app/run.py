@@ -24,7 +24,7 @@ import multiprocessing
 from multiprocessing import Process, Queue, Pool, Manager
 ##while 1: #time.sleep(10)
 
-brokerAddress="vernemq"
+brokerAddress="vernemq" 
 clientID="0002"
 userName="decode-publish"  
 userPassword="/-K3tuBhod3-FIzv"
@@ -35,10 +35,10 @@ SpecialSensors={}
 #userName = "js-client2"
 #userPassword = "c764eb2b5fa2d259dc667e2b9e195218"
 
-# brokerAddress="vernemq" 
-# clientID="0015"
-# userName="decode-publish-dbg-steven"  
-# userPassword="/-K3tuBhod3-FIzv"
+brokerAddress="vernemq" 
+clientID1="0015"
+userName1="decode-publish-dbg-steven"  
+userPassword1="/-K3tuBhod3-FIzv"
 # dataBuffer=[]
 # SpecialSensors={}
 
@@ -69,7 +69,7 @@ mac = '123456'
 aggregate_period = 2 # seconds
 breathRate_MA = 0 
 heartRate_MA = 0
-API_link = "https://htx.gaitmetrics.org/api/algo-config"
+API_link = "https://aswelfarehome.gaitmetrics.org/api/algo-config"
 
 manager = Manager()
 # sharedList = manager.list()
@@ -80,9 +80,10 @@ manager = Manager()
 stateParam_sharedDict = manager.dict()
 algoCfg_sharedDict = manager.dict()
 devicesTbl_sharedDict = manager.dict()
-macQueue = Queue()
-dataBufferQueue = Queue()
-processDataQueue = Queue()
+processStatus = manager.dict()
+macQueue = manager.Queue()
+# dataBufferQueue = manager.Queue()
+processDataQueue = manager.Queue()
 
 def cleanup():
     global mqttc
@@ -169,11 +170,6 @@ def decode_process_publish(mac, data):
             else:
                 minZVel_threshold = algoCfg["DATA"]["fall_minZVel"]
 
-            if "fall_minXYVel_" + mac in algoCfg["DATA"]:
-                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel_"+mac]
-            else:
-                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel"]
-
             if "fall_numFrames_" + mac in algoCfg["DATA"]:
                 numFrames_threshold = int(algoCfg["DATA"]["fall_numFrames_"+mac])
             else:
@@ -189,11 +185,6 @@ def decode_process_publish(mac, data):
             else:
                 distanceMoved_threshold = algoCfg["DATA"]["vital_distanceMoved"]
 
-            if "wall_distanceMoved_" + mac in algoCfg["DATA"]:
-                distanceMoved_threshold = algoCfg["DATA"]["wall_distanceMoved_"+mac]
-            else:
-                distanceMoved_threshold = algoCfg["DATA"]["wall_distanceMoved"]
-
             if "vital_xPos_" + mac in algoCfg["DATA"]:
                 xPos_threshold = algoCfg["DATA"]["vital_xPos_"+mac]
             else:
@@ -208,16 +199,6 @@ def decode_process_publish(mac, data):
                 aggregatePeriod_threshold = algoCfg["DATA"]["aggregatePeriod_"+mac]
             else:
                 aggregatePeriod_threshold = algoCfg["DATA"]["aggregatePeriod"]
-
-            if "vital_pointCloudThreshold_" + mac in algoCfg["DATA"]:
-                vital_pointCloud_threshold = algoCfg["DATA"]["vital_pointCloudThreshold_"+mac]
-            else:
-                vital_pointCloud_threshold = algoCfg["DATA"]["vital_pointCloudThreshold"]
-
-            if "wall_pointCloudThreshold_" + mac in algoCfg["DATA"]:
-                wall_pointCloud_threshold = algoCfg["DATA"]["wall_pointCloudThreshold_"+mac]
-            else:
-                wall_pointCloud_threshold = algoCfg["DATA"]["wall_pointCloudThreshold"]
 
             if radarType == 'wall':
                 global wallStateParam
@@ -281,11 +262,8 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['rollingY'] = []
                     wallStateParam[mac]['rollingZ'] = []
                     wallStateParam[mac]['rollingZVel'] = []
-                    wallStateParam[mac]['rollingXYVel'] = []
                     wallStateParam[mac]['minZVel'] = []
-                    wallStateParam[mac]['minXYVel'] = []
                     wallStateParam[mac]['rollingHeight'] = []
-                    wallStateParam[mac]['rollingBodyWidth'] = []
                     wallStateParam[mac]['averageX'] = []
                     wallStateParam[mac]['averageY'] = []
                     wallStateParam[mac]['averageZ'] = []
@@ -297,7 +275,7 @@ def decode_process_publish(mac, data):
                     wallStateParam[mac]['trackIDs'] = np.zeros((0))  # trackers ID
                     wallStateParam[mac]['previous_pointClouds'] = np.zeros((0, 7))  # previous point clouds
                     wallStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy', 'stationary',
+                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy',
                                                                             'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ', 'accX', 'accY', 'accZ', 
                                                                             'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult', 'signOfLife', 'pointCloudDetected'])
 
@@ -444,7 +422,7 @@ def decode_process_publish(mac, data):
 
                             # Point Cloud Detected ?
                             if 'pointCloud' in outputDict:
-                              if len(outputDict['pointCloud']) > wall_pointCloud_threshold:
+                              if len(outputDict['pointCloud']) > 0:
                                 wall_Dict['pointCloudDetected'] = 1
                               else:
                                 wall_Dict['pointCloudDetected'] = 0 
@@ -519,11 +497,8 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingY'].append([])
                                 wallStateParam[mac]['rollingZ'].append([])
                                 wallStateParam[mac]['rollingZVel'].append([])
-                                wallStateParam[mac]['rollingXYVel'].append([])
                                 wallStateParam[mac]['minZVel'].append([])
-                                wallStateParam[mac]['minXYVel'].append([])
                                 wallStateParam[mac]['rollingHeight'].append([])
-                                wallStateParam[mac]['rollingBodyWidth'].append([])
                                 wallStateParam[mac]['averageX'].append([])
                                 wallStateParam[mac]['averageY'].append([])
                                 wallStateParam[mac]['averageZ'].append([])
@@ -571,7 +546,7 @@ def decode_process_publish(mac, data):
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
                                                 wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
                                                 if wallStateParam[mac]['period_noSignOfLife'] > 60 and wallStateParam[mac]['period_stationary'] > 60:
-                                                    wall_Dict['signOfLife'] = None
+                                                    wall_Dict['signOfLife'] = 0
                                                     
                                                     # Publish alert via MQTT communication channel
                                                     # pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}
@@ -595,7 +570,6 @@ def decode_process_publish(mac, data):
                                 wallStateParam[mac]['rollingY'][minDistIdx].append(y_pos)
                                 wallStateParam[mac]['rollingZ'][minDistIdx].append(z_pos)
                                 wallStateParam[mac]['rollingZVel'][minDistIdx].append(z_vel)
-                                wallStateParam[mac]['rollingXYVel'][minDistIdx].append(np.sqrt(x_vel**2 + y_vel**2))
 
                                 if len(wallStateParam[mac]['rollingX'][minDistIdx]) >= 10:
                                     wallStateParam[mac]['averageX'][minDistIdx].append(np.average(wallStateParam[mac]['rollingX'][minDistIdx]))
@@ -607,12 +581,9 @@ def decode_process_publish(mac, data):
 
                                 if len(wallStateParam[mac]['rollingZVel'][minDistIdx]) >= numFrames_threshold:
                                     wallStateParam[mac]['minZVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingZVel'][minDistIdx], 5))
-                                    wallStateParam[mac]['minXYVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingXYVel'][minDistIdx], 95))
                                     del wallStateParam[mac]['rollingZVel'][minDistIdx][0]
-                                    del wallStateParam[mac]['rollingXYVel'][minDistIdx][0]
                                     if len(wallStateParam[mac]['minZVel'][minDistIdx]) >= 10:
                                         del wallStateParam[mac]['minZVel'][minDistIdx][0]
-                                        del wallStateParam[mac]['minXYVel'][minDistIdx][0]
 
                                 if len(wallStateParam[mac]['averageX'][minDistIdx]) > numFrames_threshold:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
@@ -654,15 +625,10 @@ def decode_process_publish(mac, data):
                                         wall_Dict['bodyWidth'] = body_width[0]
 
                                         wallStateParam[mac]['rollingHeight'][minDistIdx].append(z_height)
-                                        wallStateParam[mac]['rollingBodyWidth'][minDistIdx].append(body_width)
 
                                         if len(wallStateParam[mac]['rollingHeight'][minDistIdx]) == 10:
                                             wallStateParam[mac]['averageHeight'][minDistIdx].append(np.average(wallStateParam[mac]['rollingHeight'][minDistIdx]))
                                             del(wallStateParam[mac]['rollingHeight'][minDistIdx][0])
-
-                                        if len(wallStateParam[mac]['rollingBodyWidth'][minDistIdx]) == numFrames_threshold:
-                                            maxBodyWidth = np.percentile(wallStateParam[mac]['rollingBodyWidth'][minDistIdx], 95)
-                                            del(wallStateParam[mac]['rollingBodyWidth'][minDistIdx][0])
 
                                         # if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 47:
                                         if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == numFrames_threshold:
@@ -670,8 +636,7 @@ def decode_process_publish(mac, data):
                                           deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-numFrames_threshold]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
-                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and maxBodyWidth > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold and wallStateParam[mac]['minXYVel'][minDistIdx][-1] > minXYVel_threshold:
-                                          # if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:
+                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:
                                           # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
                                           # if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
@@ -851,11 +816,8 @@ def decode_process_publish(mac, data):
                             wallStateParam[mac]['rollingY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZ'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZVel'].pop(trackerInvalidIdx[Idx])
-                            wallStateParam[mac]['rollingXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['minZVel'].pop(trackerInvalidIdx[Idx])
-                            wallStateParam[mac]['minXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingHeight'].pop(trackerInvalidIdx[Idx])
-                            wallStateParam[mac]['rollingBodyWidth'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageZ'].pop(trackerInvalidIdx[Idx])
@@ -876,7 +838,7 @@ def decode_process_publish(mac, data):
 
                     # Point Cloud Detected ?
                     if 'pointCloud' in outputDict:
-                      if len(outputDict['pointCloud']) > wall_pointCloud_threshold:
+                      if len(outputDict['pointCloud']) > 0:
                         wall_Dict['pointCloudDetected'] = 1
                       else:
                         wall_Dict['pointCloudDetected'] = 0                    
@@ -1700,8 +1662,6 @@ def decode_process_publish(mac, data):
                     vitalStateParam[mac]['label_list'] = []
                     vitalStateParam[mac]['rollingVelY'] = []
                     vitalStateParam[mac]['rollingHeight'] = []
-                    vitalStateParam[mac]['rollingBreathRate'] = []
-                    vitalStateParam[mac]['rollingHeartRate'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
                     vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife','pointCloudDetected'])
@@ -1711,7 +1671,7 @@ def decode_process_publish(mac, data):
                 # print("============================\n", outputDict,"\n------------------------------\n",vitalStateParam, "\n==============================")
                 if outputDict is not None:
                   if 'pointCloud' in outputDict:
-                    if len(outputDict['pointCloud']) > vital_pointCloud_threshold:
+                    if len(outputDict['pointCloud']) > 0:
                       vital_dict['pointCloudDetected'] = 1
                     else:
                       vital_dict['pointCloudDetected'] = 0 
@@ -1748,14 +1708,14 @@ def decode_process_publish(mac, data):
                         #     Heartbeatsignal = Heartbeatsignal[15:]
                         #     count_vitalSign = 16
 
-                        # curBreathRate = float(vitalsDict["breathRate"])
-                        # curHeartRate = float(vitalsDict["heartRate"])
+                        curBreathRate = float(vitalsDict["breathRate"])
+                        curHeartRate = float(vitalsDict["heartRate"])
 
-                        # if vitalStateParam[mac]['prevBreathRate'] > 0:
-                        #     if curBreathRate - vitalStateParam[mac]['prevBreathRate'] > 1:
-                        #         curBreathRate = vitalStateParam[mac]['prevBreathRate'] + np.random.uniform(0, 0.5, 1)[0]
-                        #     elif vitalStateParam[mac]['prevBreathRate'] - curBreathRate > 1:
-                        #         curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
+                        if vitalStateParam[mac]['prevBreathRate'] > 0:
+                            if curBreathRate - vitalStateParam[mac]['prevBreathRate'] > 1:
+                                curBreathRate = vitalStateParam[mac]['prevBreathRate'] + np.random.uniform(0, 0.5, 1)[0]
+                            elif vitalStateParam[mac]['prevBreathRate'] - curBreathRate > 1:
+                                curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
 
                         # if curBreathRate > 25:
                             # curBreathRate = None
@@ -1783,39 +1743,15 @@ def decode_process_publish(mac, data):
                         # else:
                         #     heartRate_MA = curHeartRate                          
 
-                        vitalStateParam[mac]['rollingBreathRate'].append(float(vitalsDict["breathRate"]))
-                        vitalStateParam[mac]['rollingHeartRate'].append(float(vitalsDict["heartRate"]))
-
-                        if len(vitalStateParam[mac]['rollingBreathRate']) > 1:
-                            # curBreathRate = np.percentile(np.array(vitalStateParam[mac]['rollingBreathRate']), 50)
-                            # curHeartRate = np.percentile(np.array(vitalStateParam[mac]['rollingHeartRate']), 50)
-                            curBreathRate = np.percentile(np.array(vitalStateParam[mac]['rollingBreathRate']), 50) # * 5.5/7
-                            curHeartRate = np.percentile(np.array(vitalStateParam[mac]['rollingHeartRate']), 95) # * 80/65
-                            if len(vitalStateParam[mac]['rollingBreathRate']) > 6:
-                                del vitalStateParam[mac]['rollingBreathRate'][0]
-                                del vitalStateParam[mac]['rollingHeartRate'][0]
-
-                            if curBreathRate > 30:
-                                curBreathRate = None
-                            elif curBreathRate < 6:
-                                curBreathRate = None
-   
-                            if curHeartRate > 100:
-                                curHeartRate = None
-                            elif curHeartRate < 60:
-                                curHeartRate = None
-
-                            vital_dict['breathRate'] = curBreathRate
-                            vital_dict['heartRate'] = curHeartRate
-                            vitalStateParam[mac]['prevBreathRate'] = curBreathRate
-                            # print("\n*******************\nvital_dict: ", vital_dict)
+                        vital_dict['breathRate'] = curBreathRate
+                        vital_dict['heartRate'] = curHeartRate
+                        vitalStateParam[mac]['prevBreathRate'] = curBreathRate
+                        # print("\n*******************\nvital_dict: ", vital_dict)
 
                       elif vitalStateParam[mac]['periodStationary'] <= periodStationary_threshold:  # count_subjectStationary <= 100:
                         # print("\n*******************\nvital_dict: X", )
                         # count_vitalSign = 0
                         vitalStateParam[mac]['prevBreathRate'] = 0
-                        vitalStateParam[mac]['rollingBreathRate'] = []
-                        vitalStateParam[mac]['rollingHeartRate'] = []
                         # vital_dict['breathRate'] = []
                         # vital_dict['heartRate'] = []
 
@@ -2003,15 +1939,15 @@ def decode_process_publish(mac, data):
                         vitalStateParam[mac]['trackerInvalid'] = vitalStateParam[mac]['trackerInvalid'][vitalStateParam[mac]['trackerInvalid'] == 0]
                         vitalStateParam[mac]['trackerInvalid'] = vitalStateParam[mac]['trackerInvalid'] + 1
 
-                # if len(vitalStateParam[mac]['label_list']) >= 10:
-                    # if statistics.mode(vitalStateParam[mac]['label_list']) == 2:
+                if len(vitalStateParam[mac]['label_list']) >= 10:
+                    if statistics.mode(vitalStateParam[mac]['label_list']) == 2:
                         
                         # Publish alert via MQTT communication channel
-                        # pubPayload = {"TIMESTAMP":ts, "URGENCY":2, "TYPE":3, "DETAILS":"IMMINENT BED EXIT"}
-                        # jsonData = json.dumps(pubPayload)
-                        # mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
+                        pubPayload = {"TIMESTAMP":ts, "URGENCY":2, "TYPE":3, "DETAILS":"IMMINENT BED EXIT"}
+                        jsonData = json.dumps(pubPayload)
+                        mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
 
-                    # vitalStateParam[mac]['label_list'] = []
+                    vitalStateParam[mac]['label_list'] = []
 
                 # Each pointCloud has the following: X, Y, Z, Doppler, SNR, Noise, Track index
                 if outputDict is not None:
@@ -2131,16 +2067,32 @@ def decode_process_publish(mac, data):
 
 # Decode, Process, and Publish MQTT Data Packets from Radar
 # def decode_process_publish(mac, data, radarType, xShift, yShift, zShift, rotXDegree, rotYDegree, rotZDegree, aggregate_period):
-def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue):
+def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue, processStatus, index): # , processQueue):
     # global mqttc, config, aggregate_period, devicesTbl, breathRate_MA, heartRate_MA, algoCfg
   while 1:
-    while macQueue.empty():
-        time.sleep(0.1)
-    mac = macQueue.get()
-    algoCfg = {"DATA":algoCfg_sharedDict["DATA"]}
-    # print("MAC: ", mac)
-    # print(devicesTbl_sharedDict[mac])    
-    data = devicesTbl_sharedDict[mac]["DATA_QUEUE"]
+    # if processQueue.empty():
+    #     processQueue.put(1, block=False)
+    # while macQueue.empty():
+    #     time.sleep(0.001)
+
+    if macQueue.empty():
+        time.sleep(0.01)
+        continue
+    try:
+        mac = macQueue.get(block=False)
+    except Exception as error:
+        # print("An exception occurred:", error)
+        print("An exception occurred: macQueue get failed")
+        continue
+    processStatus[index] = 1
+    # if mac in processStatus:
+    #     if processStatus[mac] == 1:
+    #         macQueue.put(mac)
+    #         continue
+    #     elif processStatus[mac] == 0:
+    #         processStatus[mac] = 1
+    # else:
+    #     processStatus[mac] = 1
     # print("Data: ",data)
     devicesTbl[mac] = devicesTbl_sharedDict[mac]
     if devicesTbl[mac]["TYPE"] == '1':
@@ -2155,6 +2107,10 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
         vitalStateParam[mac] = stateParam_sharedDict[mac]
       else:
         vitalStateParam = {}
+    algoCfg = {"DATA":algoCfg_sharedDict["DATA"]}
+    # print("MAC: ", mac)
+    # print(devicesTbl_sharedDict[mac])    
+    data = devicesTbl_sharedDict[mac]["DATA_QUEUE"]
 
     my_list = []
     print("algorithm configuration: ", algoCfg)
@@ -2223,6 +2179,11 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
             else:
                 minZVel_threshold = algoCfg["DATA"]["fall_minZVel"]
 
+            if "fall_minXYVel_" + mac in algoCfg["DATA"]:
+                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel_"+mac]
+            else:
+                minXYVel_threshold = algoCfg["DATA"]["fall_minXYVel"]
+
             if "fall_numFrames_" + mac in algoCfg["DATA"]:
                 numFrames_threshold = int(algoCfg["DATA"]["fall_numFrames_"+mac])
             else:
@@ -2238,6 +2199,11 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
             else:
                 distanceMoved_threshold = algoCfg["DATA"]["vital_distanceMoved"]
 
+            if "wall_distanceMoved_" + mac in algoCfg["DATA"]:
+                distanceMoved_threshold = algoCfg["DATA"]["wall_distanceMoved_"+mac]
+            else:
+                distanceMoved_threshold = algoCfg["DATA"]["wall_distanceMoved"]
+
             if "vital_xPos_" + mac in algoCfg["DATA"]:
                 xPos_threshold = algoCfg["DATA"]["vital_xPos_"+mac]
             else:
@@ -2252,6 +2218,16 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                 aggregatePeriod_threshold = algoCfg["DATA"]["aggregatePeriod_"+mac]
             else:
                 aggregatePeriod_threshold = algoCfg["DATA"]["aggregatePeriod"]
+
+            if "vital_pointCloudThreshold_" + mac in algoCfg["DATA"]:
+                vital_pointCloud_threshold = algoCfg["DATA"]["vital_pointCloudThreshold_"+mac]
+            else:
+                vital_pointCloud_threshold = algoCfg["DATA"]["vital_pointCloudThreshold"]
+
+            if "wall_pointCloudThreshold_" + mac in algoCfg["DATA"]:
+                wall_pointCloud_threshold = algoCfg["DATA"]["wall_pointCloudThreshold_"+mac]
+            else:
+                wall_pointCloud_threshold = algoCfg["DATA"]["wall_pointCloudThreshold"]
 
             if radarType == 'wall':
                 # global wallStateParam
@@ -2314,8 +2290,11 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                     wallStateParam[mac]['rollingY'] = []
                     wallStateParam[mac]['rollingZ'] = []
                     wallStateParam[mac]['rollingZVel'] = []
+                    wallStateParam[mac]['rollingXYVel'] = []
                     wallStateParam[mac]['minZVel'] = []
+                    wallStateParam[mac]['minXYVel'] = []
                     wallStateParam[mac]['rollingHeight'] = []
+                    wallStateParam[mac]['rollingBodyWidth'] = []
                     wallStateParam[mac]['averageX'] = []
                     wallStateParam[mac]['averageY'] = []
                     wallStateParam[mac]['averageZ'] = []
@@ -2327,7 +2306,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                     wallStateParam[mac]['trackIDs'] = np.zeros((0))  # trackers ID
                     wallStateParam[mac]['previous_pointClouds'] = np.zeros((0, 7))  # previous point clouds
                     wallStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy',
+                    wallStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp', 'trackIndex', 'numSubjects', 'roomOccupancy', 'stationary',
                                                                             'posX', 'posY', 'posZ', 'velX', 'velY', 'velZ', 'accX', 'accY', 'accZ', 
                                                                             'bodyHeight', 'bodyWidth', 'state', 'kidOrAdult', 'signOfLife', 'pointCloudDetected'])
 
@@ -2474,7 +2453,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
 
                             # Point Cloud Detected ?
                             if 'pointCloud' in outputDict:
-                              if len(outputDict['pointCloud']) > 0:
+                              if len(outputDict['pointCloud']) > wall_pointCloud_threshold:
                                 wall_Dict['pointCloudDetected'] = 1
                               else:
                                 wall_Dict['pointCloudDetected'] = 0 
@@ -2549,8 +2528,11 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                 wallStateParam[mac]['rollingY'].append([])
                                 wallStateParam[mac]['rollingZ'].append([])
                                 wallStateParam[mac]['rollingZVel'].append([])
+                                wallStateParam[mac]['rollingXYVel'].append([])
                                 wallStateParam[mac]['minZVel'].append([])
+                                wallStateParam[mac]['minXYVel'].append([])
                                 wallStateParam[mac]['rollingHeight'].append([])
+                                wallStateParam[mac]['rollingBodyWidth'].append([])
                                 wallStateParam[mac]['averageX'].append([])
                                 wallStateParam[mac]['averageY'].append([])
                                 wallStateParam[mac]['averageZ'].append([])
@@ -2588,16 +2570,21 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                         wallStateParam[mac]['x0'] = x_pos
                                         wallStateParam[mac]['y0'] = y_pos
                                         wallStateParam[mac]['z0'] = z_pos
-                                        if distanceMoved > 0.1 or math.isnan(wallStateParam[mac]['timeStamp_stationary']):
+                                        if math.isnan(wallStateParam[mac]['timeStamp_stationary']):
                                             wallStateParam[mac]['timeStamp_stationary'] = ts
+                                        elif distanceMoved > distanceMoved_threshold:
+                                            wallStateParam[mac]['timeStamp_stationary'] = ts
+                                            wall_Dict['stationary'] = 0
                                         else:
-                                            
+                                            if len(x_coord[trackIndices == trackId]) > 0:
+                                                wall_Dict['stationary'] = 1
                                             if len(x_coord[trackIndices == trackId]) > 0 or math.isnan(wallStateParam[mac]['timeStamp_lastSignOfLife']):
                                                 wallStateParam[mac]['timeStamp_lastSignOfLife'] = ts
                                             else:
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
                                                 wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
                                                 if wallStateParam[mac]['period_noSignOfLife'] > 60 and wallStateParam[mac]['period_stationary'] > 60:
+                                                    # wall_Dict['signOfLife'] = 0
                                                     wall_Dict['signOfLife'] = None
                                                     
                                                     # Publish alert via MQTT communication channel
@@ -2622,6 +2609,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                 wallStateParam[mac]['rollingY'][minDistIdx].append(y_pos)
                                 wallStateParam[mac]['rollingZ'][minDistIdx].append(z_pos)
                                 wallStateParam[mac]['rollingZVel'][minDistIdx].append(z_vel)
+                                wallStateParam[mac]['rollingXYVel'][minDistIdx].append(np.sqrt(x_vel**2 + y_vel**2))
 
                                 if len(wallStateParam[mac]['rollingX'][minDistIdx]) >= 10:
                                     wallStateParam[mac]['averageX'][minDistIdx].append(np.average(wallStateParam[mac]['rollingX'][minDistIdx]))
@@ -2633,9 +2621,12 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
 
                                 if len(wallStateParam[mac]['rollingZVel'][minDistIdx]) >= numFrames_threshold:
                                     wallStateParam[mac]['minZVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingZVel'][minDistIdx], 5))
+                                    wallStateParam[mac]['minXYVel'][minDistIdx].append(np.percentile(wallStateParam[mac]['rollingXYVel'][minDistIdx], 95))
                                     del wallStateParam[mac]['rollingZVel'][minDistIdx][0]
+                                    del wallStateParam[mac]['rollingXYVel'][minDistIdx][0]
                                     if len(wallStateParam[mac]['minZVel'][minDistIdx]) >= 10:
                                         del wallStateParam[mac]['minZVel'][minDistIdx][0]
+                                        del wallStateParam[mac]['minXYVel'][minDistIdx][0]
 
                                 if len(wallStateParam[mac]['averageX'][minDistIdx]) > numFrames_threshold:
                                     deltaX = wallStateParam[mac]['averageX'][minDistIdx][-1] - wallStateParam[mac]['averageX'][minDistIdx][-10]
@@ -2677,10 +2668,15 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                         wall_Dict['bodyWidth'] = body_width[0]
 
                                         wallStateParam[mac]['rollingHeight'][minDistIdx].append(z_height)
+                                        wallStateParam[mac]['rollingBodyWidth'][minDistIdx].append(body_width)
 
                                         if len(wallStateParam[mac]['rollingHeight'][minDistIdx]) == 10:
                                             wallStateParam[mac]['averageHeight'][minDistIdx].append(np.average(wallStateParam[mac]['rollingHeight'][minDistIdx]))
                                             del(wallStateParam[mac]['rollingHeight'][minDistIdx][0])
+
+                                        if len(wallStateParam[mac]['rollingBodyWidth'][minDistIdx]) == numFrames_threshold:
+                                            maxBodyWidth = np.percentile(wallStateParam[mac]['rollingBodyWidth'][minDistIdx], 95)
+                                            del(wallStateParam[mac]['rollingBodyWidth'][minDistIdx][0])
 
                                         # if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == 47:
                                         if len(wallStateParam[mac]['averageHeight'][minDistIdx]) == numFrames_threshold:
@@ -2688,7 +2684,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                           deltaHeight = wallStateParam[mac]['averageHeight'][minDistIdx][-1] - wallStateParam[mac]['averageHeight'][minDistIdx][-numFrames_threshold]
                                           del(wallStateParam[mac]['averageHeight'][minDistIdx][0])
 
-                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and body_width > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold:
+                                          if deltaHeight < deltaZHeight_threshold and deltaZPos < deltaZPos_threshold and maxBodyWidth > bodyWidth_threshold and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < averageHeight_threshold and wallStateParam[mac]['minZVel'][minDistIdx][-1] < minZVel_threshold and wallStateParam[mac]['minXYVel'][minDistIdx][-1] > minXYVel_threshold:
                                           # if deltaHeight < -1 and deltaZPos < -1 and body_width > 1 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and z_height < 1.0 and ((body_width) / (z_dim + 0.2)) > 1.0:
                                           # if deltaHeight < -0.8 and deltaZPos < -0.8 and body_width > 0.8 and wallStateParam[mac]['averageHeight'][minDistIdx][-1] < 0.8: # and ((body_width) / (wallStateParam[mac]['averageHeight'][minDistIdx][-1])) > 1.5:
                                             # print('Fall')
@@ -2758,7 +2754,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                 wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
                                 # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
-                            elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+                            elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregatePeriod_threshold:
 
                                 # print(wallStateParam[mac]['pandasDF']['trackIndex'].unique())
                                 if len(wallStateParam[mac]['pandasDF']['trackIndex'].unique()) > 0:
@@ -2793,6 +2789,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                         aggregate_dict['state'] = np.nan
                                     aggregate_dict['kidOrAdult'] = pandasDF_dum['kidOrAdult'].mean(skipna=True)
                                     aggregate_dict['signOfLife'] = pandasDF_dum['signOfLife'].mean(skipna=True)
+                                    aggregate_dict['stationary'] = pandasDF_dum['stationary'].mean(skipna=True)
                                     aggregate_dict['pointCloudDetected'] = pandasDF_dum['pointCloudDetected'].mean(skipna=True)
 
                                     # if aggregate_dict['state'].dropna().empty:
@@ -2831,6 +2828,12 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                         aggregate_dict['signOfLife'] = 1
                                       elif aggregate_dict['signOfLife'] == 0:
                                         aggregate_dict['signOfLife'] = 0
+                                    if not math.isnan(aggregate_dict['stationary']):
+                                      # aggregate_dict['stationary'] = bool(round(aggregate_dict['stationary']))
+                                      if aggregate_dict['stationary'] > 0:
+                                        aggregate_dict['stationary'] = 1
+                                      elif aggregate_dict['stationary'] == 0:
+                                        aggregate_dict['stationary'] = 0
                                     if not math.isnan(aggregate_dict['pointCloudDetected']):
                                       if aggregate_dict['pointCloudDetected'] > 0:
                                         aggregate_dict['pointCloudDetected'] = 1
@@ -2869,8 +2872,11 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                             wallStateParam[mac]['rollingY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZ'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingZVel'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['rollingXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['minZVel'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['minXYVel'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['rollingHeight'].pop(trackerInvalidIdx[Idx])
+                            wallStateParam[mac]['rollingBodyWidth'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageX'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageY'].pop(trackerInvalidIdx[Idx])
                             wallStateParam[mac]['averageZ'].pop(trackerInvalidIdx[Idx])
@@ -2891,7 +2897,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
 
                     # Point Cloud Detected ?
                     if 'pointCloud' in outputDict:
-                      if len(outputDict['pointCloud']) > 0:
+                      if len(outputDict['pointCloud']) > wall_pointCloud_threshold:
                         wall_Dict['pointCloudDetected'] = 1
                       else:
                         wall_Dict['pointCloudDetected'] = 0                    
@@ -2903,7 +2909,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                             wallStateParam[mac]['pandasDF'] = pd.concat([wallStateParam[mac]['pandasDF'], pd.DataFrame([wall_Dict])], ignore_index=True)
                             # wallStateParam[mac]['pandasDF'] = wallStateParam[mac]['pandasDF'].append(wall_Dict, ignore_index=True)
 
-                        elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+                        elif (wall_Dict['timeStamp'] - wallStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregatePeriod_threshold:
 
                             aggregate_dict = {}
                             aggregate_dict['timeStamp'] = round(wallStateParam[mac]['pandasDF']['timeStamp'].mean(skipna=True),2)
@@ -2924,6 +2930,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                             aggregate_dict['state'] = None
                             aggregate_dict['kidOrAdult'] = None
                             aggregate_dict['signOfLife'] = None
+                            aggregate_dict['stationary'] = None
                             aggregate_dict['pointCloudDetected'] = wallStateParam[mac]['pandasDF']['pointCloudDetected'].mean(skipna=True)
 
                             if not math.isnan(aggregate_dict['pointCloudDetected']):
@@ -3715,16 +3722,18 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                     vitalStateParam[mac]['label_list'] = []
                     vitalStateParam[mac]['rollingVelY'] = []
                     vitalStateParam[mac]['rollingHeight'] = []
+                    vitalStateParam[mac]['rollingBreathRate'] = []
+                    vitalStateParam[mac]['rollingHeartRate'] = []
                     vitalStateParam[mac]['previous_pointClouds'] = []  # previous point clouds
                     vitalStateParam[mac]['trackerInvalid'] = np.zeros((0))
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife','pointCloudDetected'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','stationary','signOfLife','pointCloudDetected'])
 
                 # Vital Sign Data Extraction
                 # numTracks = 0
                 # print("============================\n", outputDict,"\n------------------------------\n",vitalStateParam, "\n==============================")
                 if outputDict is not None:
                   if 'pointCloud' in outputDict:
-                    if len(outputDict['pointCloud']) > 0:
+                    if len(outputDict['pointCloud']) > vital_pointCloud_threshold:
                       vital_dict['pointCloudDetected'] = 1
                     else:
                       vital_dict['pointCloudDetected'] = 0 
@@ -3761,24 +3770,14 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                         #     Heartbeatsignal = Heartbeatsignal[15:]
                         #     count_vitalSign = 16
 
-                        curBreathRate = float(vitalsDict["breathRate"])
-                        curHeartRate = float(vitalsDict["heartRate"])
+                        # curBreathRate = float(vitalsDict["breathRate"])
+                        # curHeartRate = float(vitalsDict["heartRate"])
 
-                        if vitalStateParam[mac]['prevBreathRate'] > 0:
-                            if curBreathRate - vitalStateParam[mac]['prevBreathRate'] > 1:
-                                curBreathRate = vitalStateParam[mac]['prevBreathRate'] + np.random.uniform(0, 0.5, 1)[0]
-                            elif vitalStateParam[mac]['prevBreathRate'] - curBreathRate > 1:
-                                curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
-
-                        # if curBreathRate > 25:
-                            # curBreathRate = None
-                        # elif curBreathRate < 6:
-                            # curBreathRate = None
-
-                        # if curHeartRate > 200:
-                            # curHeartRate = None
-                        # elif curHeartRate < 30:
-                            # curHeartRate = None
+                        # if vitalStateParam[mac]['prevBreathRate'] > 0:
+                        #     if curBreathRate - vitalStateParam[mac]['prevBreathRate'] > 1:
+                        #         curBreathRate = vitalStateParam[mac]['prevBreathRate'] + np.random.uniform(0, 0.5, 1)[0]
+                        #     elif vitalStateParam[mac]['prevBreathRate'] - curBreathRate > 1:
+                        #         curBreathRate = vitalStateParam[mac]['prevBreathRate'] - np.random.uniform(0, 0.5, 1)[0]
 
                         # if breathRate_MA!=0 and curBreathRate != None:
                         #     if curBreathRate > 3*breathRate_MA or curBreathRate < 0.3*breathRate_MA:
@@ -3796,15 +3795,37 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                         # else:
                         #     heartRate_MA = curHeartRate                          
 
-                        vital_dict['breathRate'] = curBreathRate
-                        vital_dict['heartRate'] = curHeartRate
-                        vitalStateParam[mac]['prevBreathRate'] = curBreathRate
-                        # print("\n*******************\nvital_dict: ", vital_dict)
+                        vitalStateParam[mac]['rollingBreathRate'].append(float(vitalsDict["breathRate"]))
+                        vitalStateParam[mac]['rollingHeartRate'].append(float(vitalsDict["heartRate"]))
+
+                        if len(vitalStateParam[mac]['rollingBreathRate']) > 1:
+                            curBreathRate = np.percentile(np.array(vitalStateParam[mac]['rollingBreathRate']), 50) # * 5.5/7
+                            curHeartRate = np.percentile(np.array(vitalStateParam[mac]['rollingHeartRate']), 95) # * 80/65
+                            if len(vitalStateParam[mac]['rollingBreathRate']) > 6:
+                                del vitalStateParam[mac]['rollingBreathRate'][0]
+                                del vitalStateParam[mac]['rollingHeartRate'][0]
+
+                            if curBreathRate > 30:
+                                curBreathRate = None
+                            elif curBreathRate < 6:
+                                curBreathRate = None
+
+                            if curHeartRate > 100:
+                                curHeartRate = None
+                            elif curHeartRate < 60:
+                                curHeartRate = None
+
+                            vital_dict['breathRate'] = curBreathRate
+                            vital_dict['heartRate'] = curHeartRate
+                            vitalStateParam[mac]['prevBreathRate'] = curBreathRate
+                            # print("\n*******************\nvital_dict: ", vital_dict)
 
                       elif vitalStateParam[mac]['periodStationary'] <= periodStationary_threshold:  # count_subjectStationary <= 100:
                         # print("\n*******************\nvital_dict: X", )
                         # count_vitalSign = 0
                         vitalStateParam[mac]['prevBreathRate'] = 0
+                        vitalStateParam[mac]['rollingBreathRate'] = []
+                        vitalStateParam[mac]['rollingHeartRate'] = []
                         # vital_dict['breathRate'] = []
                         # vital_dict['heartRate'] = []
 
@@ -3934,10 +3955,12 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                 # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) <= 0.3:
                                 if len(v_coord[trackIndices == trackId]) > 0:
                                   # if np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) <= 1:
-                                  if np.abs(x_pos) < xPos_threshold and np.abs(z_pos) < zPos_threshold and distanceMoved < distanceMoved_threshold:
+                                  # if np.abs(x_pos) < xPos_threshold and np.abs(z_pos) < zPos_threshold and distanceMoved < distanceMoved_threshold:
+                                  if np.abs(x_pos) < xPos_threshold and distanceMoved < distanceMoved_threshold:
                                     # if np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) <= 0.3:
                                     # print("In Bed, Subject Stationary")
                                     vital_dict['bedOccupancy'] = 1
+                                    vital_dict['stationary'] = 1
                                     # label_list.append(0)
                                     # count_subjectStationary += 1
                                     if vitalStateParam[mac]['prevTimeStationary'] == 0:
@@ -3950,17 +3973,19 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
 
                                   # elif np.abs(x_pos) < 0.5 and np.abs(z_pos) < 0.5 and np.linalg.norm([x_vel, y_vel, z_vel]) > 0.3:
                                   # elif np.abs(x_pos) < 0.6 and np.abs(z_pos) < 0.6 and np.percentile(np.abs(v_coord[trackIndices == trackId]), [99]) > 1:
-                                  elif np.abs(x_pos) < xPos_threshold and np.abs(z_pos) < zPos_threshold:
+                                  # elif np.abs(x_pos) < xPos_threshold and np.abs(z_pos) < zPos_threshold:
+                                  elif np.abs(x_pos) < xPos_threshold:
                                     # elif np.abs(x_pos) < 0.8 and np.abs(z_pos) < 0.8 and np.percentile(v_coord, [99]) > 0.3:
                                     # print("In Bed, Subject Moving")
                                     vital_dict['bedOccupancy'] = 1
+                                    vital_dict['stationary'] = 0
                                     vital_dict['inBedMoving'] = 1
                                     # label_list.append(1)
                                     # count_subjectStationary = 0
                                     vitalStateParam[mac]['periodStationary'] = 0
                                     vitalStateParam[mac]['label_list'].append(1)
 
-                                  elif np.abs(x_pos) > 1.0 or np.abs(z_pos) > 1.0:
+                                  elif np.abs(x_pos) > xPos_threshold:
                                     # print("Out of Bed")
                                     vital_dict['bedOccupancy'] = 0
                                     # label_list.append(2)
@@ -4013,10 +4038,10 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                 
                 if vitalStateParam[mac]['pandasDF'].empty:
                     # Append data frame
-                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','signOfLife','pointCloudDetected'])
+                    vitalStateParam[mac]['pandasDF'] = pd.DataFrame(columns=['timeStamp','bedOccupancy','breathRate','heartRate','inBedMoving','stationary','signOfLife','pointCloudDetected'])
                     vitalStateParam[mac]['pandasDF'] = pd.concat([vitalStateParam[mac]['pandasDF'], pd.DataFrame([vital_dict])], ignore_index=True)
 
-                elif (vital_dict['timeStamp'] - vitalStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregate_period:
+                elif (vital_dict['timeStamp'] - vitalStateParam[mac]['pandasDF']['timeStamp'].iloc[0]) > aggregatePeriod_threshold: # aggregate_period:
                     # aggregate_dict = vitalStateParam[mac]['pandasDF'].agg({'timeStamp': ['mean'], 'bedOccupancy': 'mean',
                     #                                                        'breathRate': 'mean', 'heartRate': 'mean'})
 
@@ -4046,6 +4071,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                     aggregate_dict['heartRate'] = vitalStateParam[mac]['pandasDF']['heartRate'].mean(skipna=True)
                     aggregate_dict['inBedMoving'] = vitalStateParam[mac]['pandasDF']['inBedMoving'].mean(skipna=True)
                     aggregate_dict['signOfLife'] = vitalStateParam[mac]['pandasDF']['signOfLife'].mean(skipna=True)
+                    aggregate_dict['stationary'] = vitalStateParam[mac]['pandasDF']['stationary'].mean(skipna=True)
                     aggregate_dict['pointCloudDetected'] = vitalStateParam[mac]['pandasDF']['pointCloudDetected'].mean(skipna=True)
 
                     if not math.isnan(aggregate_dict['bedOccupancy']):
@@ -4054,6 +4080,12 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                         aggregate_dict['inBedMoving'] = bool(round(aggregate_dict['inBedMoving']))
                     if not math.isnan(aggregate_dict['signOfLife']):
                         aggregate_dict['signOfLife'] = bool(round(aggregate_dict['signOfLife']))
+                    if not math.isnan(aggregate_dict['stationary']):
+                        if aggregate_dict['stationary'] > 0:
+                            aggregate_dict['stationary'] = 1
+                        elif aggregate_dict['stationary'] == 0:
+                            aggregate_dict['stationary'] = 0
+
                     if not math.isnan(aggregate_dict['pointCloudDetected']):
                         if aggregate_dict['pointCloudDetected'] > 0:
                             aggregate_dict['pointCloudDetected'] = 1
@@ -4092,6 +4124,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
       if mac in vitalStateParam:
         stateParam_sharedDict[mac] = vitalStateParam[mac]
     # print("my_list: ", my_list)
+    # processStatus[mac] = 0
 
     if len(my_list) > 0:
 
@@ -4100,11 +4133,15 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
             "DATA": my_list,
             "TYPE": radarType
         }
-      processDataQueue.put(pubPayload)
+      try:
+          processDataQueue.put(pubPayload, block=False)
+      except Exception as error:
+          # print("An exception occurred:", error)
+          print("An exception occurred: processDataQueue put failed")
 
 def publishProcessData(processDataList):
   global mqttc, dataBuffer
-  for n in range(len(processDataList)-1):
+  for n in range(len(processDataList)):
     pubPayload = processDataList[n]
     radarType = pubPayload["TYPE"]
     mac = pubPayload["MAC"]
@@ -4124,19 +4161,19 @@ def publishProcessData(processDataList):
                 pubPayload["TYPE"]="WALL"
                 jsonData = json.dumps(pubPayload)
                 print("publishing...")
-                result = mqttc.publish("/GMT/DEV/"+mac+"/DATA/WALL/JSON", jsonData)
+                result = mqttc.publish("/GMT/DEV/"+mac+"/DATA/WALL/JSON", jsonData, 1)
                 print(result)
             elif radarType == 'ceil':
                 pubPayload["TYPE"]="CEIL"
                 jsonData = json.dumps(pubPayload)
                 print("publishing...")
-                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/CEIL/JSON", jsonData)
+                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/CEIL/JSON", jsonData, 1)
                 print(result)
             elif radarType == 'vital':
                 pubPayload["TYPE"]="VITAL"
                 jsonData = json.dumps(pubPayload)
                 print("publishing...")
-                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/VITAL/JSON", jsonData)
+                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/VITAL/JSON", jsonData, 1)
                 print(result)
             print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")              
             time.sleep(0.1)
@@ -4594,7 +4631,7 @@ def decode_process_publish_wall(stateParamQueue, mac, data, wallStateParam, mqtt
                                                 wallStateParam[mac]['period_noSignOfLife'] = ts - wallStateParam[mac]['timeStamp_lastSignOfLife']
                                                 wallStateParam[mac]['period_stationary'] = wallStateParam[mac]['timeStamp_lastSignOfLife'] - wallStateParam[mac]['timeStamp_stationary']
                                                 if wallStateParam[mac]['period_noSignOfLife'] > 60 and wallStateParam[mac]['period_stationary'] > 60:
-                                                    wall_Dict['signOfLife'] = None
+                                                    wall_Dict['signOfLife'] = 0
                                                     
                                                     # Publish alert via MQTT communication channel
                                                     # pubPayload = {"TIMESTAMP":ts, "URGENCY":3, "TYPE":1, "DETAILS":"NOSIGNOFLIFE"}
@@ -5606,23 +5643,23 @@ def on_message(mosq, obj, msg):
             del devicesTbl[DEV]
         return
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
         while algoCfg_updated == 0:
           print("algoCfg updating 1\n")
           try:
             while _algoCfg.status_code != 200:
               print("API call 1\n")
-              _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
             algoCfg = _algoCfg.json()
             pubPayload = {"STATUS":"UPDATED"}
             jsonData = json.dumps(pubPayload)
@@ -5633,13 +5670,13 @@ def on_message(mosq, obj, msg):
         return
     elif bool(algoCfg) == 0:
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
         while algoCfg_updated == 0:
             print("algoCfg updating 0\n")
             try:
               while _algoCfg.status_code != 200:
                 print("API call 0\n")
-                _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
               algoCfg = _algoCfg.json()
               algoCfg_updated = 1
             except Exception as e:
@@ -5739,23 +5776,23 @@ def on_message_obsolete(mosq, obj, msg):
             del devicesTbl[DEV]
         return
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
         while algoCfg_updated == 0:
           print("algoCfg updating 1\n")
           try:
             while _algoCfg.status_code != 200:
               print("API call 1\n")
-              _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
             algoCfg = _algoCfg.json()
             pubPayload = {"STATUS":"UPDATED"}
             jsonData = json.dumps(pubPayload)
@@ -5766,13 +5803,13 @@ def on_message_obsolete(mosq, obj, msg):
         return
     elif bool(algoCfg) == 0:
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
         while algoCfg_updated == 0:
             print("algoCfg updating 0\n")
             try:
               while _algoCfg.status_code != 200:
                 print("API call 0\n")
-                _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
               algoCfg = _algoCfg.json()
               algoCfg_updated = 1
             except Exception as e:
@@ -5893,23 +5930,23 @@ def on_message2(mosq, obj, msg):
             del devicesTbl[DEV]
         return
     # if topicList[-1] == "ALGO_CONFIG":
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     #     pubPayload = {"STATUS":"UPDATED"}
     #     jsonData = json.dumps(pubPayload)
     #     mqttc.publish("/GMT/DEV/ALGO_CONFIG/R", jsonData)
     # elif bool(algoCfg) == 0:
-    #     _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+    #     _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
     #     algoCfg = _algoCfg.json()
     if topicList[-1] == "ALGO_CONFIG":
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
         while algoCfg_updated == 0:
           print("algoCfg updating 1\n")
           try:
             while _algoCfg.status_code != 200:
               print("API call 1\n")
-              _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+              _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
             algoCfg = _algoCfg.json()
             pubPayload = {"STATUS":"UPDATED"}
             jsonData = json.dumps(pubPayload)
@@ -5920,13 +5957,13 @@ def on_message2(mosq, obj, msg):
         return
     elif bool(algoCfg) == 0:
         algoCfg_updated = 0
-        _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+        _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
         while algoCfg_updated == 0:
             print("algoCfg updating 0\n")
             try:
               while _algoCfg.status_code != 200:
                 print("API call 0\n")
-                _algoCfg = requests.get("https://htx.gaitmetrics.org/api/algo-config")
+                _algoCfg = requests.get("https://aswelfarehome.gaitmetrics.org/api/algo-config")
               algoCfg = _algoCfg.json()
               algoCfg_updated = 1
             except Exception as e:
@@ -6034,12 +6071,11 @@ def on_message2(mosq, obj, msg):
         devicesTbl[devName]["DATA_QUEUE"]={}
 
 multiprocess_count = 0
-# url = "https://aswelfarehome.gaitmetrics.org/api/algo-config"
 processDataList = []
 def on_message3(mosq, obj, msg):
     startTime = time.time()
-    global devicesTbl,config,aggregate_period,algoCfg,multiprocess_count, processDataList
-    print(msg.payload)
+    global mqttc, devicesTbl,config,aggregate_period,algoCfg,multiprocess_count, processDataList
+    # print(msg.payload)
     topicList = msg.topic.split('/')
     in_data = ''
 
@@ -6120,11 +6156,6 @@ def on_message3(mosq, obj, msg):
     # print(f"{msg.topic}, {msg.payload}")
     devName = topicList[3]
     # print(topicList)
-
-    # Lab Demo (remember to restart "events" container)
-    # if not devName == '84FCE67354C8' and not devName == '84FCE6739B38':
-    #     return
-
     if devName not in devicesTbl:
         print("+++++++++++++++++++++++++++++")
         print(devName)
@@ -6152,15 +6183,24 @@ def on_message3(mosq, obj, msg):
     #     # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
     #     multiprocess_count = 1
 
-    while not processDataQueue.empty():
-        processDataDummy = processDataQueue.get()
-        processDataList.append(processDataDummy)
-        # dataBuffer.append(processDataDummy)
-    if len(processDataList) > 0:
-        # th = threading.Thread(target=publishProcessData, args=(processDataList,))
-        # th.start()
-        publishProcessData(processDataList)
-        processDataList = []
+    # while not processDataQueue.empty():
+    #     processDataDummy = processDataQueue.get()
+    #     processDataList.append(processDataDummy)
+    #     # dataBuffer.append(processDataDummy)
+    # if len(processDataList) > 0:
+    #     # th = threading.Thread(target=publishProcessData, args=(processDataList,))
+    #     # th.start()
+    #     publishProcessData(processDataList)
+    #     processDataList = []
+
+    # for n in range(len(process_list)):
+    #     proc = process_list[n]
+    #     if not proc.is_alive() and not proc.exitcode == None:
+    #         proc.close()
+    #         process_list.remove(n)
+    #         proc = Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,))
+    #         proc.start()
+    #         process_list.append(proc)
 
     in_data = str(msg.payload).replace("b'", "").split(',')
     # print(topicList[-1])
@@ -6204,11 +6244,80 @@ def on_message3(mosq, obj, msg):
     # except:
     #     print("Error Processing")
         # print("MAC: ", devicesTbl[devName])
-        # devicesTbl_sharedDict[devName] = devicesTbl[devName]
-        # macQueue.put(devName)
-        decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
+        devicesTbl_sharedDict[devName] = devicesTbl[devName]
+        try:
+            macQueue.put(devName, block=False)
+        except Exception as error:
+            # print("An exception occurred:", error)
+            print("An exception occurred: macQueue put failed")
+        print("macQueue qsize: ", macQueue.qsize())
+        print("macQueue isFull: ", macQueue.full())
+        # decode_process_publish(devName, devicesTbl[devName]["DATA_QUEUE"])
+        print("devicesTbl DATA_QUEUE length: ", len(devicesTbl[devName]["DATA_QUEUE"]))
+        print("shared DATA_QUEUE length: ", len(devicesTbl_sharedDict[devName]["DATA_QUEUE"]))
+        print("two dictionaries same ?: ", devicesTbl[devName]["DATA_QUEUE"]==devicesTbl_sharedDict[devName]["DATA_QUEUE"])
+        # if len(devicesTbl[devName]["DATA_QUEUE"]) > 20:
+        #     print(devicesTbl[devName]["DATA_QUEUE"])
         devicesTbl[devName]["DATA_QUEUE"]={}
+    
     print("Time Lapsed: ", time.time()-startTime)
+
+def publishDataThread(processDataQueue):
+  global mqttc, dataBuffer
+  while 1:
+    if processDataQueue.empty():
+        time.sleep(0.01)
+        continue
+    print("processDataQueue qsize: ", processDataQueue.qsize())
+    print("processDataQueue isFull: ", processDataQueue.full())
+    try:
+        pubPayload = processDataQueue.get(block=False)
+    except Exception as error:
+        # print("An exception occurred:", error)
+        print("An exception occurred: processDataQueue get failed")
+        continue
+    radarType = pubPayload["TYPE"]
+    mac = pubPayload["MAC"]
+
+    try: 
+      if "URGENCY" in pubPayload:
+        jsonData = json.dumps(pubPayload)
+        mqttc.publish("/GMT/DEV/"+mac+"/ALERT", jsonData)
+      elif "DATA" in pubPayload:  
+        print("my_list: ", pubPayload["DATA"])
+        op = len(pubPayload["DATA"])
+        if len(pubPayload["DATA"]) > 0:
+            print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
+            print(f"on message {op}", radarType)
+        
+            if radarType == 'wall':
+                pubPayload["TYPE"]="WALL"
+                jsonData = json.dumps(pubPayload)
+                print("publishing...")
+                # result = mqttc.publish("/GMT/DEV/"+mac+"/DATA/WALL/JSON", jsonData, 1)
+                result = mqttc.publish("/GMT/DEV/"+mac+"/DATA/WALL/JSON", jsonData)
+                print(result)
+            elif radarType == 'ceil':
+                pubPayload["TYPE"]="CEIL"
+                jsonData = json.dumps(pubPayload)
+                print("publishing...")
+                # result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/CEIL/JSON", jsonData, 1)
+                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/CEIL/JSON", jsonData)
+                print(result)
+            elif radarType == 'vital':
+                pubPayload["TYPE"]="VITAL"
+                jsonData = json.dumps(pubPayload)
+                print("publishing...")
+                # result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/VITAL/JSON", jsonData, 1)
+                result = mqttc.publish("/GMT/DEV/" + mac + "/DATA/VITAL/JSON", jsonData)
+                print(result)
+            print("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")              
+            time.sleep(0.1)
+            dataBuffer.append(jsonData)
+            # dataBufferQueue.put(jsonData)
+    except Exception as e:
+        print(e)
+
 
 def on_connect(client, userdata, flags, rc):
     print("MQTT server connected")
@@ -6228,11 +6337,34 @@ def WatchDog():
     while 1:
         time.sleep(30)
         print("WatchiDog checking")
+
+        # for n in range(len(process_list)):
+        #   proc = process_list[n]
+        #   # procQ = process_queue[n]
+        #   if not proc.is_alive() or not proc.exitcode == None or processStatus[n] == 0: #  or procQ.empty():
+        #     proc.terminate()
+        #     proc.close()
+        #     # procQ.close()
+        #     process_list.remove(n)
+        #     # process_queue.remove(n)
+        #     # procQ = Queue()
+        #     proc = Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue, processStatus, n,))
+        #     proc.start()
+        #     process_list.append(proc)
+        #     # process_queue.append(procQ)
+        #   processStatus[n] = 0
+          # try:
+          #   procQ.get(block=False)
+          # except Exception as error:
+          #   print("An exception occurred:", error)
         DATA_BUFF_LEN = len(dataBuffer)
         print(DATA_BUFF_LEN)
         print("WDT Checking if data publishing is still working, dataBuffer[%d]" % DATA_BUFF_LEN)
         if DATA_BUFF_LEN == 0:
             print("Empty data buffer, restart")
+            os._exit(2)
+        elif macQueue.qsize() > 100 or processDataQueue.qsize() > 100:
+            print("Process choked up, restart")
             os._exit(2)
         else:
             dataBuffer.clear()
@@ -6289,12 +6421,19 @@ if __name__ == '__main__':
     mqttc.subscribe("/GMT/DEV/ALGO_CONFIG")
     mqttc.subscribe("/GMT/DEV/+/DATA/+/JSON")
 
-    # for n in range(1):
-    #     Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue,)).start()
+    process_list = []
+    # process_queue = []
+    for n in range(5):
+        # procQ = Queue()
+        proc = Process(target=decode_multiProcess_publish, args=(stateParam_sharedDict, devicesTbl_sharedDict, algoCfg_sharedDict, processDataQueue, macQueue, processStatus, n,))
+        proc.start()
+        process_list.append(proc)
+        # process_queue.append(procQ)
     # Process(target=publishProcessData,args=(clientID1, userName1, userPassword1, processDataQueue, dataBufferQueue,)).start()
     # _thread.start_new_thread( WatchDog2, (dataBufferQueue,))
 
     time.sleep(1)
+    threading.Thread(target=publishDataThread, args=(processDataQueue,)).start()
     _thread.start_new_thread( WatchDog, ())
     print("Start mqtt receiving loop")
     mqttc.loop_forever()

@@ -72,8 +72,6 @@ class NumpyArrayEncoder(JSONEncoder):
 def decode_process_publish(mac, data):
     global mqttc, aggregate_period, devicesTbl
     my_list = []
-    if mac!='ECDA3B94480C':
-        return
     # for x in data:
     for ts_str, byteAD in data.items():
         try:
@@ -295,7 +293,6 @@ def decode_process_publish(mac, data):
                             x_pos = x_pos + wallStateParam[mac]['radar_coord'][0]
                             y_pos = y_pos + wallStateParam[mac]['radar_coord'][1]
                             # z_pos = z_pos + wallStateParam[mac]['radar_coord'][2]
-                            print(mac, x_pos)
 
                             # Tracker velocity (normalized) direction
                             # x_vel_direction = x_vel / np.linalg.norm([x_vel, y_vel, z_vel, 0.001])  # Add epsilon to denominator to prevent run-time warning

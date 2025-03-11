@@ -22,7 +22,7 @@ services:
       DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.user: 'vernemq'
       DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.password: 'vernemq'
       DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.database: 'vernemq_db'
-      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.password_hash_method: 'md5'
+      DOCKER_VERNEMQ_VMQ_DIVERSITY.mysql.password_hash_method: 'md5'   
     ports:
       - 1883:1883
       - 8888:8080

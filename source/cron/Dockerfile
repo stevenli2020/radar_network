@@ -1,9 +1,5 @@
 # syntax=docker/dockerfile:1
 FROM python:3.9-alpine as base
-
-RUN apk update && \
-    apk add --no-cache mysql-client
-
 # Set the working directory inside the container
 WORKDIR /app
 

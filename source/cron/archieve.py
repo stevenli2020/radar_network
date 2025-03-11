@@ -1,9 +1,8 @@
-#import schedule
+import schedule
 import time
 from datetime import datetime, timedelta
 import subprocess
 import mysql.connector
-import os
 
 config = {
     'user': 'flask',
@@ -23,13 +22,7 @@ def archive_old_table():
   three_months_ago = datetime.now() - timedelta(days=90)
   date_suffix = three_months_ago.strftime('%Y_%m_%d')
   table_name = f"PROCESSED_DATA_{date_suffix}"
-  dump_file = f"/backup/{table_name}.sql"
-  
-  backup_dir = "/backup"
-    
-# Create the backup directory if it doesn't exist
-  if not os.path.exists(backup_dir):
-    os.makedirs(backup_dir)
+  dump_file = f"/path/to/your/backup/directory/{table_name}.sql"
 
   try:
     connection = mysql.connector.connect(**config)
@@ -45,9 +38,9 @@ def archive_old_table():
     print(f"Table data dumped successfully: {dump_file}")
 
     # Optionally, delete old data from the original table
-    #delete_old_data_sql = f"DELETE FROM your_table_name WHERE date_column <= '{three_months_ago.strftime('%Y-%m-%d')}'"
-    #cursor.execute(delete_old_data_sql)
-    #connection.commit()
+    delete_old_data_sql = f"DELETE FROM your_table_name WHERE date_column <= '{three_months_ago.strftime('%Y-%m-%d')}'"
+    cursor.execute(delete_old_data_sql)
+    connection.commit()
     
     print(f"Old data deleted successfully from your_table_name")
 

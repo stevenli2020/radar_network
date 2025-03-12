@@ -2234,7 +2234,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                 if mac not in wallStateParam:
                     wallStateParam[mac] = {}
                     wallStateParam[mac]['timeNow'] = 0
-                    wallStateParam[mac]['multi_frame_count'] = 2
+                    wallStateParam[mac]['multi_frame_count'] = 1
                     wallStateParam[mac]['label_state'] = ['Moving', 'Upright', 'Laying', 'Fall', 'None', 'Social']
 
                 # Read Radar Setup from Database
@@ -2656,7 +2656,7 @@ def decode_multiProcess_publish(stateParam_sharedDict, devicesTbl_sharedDict, al
                                     # elif numTracks == 1:
 
                                     # elif deltaDisp > 0.05 and len(x_coord[trackIndices == trackId]) > 5:
-                                    if len(x_coord[trackIndices == trackId]) > 5:
+                                    if len(x_coord[trackIndices == trackId]) > 4:
                                         x_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['x_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
                                         y_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['y_coord_multi'][minDistIdx][:], axis=0), [1, 99]))
                                         z_dim = np.diff(np.percentile(np.concatenate(wallStateParam[mac]['z_coord_multi'][minDistIdx][:], axis=0), [1, 99]))

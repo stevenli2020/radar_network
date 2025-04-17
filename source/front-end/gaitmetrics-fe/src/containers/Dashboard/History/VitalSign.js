@@ -248,8 +248,14 @@ const VitalSign = (props) => {
     if (mode == "REALTIME" && props.vital_data){
       setChartLoading(false)
       let now = new Date();
-      let heartRate = parseFloat(props.vital_data[0].toFixed(1))
-      let breathRate = parseFloat(props.vital_data[1].toFixed(1))
+      let heartRate = 0.0
+      let breathRate = 0.0
+      try{
+        heartRate = parseFloat(props.vital_data[0].toFixed(1))
+        breathRate = parseFloat(props.vital_data[1].toFixed(1))
+      }catch(ex){
+        console.log(ex)
+      }
       let hearthRates = [...realtimeHeart, heartRate];
       let breathRates = [...realtimeBreath, breathRate];
       let timeRange = [...realtimeTime, now.toLocaleTimeString().replace(/^\D*/, "")];

@@ -381,7 +381,7 @@ def notify_email(context):
 with DAG(
     dag_id="data_checker_htx",
     start_date=datetime(2024, 10, 12),
-    schedule_interval="0 */4 * * *",
+    schedule_interval="59 23 * * *",
     catchup=False,
 ) as dag:
 

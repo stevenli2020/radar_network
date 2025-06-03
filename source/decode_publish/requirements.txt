@@ -2,3 +2,5 @@ numpy
 pandas>2
 mysql-connector
 paho-mqtt<2
+serial
+requests

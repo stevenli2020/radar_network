@@ -447,7 +447,7 @@ def getAnalyticDataofPosture(data):
 
         if tables:
             combine_table_query = " UNION ".join(
-                f"SELECT * FROM Gaitmetrics.{table} WHERE MAC {mac_list_str} AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 {T}) AND OBJECT_LOCATION IS NOT NULL"
+                f"SELECT ID, `TIMESTAMP`, ROOM_UUID, MAC, `TYPE`, STATE, OBJECT_COUNT, OBJECT_LOCATION, IN_BED, IN_BED_MOVING, SIGN_OF_LIFE, HEART_RATE, BREATH_RATE, pointCloudDetected, PX, PY, PZ, VX, VY, VZ, AX, AY, AZ FROM Gaitmetrics.{table} WHERE MAC {mac_list_str} AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL 1 {T}) AND OBJECT_LOCATION IS NOT NULL"
                 for table in tables
             )
             sql = f"""
@@ -568,11 +568,11 @@ def getSummaryDataofPosition(data):
         for table in tables:
             if t == "CUSTOM":
                 combine_table.append(
-                    f"""SELECT * FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
+                    f"""SELECT ID, `TIMESTAMP`, ROOM_UUID, MAC, `TYPE`, STATE, OBJECT_COUNT, OBJECT_LOCATION, IN_BED, IN_BED_MOVING, SIGN_OF_LIFE, HEART_RATE, BREATH_RATE, pointCloudDetected, PX, PY, PZ, VX, VY, VZ, AX, AY, AZ FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
                 )
             else:
                 combine_table.append(
-                    f"""SELECT * FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL {timeRange}) AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
+                    f"""SELECT ID, `TIMESTAMP`, ROOM_UUID, MAC, `TYPE`, STATE, OBJECT_COUNT, OBJECT_LOCATION, IN_BED, IN_BED_MOVING, SIGN_OF_LIFE, HEART_RATE, BREATH_RATE, pointCloudDetected, PX, PY, PZ, VX, VY, VZ, AX, AY, AZ FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL {timeRange}) AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
                 )
 
         combine_table_query = " UNION ".join(combine_table)
@@ -599,11 +599,11 @@ def getSummaryDataofPosition(data):
         for table in tables:
             if t == "CUSTOM":
                 combine_table.append(
-                    f"""SELECT * FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
+                    f"""SELECT ID, `TIMESTAMP`, ROOM_UUID, MAC, `TYPE`, STATE, OBJECT_COUNT, OBJECT_LOCATION, IN_BED, IN_BED_MOVING, SIGN_OF_LIFE, HEART_RATE, BREATH_RATE, pointCloudDetected, PX, PY, PZ, VX, VY, VZ, AX, AY, AZ FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
                 )
             else:
                 combine_table.append(
-                    f"""SELECT * FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL {timeRange}) AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
+                    f"""SELECT ID, `TIMESTAMP`, ROOM_UUID, MAC, `TYPE`, STATE, OBJECT_COUNT, OBJECT_LOCATION, IN_BED, IN_BED_MOVING, SIGN_OF_LIFE, HEART_RATE, BREATH_RATE, pointCloudDetected, PX, PY, PZ, VX, VY, VZ, AX, AY, AZ FROM Gaitmetrics.{table} WHERE MAC='{data['DEVICEMAC']}' AND TIMESTAMP > DATE_SUB(NOW(), INTERVAL {timeRange}) AND `PX` IS NOT NULL AND PY IS NOT NULL{filtering}"""
                 )
 
         combine_table_query = " UNION ".join(combine_table)

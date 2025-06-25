@@ -84,7 +84,6 @@ def get_current_date():
     print(datetime.datetime.now())
     return str(datetime.datetime.now(timezone("Asia/Singapore"))).split(" ")[0]
 
-
 def get_interval_tables(cursor, date):
     end_date = dt.strptime(date, "%Y-%m-%d")
     start_date = end_date - timedelta(days=6)

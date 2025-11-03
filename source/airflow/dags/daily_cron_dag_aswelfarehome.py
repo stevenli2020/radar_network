@@ -80,6 +80,16 @@ def get_rooms():
     return rooms
 
 
+def clean_up_data():
+    connection = mysql.connector.connect(**config(env))
+    cursor = connection.cursor(dictionary=True)
+    sql = "DELETE FROM fall_detection WHERE ts < UNIX_TIMESTAMP(NOW() - INTERVAL 5 DAY);"
+    cursor.execute(sql)
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+
 def get_current_date():
     print(datetime.datetime.now())
     return str(datetime.datetime.now(timezone("Asia/Singapore"))).split(" ")[0]
@@ -1365,6 +1375,11 @@ with DAG(
         task_id="GET_DATE",
         python_callable=get_current_date,
         on_failure_callback=notify_email,
+    )
+
+    clean_task = PythonOperator(
+        task_id="CLEAN_DATA",
+        python_callable=clean_up_data,
     )
 
     get_room_task = PythonOperator(

@@ -5,6 +5,7 @@ services:
     image: mariadb:10.3
     container_name: database
     restart: unless-stopped
+    command: ["mysqld", "--event-scheduler=ON"]
     security_opt:
       - no-new-privileges:true
     networks:

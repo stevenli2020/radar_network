@@ -14,7 +14,7 @@ env = "aswelfarehome"
 def clean_data():
     prefix = "PROCESSED_DATA_"
     pattern = re.compile(r"^PROCESSED_DATA_(\d{4}_\d{2}_\d{2})$")
-    keep_months = 6  # keep last 6 months
+    keep_months = 4  # keep last 6 months
     cutoff_date = dt.today() - timedelta(days=keep_months * 30)  # ~6 months
     connection = mysql.connector.connect(**config(env))
     cursor = connection.cursor(dictionary=True)
@@ -41,7 +41,7 @@ def clean_data():
 
     print("Cleaning ROOM_TRACKER.")
 
-    query = "DELETE FROM ROOM_TRACKER WHERE `TIMESTAMP` < NOW() - INTERVAL 10 DAY;"
+    query = "DELETE FROM ROOM_TRACKER WHERE `TIMESTAMP` < NOW() - INTERVAL 7 DAY;"
     cursor.execute(query)
     connection.commit()
 

@@ -297,8 +297,6 @@ def analyse_position_data(data):
             in_room_min += 1
             if row["IS_MOVING"] == 1:
                 moving_min += 1
-            elif row["IS_UPRIGHT"] == 1:
-                upright_min += 1
             elif (
                 row["IS_LAYING"] == 1
                 or (row["HEART_RATE"] and row["HEART_RATE"] >= constants.MIN_HEART_RATE)
@@ -308,6 +306,8 @@ def analyse_position_data(data):
                 )
             ):
                 laying_min += 1
+            elif row["IS_UPRIGHT"] == 1:
+                upright_min += 1
             elif row["IS_SOCIAL"] == 1:
                 social_min += 1
             else:

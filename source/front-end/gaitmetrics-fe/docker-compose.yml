@@ -2,6 +2,8 @@ version: '3'
 services:
   react-app:
     restart: always
+    mem_limit: 768m
+    mem_reservation: 512m
     build:
       context: .
       dockerfile: Dockerfile

@@ -975,6 +975,116 @@ def filter_non_zero(number):
     return number > 0
 
 
+
+def analyse_rooms_days(date, rooms):
+    curr = date
+
+    for room in rooms:
+        print("Date:", curr, "Room:", room["ID"])
+        (
+            sleeping_hour,
+            time_in_bed,
+            bed_time,
+            wake_up_time,
+            in_room,
+            sleep_disruption,
+            breath_rate,
+            heart_rate,
+            disrupt_duration,
+            current_sleeping_hour,
+            current_sleep_disruption,
+            current_disrupt_duration,
+            current_inbed_seconds,
+            current_inroom_seconds,
+            current_wake_time,
+            current_bed_time,
+            current_heart_rate,
+            current_breath_rate,
+            social_time,
+            moving_time,
+            upright_time,
+            laying_time,
+        ) = getLaymanData(curr, room["ROOM_UUID"])
+        insert_data(curr, room["ID"], "sleeping_hour", sleeping_hour)
+        insert_data(curr, room["ID"], "time_in_bed", time_in_bed)
+        insert_data(curr, room["ID"], "bed_time", bed_time)
+        insert_data(curr, room["ID"], "wake_up_time", wake_up_time)
+        insert_data(curr, room["ID"], "in_room", in_room)
+        insert_data(curr, room["ID"], "sleep_disruption", sleep_disruption)
+        insert_data(curr, room["ID"], "breath_rate", breath_rate)
+        insert_data(curr, room["ID"], "heart_rate", heart_rate)
+        insert_data(curr, room["ID"], "disrupt_duration", disrupt_duration)
+
+        alert_configs = get_alert_configs()
+
+        insert_data(curr, room["ID"], "in_room", current_inroom_seconds, mode="day")
+        insert_data(curr, room["ID"], "time_in_bed", current_inbed_seconds, mode="day")
+        insert_data(curr, room["ID"], "wake_up_time", current_wake_time, mode="day")
+        insert_data(curr, room["ID"], "bed_time", current_bed_time, mode="day")
+        insert_data(curr, room["ID"], "heart_rate", current_heart_rate, mode="day")
+        insert_data(curr, room["ID"], "breath_rate", current_breath_rate, mode="day")
+
+        insert_data(curr, room["ID"], "in_room_social_time", social_time, mode="day")
+        insert_data(curr, room["ID"], "in_room_moving_time", moving_time, mode="day")
+        insert_data(curr, room["ID"], "in_room_upright_time", upright_time, mode="day")
+        insert_data(curr, room["ID"], "in_room_laying_time", laying_time, mode="day")
+
+        if current_sleeping_hour:
+            insert_data(
+                curr, room["ID"], "sleeping_hour", current_sleeping_hour, mode="day"
+            )
+            insert_data(
+                curr,
+                room["ID"],
+                "sleep_disruption",
+                current_sleep_disruption,
+                mode="day",
+            )
+            insert_data(
+                curr,
+                room["ID"],
+                "disrupt_duration",
+                current_disrupt_duration,
+                mode="day",
+            )
+
+        for alert_config in alert_configs:
+            key = alert_config["DATA_TYPE"]
+            mode = "day" if alert_config["MODE"] == 1 else "weekday"
+            threshold = alert_config["THRESHOLD"]
+            min_dp = alert_config["MIN_DATA_POINT"]
+            max_dp = alert_config["MAX_DATA_POINT"]
+
+            curr_key_data = get_data_by_date_and_key(curr, key, room["ID"])
+
+            if curr_key_data:
+                if (
+                    key in ALERT.data_type
+                    and key in ALERT.message
+                    and check_anomaly(
+                        curr,
+                        room["ID"],
+                        key,
+                        curr_key_data,
+                        ALERT.data_type[key],
+                        threshold=threshold,
+                        min_dp=min_dp,
+                        max_dp=max_dp,
+                    )
+                ):
+                    print(
+                        curr,
+                        ALERT.message[key][mode].replace("[DATA]", str(curr_key_data)),
+                    )
+                    insert_alert(
+                        room["ID"],
+                        1,
+                        1,
+                        ALERT.message[key][mode].replace("[DATA]", str(curr_key_data)),
+                    )
+
+
+
 def analyse_rooms(ti):
     rooms = ti.xcom_pull(task_ids="GET_ROOMS")
     curr = ti.xcom_pull(task_ids="GET_DATE")
@@ -1396,3 +1506,4 @@ with DAG(
     )
 
     get_date_task >> get_room_task >> analyse_room_task
+
